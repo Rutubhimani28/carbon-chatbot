@@ -4146,7 +4146,11 @@ import {
   CircularProgress,
   Skeleton,
   MenuItem,
+  Menu,
   Popover,
+  Dialog,
+  DialogTitle,
+  DialogContent,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -4156,6 +4160,7 @@ import {
 } from "@mui/icons-material";
 import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
+import LogoutTwoToneIcon from '@mui/icons-material/LogoutTwoTone';
 
 // Mock logo - replace with your actual logo import
 const Logo = () => (
@@ -4184,6 +4189,9 @@ const ChatUI = () => {
   const [skipHistoryLoad, setSkipHistoryLoad] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedBot, setSelectedBot] = useState("gpt-3.5");
+  const [openProfile, setOpenProfile] = useState(false);
+
+
   // In your state initialization
   // const [messageGroups, setMessageGroups] = useState([]);
 
@@ -4200,11 +4208,30 @@ const ChatUI = () => {
     setAnchorEl(null);
     setActiveGroup(null);
   };
+  const [anchorsEl, setAnchorsEl] = useState(null);
+
+  const handleToggleMenu = (event) => {
+  if (anchorsEl) {
+    // જો પહેલેથી open છે → close
+    setAnchorsEl(null);
+  } else {
+    // નહીતર open
+    setAnchorsEl(event.currentTarget);
+  }
+};
+
+  const handleCloseMenu = () => {
+  setAnchorsEl(null);
+};
 
   // Add this function to generate a unique session ID
   const generateSessionId = () => {
     return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const username = user?.username;
+  const email = user?.email;
 
   useEffect(() => {
     const lastSessionId = localStorage.getItem("lastChatSessionId");
@@ -4244,7 +4271,7 @@ const ChatUI = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: "chiraaag.korat@gmail.com" }),
+          body: JSON.stringify({ email}),
         }
       );
 
@@ -4325,7 +4352,7 @@ const ChatUI = () => {
       const response = await fetch("http://localhost:8080/api/ai/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, email: "chiraaag.korat@gmail.com" }),
+        body: JSON.stringify({ sessionId, email}),
       });
 
       if (!response.ok) {
@@ -4403,14 +4430,14 @@ const ChatUI = () => {
         if (message.role === "user") {
           // Find the corresponding model response
           let modelResponse = null;
-           let tokensUsed = null;
+          let tokensUsed = null;
           let j = i + 1;
 
           while (j < rawHistory.length && rawHistory[j].role !== "user") {
             if (rawHistory[j].role === "model") {
               modelResponse = rawHistory[j];
-                // Extract tokens used from the response if available
-            tokensUsed = modelResponse.tokensUsed || null;
+              // Extract tokens used from the response if available
+              tokensUsed = modelResponse.tokensUsed || null;
               break;
             }
             j++;
@@ -4430,7 +4457,7 @@ const ChatUI = () => {
               isTyping: false,
               isComplete: true,
               // tokensUsed: message.tokensUsed || null, // Add this line
-                tokensUsed: tokensUsed, // Store tokens used
+              tokensUsed: tokensUsed, // Store tokens used
             });
           } else {
             // Handle case where there's a user message but no response yet
@@ -4677,27 +4704,27 @@ const ChatUI = () => {
       const tokensUsed =
         result.tokensUsed || result.usage?.total_tokens || null;
 
- // If this was a new chat with no session ID, update it with the one from the response
-    if (!currentSessionId && result.sessionId) {
-      // Update the selected chat's session ID in the chats array
-      setChats((prev) => {
-        return prev.map((chat) => {
-          if (chat.id === selectedChatId) {
-            return {
-              ...chat,
-              sessionId: result.sessionId,
-            };
-          }
-          return chat;
+      // If this was a new chat with no session ID, update it with the one from the response
+      if (!currentSessionId && result.sessionId) {
+        // Update the selected chat's session ID in the chats array
+        setChats((prev) => {
+          return prev.map((chat) => {
+            if (chat.id === selectedChatId) {
+              return {
+                ...chat,
+                sessionId: result.sessionId,
+              };
+            }
+            return chat;
+          });
         });
-      });
 
-      // Update the current session ID
-      currentSessionId = result.sessionId;
-      
-      // Update localStorage with the new session ID
-      localStorage.setItem("lastChatSessionId", selectedChatId);
-    }
+        // Update the current session ID
+        currentSessionId = result.sessionId;
+
+        // Update localStorage with the new session ID
+        localStorage.setItem("lastChatSessionId", selectedChatId);
+      }
 
       // Update the response directly in state instead of calling history API
       const chars = result.response.split("");
@@ -4757,7 +4784,7 @@ const ChatUI = () => {
   };
 
   const createNewChat = () => {
-      const newSessionId = generateSessionId(); // Generate a proper session ID
+    const newSessionId = generateSessionId(); // Generate a proper session ID
     const newChat = {
       // id: `temp_${Date.now()}`, // temporary ID for UI
       id: newSessionId,
@@ -4996,6 +5023,136 @@ const ChatUI = () => {
                 </List>
               )}
             </Box>
+
+            {/* <Box
+              sx={{
+                position: "sticky",
+                zIndex: 2,
+                bgcolor: "#f5f5f5",
+                borderBottom: "1px solid #e0e0e0",
+                display: "flex",
+                // flexDirection: "column",
+                // alignItems: "center",
+                p: 1,
+                gap:1,
+                // textAlign: "center",
+                width: "100%",
+                // height:"100%",
+              }}
+            >
+              
+                <Avatar
+                  sx={{
+                    bgcolor: "#1976d2",
+                    width: 34,
+                    height: 34,
+                    fontSize: 20,
+                  }}
+                >
+                  {(username || email || "U").charAt(0).toUpperCase()}
+                </Avatar>
+
+                <Typography
+                  variant="subtitle1"
+                  sx={{ fontWeight: "bold", mt: 1,  }}
+                >
+                  {username || email}
+                </Typography>
+              </Box> */}
+
+          
+<Box
+  sx={{
+    position: "sticky",
+    zIndex: 2,
+    bgcolor: "#f5f5f5",
+    borderBottom: "1px solid #e0e0e0",
+    display: "flex",
+    alignItems: "center",
+    p: 1,
+    gap: 1,
+    width: "100%",
+    cursor: "pointer",
+  }}
+  onClick={handleToggleMenu} // toggle use
+>
+  <Avatar
+    sx={{
+      bgcolor: "#1976d2",
+      width: 30,
+      height: 30,
+      fontSize: 20,
+    }}
+  >
+    {(username || email || "U").charAt(0).toUpperCase()}
+  </Avatar>
+
+  <Typography
+    variant="subtitle1"
+    sx={{ fontWeight: "bold", mt: 1 }}
+  >
+    {username || email}
+  </Typography>
+
+  {/* Dropdown Menu */}
+  <Menu
+    anchorEl={anchorsEl}
+    open={Boolean(anchorsEl)}
+    onClose={handleCloseMenu}
+    anchorOrigin={{
+      vertical: "top",
+      horizontal: "left",
+    }}
+    transformOrigin={{
+      vertical: "bottom",
+      horizontal: "left",
+    }}
+     PaperProps={{
+    sx: {
+      width: 200,   // અહીં તમે custom width આપી શકો
+      height: 90,  // અહીં height
+      borderRadius: 2, // rounded corner (optional)
+    },
+  }}
+  >
+    <MenuItem
+      onClick={() => {
+        handleCloseMenu();
+         setOpenProfile(true); // Profile box open
+      }}
+    >
+      Profile
+    </MenuItem>
+
+    <MenuItem
+        onClick={() => {
+    handleCloseMenu();       // Menu બંધ કરો
+    localStorage.clear();    // બધું clear કરો
+    window.location.href = "/login"; // login page પર redirect
+  }}
+    >
+     <LogoutTwoToneIcon
+    fontSize="small"
+    sx={{ mr: 1 }} // icon ni right side margin + red color
+  />
+      Logout
+    </MenuItem>
+  </Menu>
+</Box>
+
+            {/* Logout Button */}
+            {/* <Button
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.href = "/login";
+                }}
+                variant="text"
+                color="error"
+                size="small"
+                sx={{ mt: 1 }}
+              >
+                Logout
+              </Button> */}
           </>
         )}
       </Box>
@@ -5379,6 +5536,95 @@ const ChatUI = () => {
           </Typography>
         </Box>
       </Box>
+
+      {/* <Dialog
+  open={openProfile}
+  onClose={() => setOpenProfile(false)}
+  maxWidth="xs"
+  fullWidth
+>
+  <DialogTitle sx={{ textAlign: "center" }}>Profile</DialogTitle>
+  <DialogContent sx={{ textAlign: "center" }}>
+    <Avatar
+      sx={{
+        bgcolor: "#1976d2",
+        width: 70,
+        height: 70,
+        fontSize: 30,
+        mx: "auto",
+        mb: 2,
+      }}
+    >
+      {(username || email || "U").charAt(0).toUpperCase()}
+    </Avatar>
+    <Typography variant="h6">{username || "Unknown User"}</Typography>
+    <Typography variant="body2" color="text.secondary">
+      {email || "No email"}
+    </Typography>
+  </DialogContent>
+</Dialog> */}
+<Dialog
+  open={openProfile}
+  onClose={() => setOpenProfile(false)}
+  maxWidth="xs"
+  fullWidth
+>
+  <DialogTitle
+    sx={{
+      textAlign: "center",
+      fontWeight: "bold",
+      borderBottom: "1px solid #e0e0e0",
+    }}
+  >
+    User Profile
+  </DialogTitle>
+
+  <DialogContent sx={{ textAlign: "center", p: 3 }}>
+    {/* Avatar */}
+    <Avatar
+      sx={{
+        bgcolor: "#1976d2",
+        width: 80,
+        height: 80,
+        fontSize: 32,
+        mx: "auto",
+        mb: 2,
+        mt:1,
+      }}
+    >
+      {(username || email || "U").charAt(0).toUpperCase()}
+    </Avatar>
+
+    {/* Username */}
+    <Box sx={{ mb: 2,display:"flex" ,alignItems:"center",gap:1}}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", fontWeight: "medium",fontSize:"17px" }}
+      >
+        Username:
+      </Typography>
+      <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+        {username || "Unknown User"}
+      </Typography>
+    </Box>
+
+    {/* Email */}
+    <Box sx={{ mb: 2,display:"flex" ,alignItems:"center",gap:1 }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block",  fontWeight: "medium",fontSize:"17px" }}
+      >
+        Email:
+      </Typography>
+      <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+        {email || "No email"}
+      </Typography>
+    </Box>
+  </DialogContent>
+</Dialog>
+
     </Box>
   );
 };

@@ -2,8 +2,10 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
-    remainingTokens: { type: Number, default: 5000 }
+    password: { type: String, required: true },
+    remainingTokens: { type: Number, default: 5000 },
   },
   { timestamps: true }
 );
