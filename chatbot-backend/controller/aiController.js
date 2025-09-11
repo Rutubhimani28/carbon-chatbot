@@ -166,8 +166,15 @@ export const getAIResponse = async (req, res) => {
     // Find or create user
     let user = await User.findOne({ email });
     if (!user) {
-      user = new User({ email, remainingTokens: 5000 });
+      return res.status(404).json({ message: "User not found" });
+    } else {
+      // જો user already DB માં છે → એને પણ 5000 tokens reset કરી દો
+      user.remainingTokens = 5000;
     }
+    
+    // if (!user) {
+    //   user = new User({ email, remainingTokens: 5000 });
+    // }
     console.log("remainingTokens<<<<<<<<<<", user.remainingTokens);
 
     // Check tokens
@@ -191,6 +198,21 @@ export const getAIResponse = async (req, res) => {
       finalReply = staticReply.split(" ").slice(0, Number(maxWords)).join(" ");
     }
 
+    // Calculate tokens for AI response
+    const aiWordCount = finalReply.trim().split(/\s+/).length;
+    const aiTokensUsed = Math.ceil(aiWordCount * 1.3);
+    const totalTokensUsed = tokensUsed + aiTokensUsed;
+
+    // Check tokens again for AI response
+    if (user.remainingTokens < totalTokensUsed) {
+      return res.status(400).json({
+        message: "Not enough tokens for the response",
+        remainingTokens: user.remainingTokens,
+      });
+    }
+    // Deduct tokens
+    user.remainingTokens -= totalTokensUsed;
+
     // Find or create session
     let session = await ChatSession.findOne({
       sessionId: currentSessionId,
@@ -204,6 +226,7 @@ export const getAIResponse = async (req, res) => {
       });
     }
     console.log("tokensUsed<<<<<<<<<<", tokensUsed);
+    console.log("totalTokensUsed<<<<<<<<<<", totalTokensUsed);
 
     // Push to session history
     session.history.push({
@@ -211,6 +234,8 @@ export const getAIResponse = async (req, res) => {
       response: finalReply,
       wordCount,
       tokensUsed,
+      totalTokensUsed,
+      create_time: new Date(),
     });
 
     // Save both
@@ -222,6 +247,7 @@ export const getAIResponse = async (req, res) => {
       response: finalReply,
       remainingTokens: user.remainingTokens,
       tokensUsed,
+      totalTokensUsed,
     });
   } catch (error) {
     console.error("Error in getAIResponse:", error.message);
@@ -310,19 +336,19 @@ export const getChatHistory = async (req, res) => {
     //   { role: "model", content: msg.response },
     // ]);
 
-      // Format history with token information
+    // Format history with token information
     const formattedHistory = [];
     session.history.forEach((msg) => {
       formattedHistory.push({
         role: "user",
         content: msg.prompt,
-        tokensUsed: msg.tokensUsed || null // Add tokens used for user message
+        tokensUsed: msg.tokensUsed || null, // Add tokens used for user message
       });
-      
+
       formattedHistory.push({
         role: "model",
         content: msg.response,
-        tokensUsed: msg.tokensUsed || null // Add tokens used for model response
+        tokensUsed: msg.tokensUsed || null, // Add tokens used for model response
       });
     });
 

@@ -247,7 +247,6 @@
 
 // export default Login;
 
-
 import React, { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
@@ -287,8 +286,17 @@ const Login = () => {
         formData
       );
       setMessage(res.data.message);
+
       setUser(res.data.data);
       localStorage.setItem("user", JSON.stringify(res.data.data));
+
+      const userData = {
+        id: res.data.data.id,
+        username: res.data.data.username,
+        email: res.data.data.email,
+        // Add any other fields you need
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // ✅ navigate to home after success
       navigate("/");
@@ -375,7 +383,11 @@ const Login = () => {
             sx={{ mt: 3, mb: 2 }}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={24} color="inherit" /> : "Sign In"}
+            {loading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Sign In"
+            )}
           </Button>
         </form>
 
