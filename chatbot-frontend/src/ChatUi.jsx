@@ -2928,8 +2928,6 @@
 //   }
 // }, [chats]);
 
-
-
 //   useEffect(() => {
 //     return () => {
 //       if (abortControllerRef.current) {
@@ -4130,8 +4128,6 @@
 // export default ChatUI;
 // --------------------------------------------------------------------------------------
 
-
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Box,
@@ -4188,22 +4184,21 @@ const ChatUI = () => {
   const [skipHistoryLoad, setSkipHistoryLoad] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedBot, setSelectedBot] = useState("gpt-3.5");
-  
+  // In your state initialization
+  // const [messageGroups, setMessageGroups] = useState([]);
+
   // State for popover
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeGroup, setActiveGroup] = useState(null);
-  const [usageTokens, setUsageTokens] = useState(null);
 
   const handleClick = (event, idx, tokens) => {
     setAnchorEl(event.currentTarget);
     setActiveGroup(idx);
-    setUsageTokens(tokens);
   };
 
   const handleClose = () => {
     setAnchorEl(null);
     setActiveGroup(null);
-    setUsageTokens(null);
   };
 
   // Add this function to generate a unique session ID
@@ -4215,7 +4210,7 @@ const ChatUI = () => {
     const lastSessionId = localStorage.getItem("lastChatSessionId");
     if (lastSessionId) {
       setSelectedChatId(lastSessionId);
-      
+
       // Load token count from localStorage
       const savedTokens = localStorage.getItem(`tokens_${lastSessionId}`);
       if (savedTokens) {
@@ -4280,7 +4275,7 @@ const ChatUI = () => {
                 `Chat ${session.session_id.slice(0, 8)}`,
               sessionId: session.session_id,
               createTime: session.create_time || new Date().toISOString(),
-              remainingTokens: session.remainingTokens
+              remainingTokens: session.remainingTokens,
             };
           });
         } else {
@@ -4302,7 +4297,7 @@ const ChatUI = () => {
                 session.create_time ||
                 session.createTime ||
                 new Date().toISOString(),
-              remainingTokens: session.remainingTokens
+              remainingTokens: session.remainingTokens,
             };
           });
         }
@@ -4381,7 +4376,7 @@ const ChatUI = () => {
         }
       }
     }
-  }, [selectedChatId, chats, skipHistoryLoad]);
+  }, [selectedChatId, skipHistoryLoad]);
 
   const loadChatHistory = async (sessionId) => {
     if (!sessionId) {
@@ -4396,8 +4391,8 @@ const ChatUI = () => {
       const rawHistory = await getChatHistory(sessionId);
 
       // Load token count from localStorage
-      const savedTokens = localStorage.getItem(`tokens_${sessionId}`);
-      const tokenCount = savedTokens ? parseInt(savedTokens) : null;
+      // const savedTokens = localStorage.getItem(`tokens_${sessionId}`);
+      // const tokenCount = savedTokens ? parseInt(savedTokens) : null;
 
       // Process the history into message groups
       const processedGroups = [];
@@ -4408,11 +4403,14 @@ const ChatUI = () => {
         if (message.role === "user") {
           // Find the corresponding model response
           let modelResponse = null;
+           let tokensUsed = null;
           let j = i + 1;
 
           while (j < rawHistory.length && rawHistory[j].role !== "user") {
             if (rawHistory[j].role === "model") {
               modelResponse = rawHistory[j];
+                // Extract tokens used from the response if available
+            tokensUsed = modelResponse.tokensUsed || null;
               break;
             }
             j++;
@@ -4431,7 +4429,8 @@ const ChatUI = () => {
               currentSlide: 0,
               isTyping: false,
               isComplete: true,
-              usageTokens: tokenCount, // Add token count to each message group
+              // tokensUsed: message.tokensUsed || null, // Add this line
+                tokensUsed: tokensUsed, // Store tokens used
             });
           } else {
             // Handle case where there's a user message but no response yet
@@ -4447,6 +4446,7 @@ const ChatUI = () => {
               currentSlide: 0,
               isTyping: false,
               isComplete: true,
+              tokensUsed: null,
             });
           }
         }
@@ -4492,11 +4492,19 @@ const ChatUI = () => {
 
       abortControllerRef.current = null;
       const data = await response.json();
+      console.log("API Response:", data);
+      console.log("Available token fields:", {
+        tokensUsed: data.tokensUsed,
+        usage: data.usage,
+        remainingTokens: data.remainingTokens,
+        total_tokens: data.usage?.total_tokens,
+      });
 
       return {
         response: data.response.replace(/\n\n/g, "<br/>"),
         sessionId: data.sessionId, // This will be the new session ID from the server
         remainingTokens: data.remainingTokens,
+        tokensUsed: data.tokensUsed || data.usage?.total_tokens || null,
       };
     } catch (err) {
       if (err?.name === "AbortError") {
@@ -4511,6 +4519,122 @@ const ChatUI = () => {
     }
   };
 
+  // const handleSend = async () => {
+  //   if (!input.trim() || isSending) return;
+
+  //   isStoppedRef.current = false;
+  //   const prompt = input;
+  //   setInput("");
+  //   setIsSending(true);
+  //   setIsTypingResponse(true);
+
+  //   let currentSessionId = selectedChatId
+  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
+  //     : "";
+
+  //   // Add new message group
+  //   setMessageGroups((prev) => {
+  //     const updated = [...prev];
+  //     const chatGroups = updated[0] || [];
+  //     chatGroups.push({
+  //       prompt,
+  //       responses: ["Thinking..."],
+  //       time: currentTime(),
+  //       currentSlide: 0,
+  //       isTyping: true,
+  //       isComplete: true,
+  //     });
+  //     return updated;
+  //   });
+
+  //   try {
+  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
+  //     if (isStoppedRef.current || !result) return;
+
+  //     // Save token count to localStorage
+  //     if (result.remainingTokens !== undefined) {
+  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
+  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
+
+  //       // also update chat list state so future load shows latest tokens
+  //       setChats((prev) =>
+  //         prev.map((chat) =>
+  //           chat.sessionId === (currentSessionId || result.sessionId)
+  //             ? { ...chat, remainingTokens: result.remainingTokens }
+  //             : chat
+  //         )
+  //       );
+  //     }
+
+  //     // If this was a new chat with no session ID, update it with the one from the response
+  //     if (!currentSessionId && result.sessionId) {
+  //       setChats((prev) => {
+  //         const updatedChats = [...prev];
+  //         const chatIndex = updatedChats.findIndex(
+  //           (chat) => chat.id === selectedChatId
+  //         );
+  //         if (chatIndex !== -1) {
+  //           updatedChats[chatIndex] = {
+  //             ...updatedChats[chatIndex],
+  //             sessionId: result.sessionId,
+  //           };
+  //         }
+  //         return updatedChats;
+  //       });
+
+  //       // Update the selected chat's session ID
+  //       currentSessionId = result.sessionId;
+  //     }
+
+  //     // Type out response character by character
+  //     const chars = result.response.split("");
+  //     let currentText = "";
+
+  //     for (let i = 0; i < chars.length; i++) {
+  //       if (isStoppedRef.current) break;
+
+  //       currentText += chars[i];
+
+  //       setMessageGroups((prev) => {
+  //         const updated = [...prev];
+  //         const chatGroups = updated[0] || [];
+  //         const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+  //         if (groupIndex !== -1) {
+  //           chatGroups[groupIndex] = {
+  //             ...chatGroups[groupIndex],
+  //             responses: [currentText],
+  //             isTyping: !isStoppedRef.current,
+  //             isComplete: !isStoppedRef.current,
+  //             usageTokens: result.remainingTokens,
+  //           };
+  //         }
+  //         return updated;
+  //       });
+
+  //       await new Promise((resolve) => setTimeout(resolve, 25));
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to send message:", error);
+  //     setMessageGroups((prev) => {
+  //       const updated = [...prev];
+  //       const chatGroups = updated[0] || [];
+  //       const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+  //       if (groupIndex !== -1) {
+  //         chatGroups[groupIndex] = {
+  //           ...chatGroups[groupIndex],
+  //           isTyping: false,
+  //           isComplete: false,
+  //           responses: ["Sorry, something went wrong."],
+  //         };
+  //       }
+  //       return updated;
+  //     });
+  //   } finally {
+  //     setIsSending(false);
+  //     setIsTypingResponse(false);
+  //     scrollToBottom();
+  //   }
+  // };
   const handleSend = async () => {
     if (!input.trim() || isSending) return;
 
@@ -4524,7 +4648,7 @@ const ChatUI = () => {
       ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
       : "";
 
-    // Add new message group
+    // Add new message group directly to state
     setMessageGroups((prev) => {
       const updated = [...prev];
       const chatGroups = updated[0] || [];
@@ -4534,7 +4658,8 @@ const ChatUI = () => {
         time: currentTime(),
         currentSlide: 0,
         isTyping: true,
-        isComplete: true,
+        isComplete: false,
+        tokensUsed: null, // Initialize tokens as null
       });
       return updated;
     });
@@ -4543,42 +4668,38 @@ const ChatUI = () => {
       const result = await fetchChatbotResponse(prompt, currentSessionId);
       if (isStoppedRef.current || !result) return;
 
-      // Save token count to localStorage
       if (result.remainingTokens !== undefined) {
         const storageKey = `tokens_${currentSessionId || result.sessionId}`;
         localStorage.setItem(storageKey, result.remainingTokens.toString());
-
-        // also update chat list state so future load shows latest tokens
-        setChats((prev) =>
-          prev.map((chat) =>
-            chat.sessionId === (currentSessionId || result.sessionId)
-              ? { ...chat, remainingTokens: result.remainingTokens }
-              : chat
-          )
-        );
       }
 
-      // If this was a new chat with no session ID, update it with the one from the response
-      if (!currentSessionId && result.sessionId) {
-        setChats((prev) => {
-          const updatedChats = [...prev];
-          const chatIndex = updatedChats.findIndex(
-            (chat) => chat.id === selectedChatId
-          );
-          if (chatIndex !== -1) {
-            updatedChats[chatIndex] = {
-              ...updatedChats[chatIndex],
+      // Extract tokens used from response (assuming API returns tokensUsed)
+      const tokensUsed =
+        result.tokensUsed || result.usage?.total_tokens || null;
+
+ // If this was a new chat with no session ID, update it with the one from the response
+    if (!currentSessionId && result.sessionId) {
+      // Update the selected chat's session ID in the chats array
+      setChats((prev) => {
+        return prev.map((chat) => {
+          if (chat.id === selectedChatId) {
+            return {
+              ...chat,
               sessionId: result.sessionId,
             };
           }
-          return updatedChats;
+          return chat;
         });
+      });
 
-        // Update the selected chat's session ID
-        currentSessionId = result.sessionId;
-      }
+      // Update the current session ID
+      currentSessionId = result.sessionId;
+      
+      // Update localStorage with the new session ID
+      localStorage.setItem("lastChatSessionId", selectedChatId);
+    }
 
-      // Type out response character by character
+      // Update the response directly in state instead of calling history API
       const chars = result.response.split("");
       let currentText = "";
 
@@ -4597,13 +4718,19 @@ const ChatUI = () => {
               responses: [currentText],
               isTyping: !isStoppedRef.current,
               isComplete: !isStoppedRef.current,
-              usageTokens: result.remainingTokens,
+              tokensUsed: tokensUsed, // Store tokens used
             };
           }
           return updated;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 25));
+        await new Promise((resolve) => setTimeout(resolve, 30));
+      }
+
+      // Update token count if available
+      if (result.remainingTokens !== undefined) {
+        const storageKey = `tokens_${currentSessionId || result.sessionId}`;
+        localStorage.setItem(storageKey, result.remainingTokens.toString());
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -4617,6 +4744,7 @@ const ChatUI = () => {
             isTyping: false,
             isComplete: false,
             responses: ["Sorry, something went wrong."],
+            tokensUsed: null,
           };
         }
         return updated;
@@ -4629,10 +4757,13 @@ const ChatUI = () => {
   };
 
   const createNewChat = () => {
+      const newSessionId = generateSessionId(); // Generate a proper session ID
     const newChat = {
-      id: `temp_${Date.now()}`, // temporary ID for UI
+      // id: `temp_${Date.now()}`, // temporary ID for UI
+      id: newSessionId,
       name: `Chat ${chats.length + 1}`,
-      sessionId: "", // blank session ID
+      // sessionId: "", // blank session ID
+      sessionId: newSessionId,
       createTime: new Date().toISOString(),
     };
 
@@ -5086,9 +5217,9 @@ const ChatUI = () => {
                         </Typography>
 
                         {/* Icon on right */}
-                        <IconButton 
-                          size="small" 
-                          onClick={(e) => handleClick(e, idx, group.usageTokens)}
+                        <IconButton
+                          size="small"
+                          onClick={(e) => handleClick(e, idx)}
                         >
                           <KeyboardArrowDownTwoToneIcon fontSize="small" />
                         </IconButton>
@@ -5120,12 +5251,25 @@ const ChatUI = () => {
                           </Typography>
                           <Typography
                             variant="caption"
+                            sx={{
+                              color: "text.secondary",
+                              display: "block",
+                              mt: 0.5,
+                            }}
+                          >
+                            {group.tokensUsed !== null &&
+                            group.tokensUsed !== undefined
+                              ? group.tokensUsed
+                              : "N/A"}
+                          </Typography>
+                          {/* <Typography
+                            variant="caption"
                             sx={{ color: "text.secondary" }}
                           >
                             {usageTokens !== undefined && usageTokens !== null
                               ? usageTokens
                               : "N/A"}
-                          </Typography>
+                          </Typography> */}
                         </Popover>
                       </Box>
                     </Paper>

@@ -221,6 +221,7 @@ export const getAIResponse = async (req, res) => {
       sessionId: currentSessionId,
       response: finalReply,
       remainingTokens: user.remainingTokens,
+      tokensUsed,
     });
   } catch (error) {
     console.error("Error in getAIResponse:", error.message);
@@ -296,7 +297,7 @@ export const getChatHistory = async (req, res) => {
 
     const session = await ChatSession.findOne({ sessionId, email });
     if (!session) {
-      return res.status(404).json({ message: "Session not found" });    
+      return res.status(404).json({ message: "Session not found" });
     }
 
     const user = await User.findOne({ email });
@@ -304,10 +305,26 @@ export const getChatHistory = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const formattedHistory = session.history.flatMap((msg) => [
-      { role: "user", content: msg.prompt },
-      { role: "model", content: msg.response },
-    ]);
+    // const formattedHistory = session.history.flatMap((msg) => [
+    //   { role: "user", content: msg.prompt },
+    //   { role: "model", content: msg.response },
+    // ]);
+
+      // Format history with token information
+    const formattedHistory = [];
+    session.history.forEach((msg) => {
+      formattedHistory.push({
+        role: "user",
+        content: msg.prompt,
+        tokensUsed: msg.tokensUsed || null // Add tokens used for user message
+      });
+      
+      formattedHistory.push({
+        role: "model",
+        content: msg.response,
+        tokensUsed: msg.tokensUsed || null // Add tokens used for model response
+      });
+    });
 
     res.json({
       response: formattedHistory,
