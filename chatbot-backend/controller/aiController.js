@@ -171,7 +171,7 @@ export const getAIResponse = async (req, res) => {
       // જો user already DB માં છે → એને પણ 5000 tokens reset કરી દો
       user.remainingTokens = 5000;
     }
-    
+
     // if (!user) {
     //   user = new User({ email, remainingTokens: 5000 });
     // }
@@ -199,9 +199,10 @@ export const getAIResponse = async (req, res) => {
     }
 
     // Calculate tokens for AI response
-    const aiWordCount = finalReply.trim().split(/\s+/).length;
-    const aiTokensUsed = Math.ceil(aiWordCount * 1.3);
-    const totalTokensUsed = tokensUsed + aiTokensUsed;
+    // const aiWordCount = finalReply.trim().split(/\s+/).length;
+    // const aiTokensUsed = Math.ceil(aiWordCount * 1.3);
+    // const totalTokensUsed = tokensUsed + aiTokensUsed;
+    const totalTokensUsed = tokensUsed;
 
     // Check tokens again for AI response
     if (user.remainingTokens < totalTokensUsed) {
@@ -279,37 +280,51 @@ export const getAIResponse = async (req, res) => {
 
 // export const getChatHistory = async (req, res) => {
 //   try {
-//     const { sessionId } = req.body; //  હવે bodyમાંથી લેશે
-//     if (!sessionId) {
-//       return res.status(400).json({ message: "SessionId is required" });
+//     const { sessionId, email } = req.body;
+//     if (!sessionId || !email) {
+//       return res
+//         .status(400)
+//         .json({ message: "SessionId & Email are required" });
 //     }
 
-//     // DB માંથી history કાઢવું
-//     const history = await ChatSession.find({ sessionId }).sort({
-//       create_time: 1,
-//     });
+//     const session = await ChatSession.findOne({ sessionId, email });
+//     if (!session) {
+//       return res.status(404).json({ message: "Session not found" });
+//     }
 
-//     // Transform → માત્ર role + content જોઈએ
-//     const formattedHistory = history.flatMap((msg) => [
-//       {
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     // const formattedHistory = session.history.flatMap((msg) => [
+//     //   { role: "user", content: msg.prompt },
+//     //   { role: "model", content: msg.response },
+//     // ]);
+
+//     // Format history with token information
+//     const formattedHistory = [];
+//     session.history.forEach((msg) => {
+//       formattedHistory.push({
 //         role: "user",
 //         content: msg.prompt,
-//       },
-//       {
+//         tokensUsed: msg.tokensUsed || null, // Add tokens used for user message
+//       });
+
+//       formattedHistory.push({
 //         role: "model",
 //         content: msg.response,
-//       },
-//     ]);
+//         tokensUsed: msg.tokensUsed || null, // Add tokens used for model response
+//       });
+//     });
 
 //     res.json({
 //       response: formattedHistory,
+//       remainingTokens: user.remainingTokens,
 //     });
 //   } catch (error) {
 //     console.error("Error in getChatHistory:", error);
-//     res.status(500).json({
-//       message: "Internal Server Error",
-//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
-//     });
+//     res.status(500).json({ message: "Internal Server Error" });
 //   }
 // };
 export const getChatHistory = async (req, res) => {
@@ -331,30 +346,23 @@ export const getChatHistory = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // const formattedHistory = session.history.flatMap((msg) => [
-    //   { role: "user", content: msg.prompt },
-    //   { role: "model", content: msg.response },
-    // ]);
-
-    // Format history with token information
-    const formattedHistory = [];
-    session.history.forEach((msg) => {
-      formattedHistory.push({
-        role: "user",
-        content: msg.prompt,
-        tokensUsed: msg.tokensUsed || null, // Add tokens used for user message
-      });
-
-      formattedHistory.push({
-        role: "model",
-        content: msg.response,
-        tokensUsed: msg.tokensUsed || null, // Add tokens used for model response
-      });
-    });
+    // Format history with token info
+    const formattedHistory = session.history.map((msg) => ({
+      prompt: msg.prompt,
+      response: msg.response,
+      tokensUsed: msg.tokensUsed || 0,
+      totalTokensUsed: msg.totalTokensUsed || 0,
+      create_time: msg.create_time,
+    }));
 
     res.json({
       response: formattedHistory,
       remainingTokens: user.remainingTokens,
+      // totalTokensUsed = last message’s cumulative tokens
+      totalTokensUsed:
+        session.history.length > 0
+          ? session.history[session.history.length - 1].totalTokensUsed
+          : 0,
     });
   } catch (error) {
     console.error("Error in getChatHistory:", error);
@@ -363,47 +371,35 @@ export const getChatHistory = async (req, res) => {
 };
 
 // export const getAllSessions = async (req, res) => {
-// try {
+//   try {
 //     const { email } = req.body;
 //     if (!email) {
-//       return res.status(400).json({ message: "email is required" });
+//       return res.status(400).json({ message: "Email is required" });
 //     }
 
-//     // DB mathi badha chats fetch karo
-//     const chats = await ChatSession.find({ email: email }).sort({ create_time: 1 });
-
-//     // group by sessionId
-//     const sessionsMap = {};
-//     chats.forEach((chat) => {
-//       if (!sessionsMap[chat.sessionId]) {
-//         // pahlā message ne heading tarike save karo
-//         sessionsMap[chat.sessionId] = {
-//           session_id: chat.sessionId,
-//           session_heading: chat.prompt, // ✅ first user message
-//           create_time: chat.create_time,
-//         };
-//       }
+//     const sessions = await ChatSession.find({ email }).sort({
+//       create_time: -1,
 //     });
 
-//     const sessions = Object.values(sessionsMap).sort(
-//       (a, b) => new Date(b.create_time) - new Date(a.create_time) // latest first
-//     );
+//     const sessionList = sessions.map((chat) => ({
+//       session_id: chat.sessionId,
+//       session_heading: chat.history.length
+//         ? chat.history[0].prompt
+//         : "Untitled",
+//       create_time: chat.create_time,
+//     }));
+
+//     const user = await User.findOne({ email });
+//     console.log("user.remainingTokens<<<<<<<<<<", user?.remainingTokens);
 
 //     res.json({
-//       response: [
-//         {
-//           user_sessions: sessions,
-//         },
-//       ],
+//       response: [{ user_sessions: sessionList }],
+//       remainingTokens: user ? user.remainingTokens : 0,
 //     });
 //   } catch (error) {
-//     console.error("Error in /get_user_sessions:", error);
-//     res.status(500).json({
-//       message: "Internal Server Error",
-//       error: process.env.NODE_ENV === "development" ? error.message : undefined,
-//     });
+//     console.error("Error in getAllSessions:", error);
+//     res.status(500).json({ message: "Internal Server Error" });
 //   }
-
 // };
 
 export const getAllSessions = async (req, res) => {
@@ -417,13 +413,31 @@ export const getAllSessions = async (req, res) => {
       create_time: -1,
     });
 
-    const sessionList = sessions.map((chat) => ({
-      session_id: chat.sessionId,
-      session_heading: chat.history.length
-        ? chat.history[0].prompt
-        : "Untitled",
-      create_time: chat.create_time,
-    }));
+    // const sessionList = sessions.map((chat) => {
+    //   const lastMessage =
+    //     chat.history.length > 0 ? chat.history[chat.history.length - 1] : null;
+    const sessionList = sessions.map((chat) => {
+      const totalTokens = chat.history.reduce(
+        (sum, msg) => sum + (msg.totalTokensUsed || 0),
+        0
+      );
+
+      return {
+        session_id: chat.sessionId,
+        session_heading: chat.history.length
+          ? chat.history[0].prompt
+          : "Untitled",
+        create_time: chat.create_time,
+        // totalTokensUsed: lastMessage ? lastMessage.totalTokensUsed : 0,
+        totalTokensUsed: totalTokens, // 👈 cumulative tokens
+      };
+    });
+
+       // Sum of all sessions' totalTokensUsed
+    const grandtotaltokenUsed = sessionList.reduce(
+      (sum, session) => sum + (session.totalTokensUsed || 0),
+      0
+    );
 
     const user = await User.findOne({ email });
     console.log("user.remainingTokens<<<<<<<<<<", user?.remainingTokens);
@@ -431,6 +445,7 @@ export const getAllSessions = async (req, res) => {
     res.json({
       response: [{ user_sessions: sessionList }],
       remainingTokens: user ? user.remainingTokens : 0,
+      grandtotaltokenUsed,
     });
   } catch (error) {
     console.error("Error in getAllSessions:", error);
