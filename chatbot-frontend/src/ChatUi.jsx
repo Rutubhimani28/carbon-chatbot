@@ -4432,7 +4432,7 @@ const ChatUI = () => {
             labelId="bot-select-label"
             value={selectedBot}
             onChange={(e) => setSelectedBot(e.target.value)}
-            sx={{ bgcolor: "#fff", borderRadius: "5px" }}
+            sx={{ bgcolor: "#fff", borderRadius: "5px",maxWidth:"175px",width:"175px" }}
           >
             <MenuItem value="gpt-3.5">OpenAI GPT-3.5</MenuItem>
             <MenuItem value="gpt-4">OpenAI GPT-4</MenuItem>
