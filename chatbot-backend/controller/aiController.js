@@ -147,7 +147,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export const getAIResponse = async (req, res) => {
   try {
-    const { prompt, sessionId, maxWords, email, botName } = req.body;
+    const { prompt, sessionId, responseLength, email, botName } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ message: "Prompt is required" });
@@ -196,23 +196,49 @@ export const getAIResponse = async (req, res) => {
     let response = "";
     if (botName === "gpt-4") {
       response =
-        "This is a response from GPT-4 model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+        "This is a response from GPT-4 model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
     } else if (botName === "assistant-x") {
       response =
-        "This is a response from Assistant X model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+        "This is a response from Assistant X model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
     } else if (botName === "custom-ai") {
       response =
-        "This is a response from Custom AI Bot model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+        "This is a response from Custom AI Bot model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
     } else {
       // Default to GPT-3.5
       response =
-        "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today? ";
+        "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today? . As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life. ";
     }
 
     // Apply dropdown limit
-    let finalReply = response;
-    if (maxWords && !isNaN(maxWords)) {
-      finalReply = response.split(" ").slice(0, Number(maxWords)).join(" ");
+    // let finalReply = response;
+
+    // if (maxWords && !isNaN(maxWords)) {
+    //   finalReply = response.split(" ").slice(0, Number(maxWords)).join(" ");
+    // }
+
+    let minWords = 0;
+    let maxWords = Infinity;
+
+    if (responseLength === "Short") {
+      minWords = 50;
+      maxWords = 100;
+    } else if (responseLength === "Concise") {
+      minWords = 150;
+      maxWords = 250;
+    } else if (responseLength === "Long") {
+      minWords = 300;
+      maxWords = 500;
+    } else if (responseLength === "NoOptimisation") {
+      minWords = 0;
+      maxWords = Infinity; // કોઈ limit નહીં
+    }
+
+    let words = response.split(" ");
+    let finalReply = words.slice(0, maxWords).join(" ");
+
+    // (Optional) જો response બહુ નાનો હોય તો fallback logic
+    if (words.length < minWords) {
+      finalReply = words.join(" "); // અથવા default msg આપી શકાય
     }
 
     // Calculate tokens for AI response
@@ -246,6 +272,8 @@ export const getAIResponse = async (req, res) => {
     console.log("tokensUsed<<<<<<<<<<", tokensUsed);
     console.log("totalTokensUsed<<<<<<<<<<", totalTokensUsed);
 
+    const responseWordCount = finalReply.trim().split(/\s+/).length;
+
     // Push to session history
     session.history.push({
       prompt,
@@ -254,6 +282,7 @@ export const getAIResponse = async (req, res) => {
       tokensUsed,
       totalTokensUsed,
       botName: botName || "gpt-3.5", // Store botName in history
+      responseLength: responseLength || "NoOptimisation",
       create_time: new Date(),
     });
 
@@ -265,10 +294,12 @@ export const getAIResponse = async (req, res) => {
     res.json({
       sessionId: currentSessionId,
       response: finalReply,
+      responseWordCount,
       remainingTokens: parseFloat(user.remainingTokens.toFixed(3)), //  upto 3 decimals
       tokensUsed: parseFloat(tokensUsed.toFixed(3)),
       totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
       botName: botName || "gpt-3.5", // Include botName in response
+      responseLength: responseLength || "NoOptimisation",
     });
   } catch (error) {
     console.error("Error in getAIResponse:", error.message);
@@ -370,21 +401,24 @@ export const getChatHistory = async (req, res) => {
     const formattedHistory = session.history.map((msg) => ({
       prompt: msg.prompt,
       response: msg.response,
-      tokensUsed:  parseFloat((msg.tokensUsed || 0).toFixed(3)), 
+      tokensUsed: parseFloat((msg.tokensUsed || 0).toFixed(3)),
       totalTokensUsed: parseFloat((msg.totalTokensUsed || 0).toFixed(3)),
       botName: msg.botName,
       create_time: msg.create_time,
     }));
 
+    const totalTokensUsed = session.history.reduce(
+      (sum, msg) => sum + (msg.tokensUsed || 0),
+      0
+    );
+
+    const remainingTokens = 5000 - totalTokensUsed;
+
     res.json({
       response: formattedHistory,
-      remainingTokens: parseFloat(user.remainingTokens.toFixed(3)),
+      remainingTokens: parseFloat(remainingTokens.toFixed(3)),
       // totalTokensUsed = last message’s cumulative tokens
-      totalTokensUsed:
-        session.history.length > 0
-          ? parseFloat(
-           session.history[session.history.length - 1].totalTokensUsed.toFixed(3)
-          ) : 0,
+      totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
     });
   } catch (error) {
     console.error("Error in getChatHistory:", error);
@@ -461,12 +495,14 @@ export const getAllSessions = async (req, res) => {
       0
     );
 
-    const user = await User.findOne({ email });
-    console.log("user.remainingTokens<<<<<<<<<<", user?.remainingTokens);
+    const remainingTokens = 5000 - grandtotaltokenUsed;
+
+    // const user = await User.findOne({ email });
+    console.log("user.remainingTokens<<<<<<<<<<", remainingTokens);
 
     res.json({
       response: [{ user_sessions: sessionList }],
-      remainingTokens: user ?  parseFloat(user.remainingTokens.toFixed(3)) : 0,
+      remainingTokens: parseFloat(remainingTokens.toFixed(3)),
       grandtotaltokenUsed: parseFloat(grandtotaltokenUsed.toFixed(3)),
     });
   } catch (error) {

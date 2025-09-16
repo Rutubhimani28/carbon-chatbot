@@ -30,6 +30,7 @@ import {
 } from "@mui/icons-material";
 import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
@@ -64,6 +65,11 @@ const ChatUI = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const [remainingTokens, setRemainingTokens] = useState(0);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [responseLength, setResponseLength] = useState("Response Length:");
+  // 🔹 नवी state add करो
+const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
+const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
+
 
   // In your state initialization
   // const [messageGroups, setMessageGroups] = useState([]);
@@ -252,7 +258,7 @@ const ChatUI = () => {
       // Extract remaining tokens and total tokens used from the response
       if (data.remainingTokens !== undefined) {
         userRemainingTokens = data.remainingTokens;
-        setRemainingTokens(userRemainingTokens);
+        setSessionRemainingTokens(userRemainingTokens);
       }
 
       if (data.grandtotaltokenUsed !== undefined) {
@@ -345,12 +351,12 @@ const ChatUI = () => {
 
       // Extract token information from the response
       if (data.remainingTokens !== undefined) {
-        setRemainingTokens(data.remainingTokens);
+        setChatRemainingTokens(data.remainingTokens);
       }
 
-      if (data.totalTokensUsed !== undefined) {
-        setTotalTokensUsed(data.totalTokensUsed);
-      }
+      // if (data.totalTokensUsed !== undefined) {
+      //   setTotalTokensUsed(data.totalTokensUsed);
+      // }
 
       return data.response || [];
     } catch (error) {
@@ -394,14 +400,21 @@ const ChatUI = () => {
   }, []);
 
   useEffect(() => {
+    if (!selectedChatId) return;
+
+  const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+
+  if (!selectedChat) return;
     if (skipHistoryLoad) {
       setSkipHistoryLoad(false);
       return;
     }
 
-    if (selectedChatId) {
-      const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-      if (selectedChat) {
+    // if (selectedChatId) {
+    //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+    //   if (selectedChat) {
+
+
         if (selectedChat.sessionId) {
           loadChatHistory(selectedChat.sessionId);
 
@@ -416,8 +429,6 @@ const ChatUI = () => {
         } else {
           setMessageGroups([[]]);
         }
-      }
-    }
   }, [selectedChatId, skipHistoryLoad]);
 
   const loadChatHistory = async (sessionId) => {
@@ -662,7 +673,7 @@ const ChatUI = () => {
       create_time: new Date().toISOString(),
       prompt: text,
       sessionId: currentSessionId || "",
-      maxWords,
+      responseLength,
       botName: selectedBot, // Include the selected bot name in the request
     };
 
@@ -1061,7 +1072,7 @@ const ChatUI = () => {
 
       // Update tokens from the response
       if (result.remainingTokens !== undefined) {
-        setRemainingTokens(result.remainingTokens);
+        setChatRemainingTokens(result.remainingTokens);
 
         // Save to localStorage for this session
         const storageKey = `tokens_${currentSessionId || result.sessionId}`;
@@ -1122,6 +1133,7 @@ const ChatUI = () => {
 
         await new Promise((resolve) => setTimeout(resolve, 30));
       }
+     
     } catch (error) {
       console.error("Failed to send message:", error);
       setMessageGroups((prev) => {
@@ -1143,6 +1155,8 @@ const ChatUI = () => {
       setIsSending(false);
       setIsTypingResponse(false);
       scrollToBottom();
+
+      setResponseLength("Response Length:");
 
       // Refresh the session list to get updated token counts
       fetchChatSessions();
@@ -1517,6 +1531,10 @@ const ChatUI = () => {
                     setOpenProfile(true); // Profile box open
                   }}
                 >
+                <PersonRoundedIcon
+                   fontSize="small"
+                    sx={{ mr: 1 }}
+                />
                   Profile
                 </MenuItem>
 
@@ -1584,6 +1602,7 @@ const ChatUI = () => {
       {/* chatbot */}
 
       <Box
+        className="chat-header-box"
         sx={{
           flexGrow: 1,
           display: "flex",
@@ -1698,7 +1717,9 @@ const ChatUI = () => {
                         // fontSize:"19px",
                       }}
                     >
-                      <Typography variant="caption"   sx={{ fontSize: "14px" }}>You</Typography>
+                      <Typography variant="caption" sx={{ fontSize: "14px" }}>
+                        You
+                      </Typography>
                     </Box>
                     <Paper
                       sx={{
@@ -1740,7 +1761,7 @@ const ChatUI = () => {
                           p: "2px", // andar jagya
                           cursor: "pointer",
                           // pl: "1px",
-                          mt:0.5,
+                          mt: 0.5,
                         }}
                         // onClick={() => setIsCollapsed(false)}
                       />
@@ -1920,7 +1941,7 @@ const ChatUI = () => {
 
           <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
             {/* Round Dropdown */}
-            <TextField
+            {/* <TextField
               select
               size="small"
               value={maxWords}
@@ -1949,6 +1970,36 @@ const ChatUI = () => {
                   {num}
                 </MenuItem>
               ))}
+            </TextField> */}
+
+            <TextField
+              select
+              size="small"
+              value={responseLength}
+              onChange={(e) => setResponseLength(e.target.value)}
+              sx={{
+                width: 179,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "10px",
+                  backgroundColor: "#fff",
+                  textAlign: "center",
+                },
+              }}
+              SelectProps={{
+                displayEmpty: true,
+                MenuProps: {
+                  disablePortal: true,
+                  PaperProps: {
+                    style: { maxHeight: 200 },
+                  },
+                },
+              }}
+            >
+              <MenuItem value="Response Length:" disabled>Response Length:</MenuItem>
+              <MenuItem value="Short">Short (50–100 words)</MenuItem>
+              <MenuItem value="Concise">Concise (150–250 words)</MenuItem>
+              <MenuItem value="Long">Long (300–500 words)</MenuItem>
+              <MenuItem value="NoOptimisation">No Optimisation</MenuItem>
             </TextField>
 
             <IconButton
@@ -2062,7 +2113,7 @@ const ChatUI = () => {
               Remaining Tokens:
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-              {remainingTokens}
+               {sessionRemainingTokens}
             </Typography>
           </Box>
         </DialogContent>
