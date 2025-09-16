@@ -18,7 +18,8 @@ const messageSchema = new mongoose.Schema(
     response: String,
     wordCount: Number,
     tokensUsed: Number,
-    totalTokensUsed: Number, 
+    totalTokensUsed: Number,
+    botName: String, 
     create_time: { type: Date, default: Date.now }
   },
   { _id: false }

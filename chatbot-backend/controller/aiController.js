@@ -147,7 +147,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export const getAIResponse = async (req, res) => {
   try {
-    const { prompt, sessionId, maxWords, email } = req.body;
+    const { prompt, sessionId, maxWords, email, botName } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ message: "Prompt is required" });
@@ -189,13 +189,30 @@ export const getAIResponse = async (req, res) => {
     user.remainingTokens -= tokensUsed;
 
     // Generate static reply (replace later with real model call)
-    const staticReply =
-      "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?";
+    // const staticReply =
+    //   "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?";
+
+    // Generate response based on selected bot
+    let response = "";
+    if (botName === "gpt-4") {
+      response =
+        "This is a response from GPT-4 model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+    } else if (botName === "assistant-x") {
+      response =
+        "This is a response from Assistant X model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+    } else if (botName === "custom-ai") {
+      response =
+        "This is a response from Custom AI Bot model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.";
+    } else {
+      // Default to GPT-3.5
+      response =
+        "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today? ";
+    }
 
     // Apply dropdown limit
-    let finalReply = staticReply;
+    let finalReply = response;
     if (maxWords && !isNaN(maxWords)) {
-      finalReply = staticReply.split(" ").slice(0, Number(maxWords)).join(" ");
+      finalReply = response.split(" ").slice(0, Number(maxWords)).join(" ");
     }
 
     // Calculate tokens for AI response
@@ -236,19 +253,22 @@ export const getAIResponse = async (req, res) => {
       wordCount,
       tokensUsed,
       totalTokensUsed,
+      botName: botName || "gpt-3.5", // Store botName in history
       create_time: new Date(),
     });
 
     // Save both
     await user.save();
     await session.save();
+    console.log("Raw session history >>>", session.history);
 
     res.json({
       sessionId: currentSessionId,
       response: finalReply,
-      remainingTokens: user.remainingTokens,
-      tokensUsed,
-      totalTokensUsed,
+      remainingTokens: parseFloat(user.remainingTokens.toFixed(3)), //  upto 3 decimals
+      tokensUsed: parseFloat(tokensUsed.toFixed(3)),
+      totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
+      botName: botName || "gpt-3.5", // Include botName in response
     });
   } catch (error) {
     console.error("Error in getAIResponse:", error.message);
@@ -345,24 +365,26 @@ export const getChatHistory = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-
+    // console.log("Raw session history >>>", session.history);
     // Format history with token info
     const formattedHistory = session.history.map((msg) => ({
       prompt: msg.prompt,
       response: msg.response,
-      tokensUsed: msg.tokensUsed || 0,
-      totalTokensUsed: msg.totalTokensUsed || 0,
+      tokensUsed:  parseFloat((msg.tokensUsed || 0).toFixed(3)), 
+      totalTokensUsed: parseFloat((msg.totalTokensUsed || 0).toFixed(3)),
+      botName: msg.botName,
       create_time: msg.create_time,
     }));
 
     res.json({
       response: formattedHistory,
-      remainingTokens: user.remainingTokens,
+      remainingTokens: parseFloat(user.remainingTokens.toFixed(3)),
       // totalTokensUsed = last message’s cumulative tokens
       totalTokensUsed:
         session.history.length > 0
-          ? session.history[session.history.length - 1].totalTokensUsed
-          : 0,
+          ? parseFloat(
+           session.history[session.history.length - 1].totalTokensUsed.toFixed(3)
+          ) : 0,
     });
   } catch (error) {
     console.error("Error in getChatHistory:", error);
@@ -429,11 +451,11 @@ export const getAllSessions = async (req, res) => {
           : "Untitled",
         create_time: chat.create_time,
         // totalTokensUsed: lastMessage ? lastMessage.totalTokensUsed : 0,
-        totalTokensUsed: totalTokens, // 👈 cumulative tokens
+        totalTokensUsed: parseFloat(totalTokens.toFixed(3)), //  cumulative tokens
       };
     });
 
-       // Sum of all sessions' totalTokensUsed
+    // Sum of all sessions' totalTokensUsed
     const grandtotaltokenUsed = sessionList.reduce(
       (sum, session) => sum + (session.totalTokensUsed || 0),
       0
@@ -444,8 +466,8 @@ export const getAllSessions = async (req, res) => {
 
     res.json({
       response: [{ user_sessions: sessionList }],
-      remainingTokens: user ? user.remainingTokens : 0,
-      grandtotaltokenUsed,
+      remainingTokens: user ?  parseFloat(user.remainingTokens.toFixed(3)) : 0,
+      grandtotaltokenUsed: parseFloat(grandtotaltokenUsed.toFixed(3)),
     });
   } catch (error) {
     console.error("Error in getAllSessions:", error);
