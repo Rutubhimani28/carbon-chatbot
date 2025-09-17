@@ -30,7 +30,7 @@ import {
 } from "@mui/icons-material";
 import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
+import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
@@ -67,9 +67,8 @@ const ChatUI = () => {
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [responseLength, setResponseLength] = useState("Response Length:");
   // 🔹 नवी state add करो
-const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
-const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
-
+  const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
+  const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
 
   // In your state initialization
   // const [messageGroups, setMessageGroups] = useState([]);
@@ -402,9 +401,9 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
   useEffect(() => {
     if (!selectedChatId) return;
 
-  const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+    const selectedChat = chats.find((chat) => chat.id === selectedChatId);
 
-  if (!selectedChat) return;
+    if (!selectedChat) return;
     if (skipHistoryLoad) {
       setSkipHistoryLoad(false);
       return;
@@ -414,21 +413,20 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
     //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
     //   if (selectedChat) {
 
+    if (selectedChat.sessionId) {
+      loadChatHistory(selectedChat.sessionId);
 
-        if (selectedChat.sessionId) {
-          loadChatHistory(selectedChat.sessionId);
-
-          // Load the latest token count for this session
-          const savedTokens = localStorage.getItem(
-            `tokens_${selectedChat.sessionId}`
-          );
-          if (savedTokens) {
-            setRemainingTokens(Number(savedTokens)); // ✅ add this line
-            console.log("Current tokens:", savedTokens);
-          }
-        } else {
-          setMessageGroups([[]]);
-        }
+      // Load the latest token count for this session
+      const savedTokens = localStorage.getItem(
+        `tokens_${selectedChat.sessionId}`
+      );
+      if (savedTokens) {
+        setRemainingTokens(Number(savedTokens)); // ✅ add this line
+        console.log("Current tokens:", savedTokens);
+      }
+    } else {
+      setMessageGroups([[]]);
+    }
   }, [selectedChatId, skipHistoryLoad]);
 
   const loadChatHistory = async (sessionId) => {
@@ -1133,7 +1131,6 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
 
         await new Promise((resolve) => setTimeout(resolve, 30));
       }
-     
     } catch (error) {
       console.error("Failed to send message:", error);
       setMessageGroups((prev) => {
@@ -1531,10 +1528,7 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
                     setOpenProfile(true); // Profile box open
                   }}
                 >
-                <PersonRoundedIcon
-                   fontSize="small"
-                    sx={{ mr: 1 }}
-                />
+                  <PersonRoundedIcon fontSize="small" sx={{ mr: 1 }} />
                   Profile
                 </MenuItem>
 
@@ -1572,7 +1566,7 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
       </Box>
 
       {/* models */}
-      <Box
+       {/* <Box
         sx={{
           mt: 3,
           ml: 2,
@@ -1597,9 +1591,41 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
             <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
           </Select>
         </FormControl>
-      </Box>
+      </Box>  */}
 
       {/* chatbot */}
+<Box  sx={{
+         width:"100%",
+         display:"flex",
+          flexDirection: "column",
+          
+        }}>
+<Box
+        sx={{
+          mt: 3,
+          ml: 2,
+          flexShrink: 0,
+        }}
+      >
+        <FormControl fullWidth size="small">
+          <Select
+            labelId="bot-select-label"
+            value={selectedBot}
+            onChange={(e) => setSelectedBot(e.target.value)}
+            sx={{
+              bgcolor: "#fff",
+              borderRadius: "5px",
+              maxWidth: "175px",
+              width: "175px",
+            }}
+          >
+            <MenuItem value="gpt-3.5">OpenAI GPT-3.5</MenuItem>
+            <MenuItem value="gpt-4">OpenAI GPT-4</MenuItem>
+            <MenuItem value="assistant-x">Assistant X</MenuItem>
+            <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
+          </Select>
+        </FormControl>
+      </Box> 
 
       <Box
         className="chat-header-box"
@@ -1609,10 +1635,12 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
           flexDirection: "column",
           transition: "all 0.3s ease",
           width: "100%",
-          maxWidth: "900px",
+          maxWidth: "940px",
           mx: "auto",
           px: { xs: 6, sm: 8, md: 10, lg: 12 },
           height: "100vh",
+          mb:0,
+          pb:0,
         }}
       >
         {/* 👉 Header (Always Common) */}
@@ -1645,6 +1673,8 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
           />
           <Typography variant="caption">Online</Typography>
         </Box> */}
+      
+
 
         {/* 👉 Main Content (Conditional) */}
         <Box
@@ -1721,6 +1751,15 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
                         You
                       </Typography>
                     </Box>
+                    {/* <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end", // Right side ma mukse
+                        alignItems:"flex-end",
+                        float:"right",
+                        mb: 1,
+                      }}
+                    > */}
                     <Paper
                       sx={{
                         p: 1.5,
@@ -1733,6 +1772,7 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
                       <Typography>{group.prompt}</Typography>
                       <Typography variant="caption">{group.time}</Typography>
                     </Paper>
+                    {/* </Box> */}
                   </Box>
 
                   {/* AI Response */}
@@ -1898,10 +1938,11 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
         </Box>
 
         {/* 👉 Footer (Always Common) */}
+        <Box sx={{mb:0,pb:0, display:"flex", flexDirection:"column"}}>
         <Box
           sx={{
-            height: "50px",
-            p: 2,
+            height: "45px",
+            p: 1,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -1990,15 +2031,17 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
                 MenuProps: {
                   disablePortal: true,
                   PaperProps: {
-                    style: { maxHeight: 200 },
+                    style: { maxHeight: 200, borderRadius: "10px" },
                   },
                 },
               }}
             >
-              <MenuItem value="Response Length:" disabled>Response Length:</MenuItem>
-              <MenuItem value="Short">Short (50–100 words)</MenuItem>
-              <MenuItem value="Concise">Concise (150–250 words)</MenuItem>
-              <MenuItem value="Long">Long (300–500 words)</MenuItem>
+              <MenuItem value="Response Length:" disabled>
+                Response Length:
+              </MenuItem>
+              <MenuItem value="Short">Short (50-100 words)</MenuItem>
+              <MenuItem value="Concise">Concise (150-250 words)</MenuItem>
+              <MenuItem value="Long">Long (300-500 words)</MenuItem>
               <MenuItem value="NoOptimisation">No Optimisation</MenuItem>
             </TextField>
 
@@ -2018,7 +2061,7 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
         </Box>
 
         {/* 👉 Tagline (Always Common) */}
-        <Box textAlign="center" py={0.5}>
+        <Box textAlign="center" >
           <Typography
             variant="caption"
             color="text.secondary"
@@ -2027,6 +2070,9 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
             This AI Assistant can help with general information.
           </Typography>
         </Box>
+</Box>
+
+      </Box>
       </Box>
 
       <Dialog
@@ -2113,7 +2159,7 @@ const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
               Remaining Tokens:
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-               {sessionRemainingTokens}
+              {sessionRemainingTokens}
             </Typography>
           </Box>
         </DialogContent>
