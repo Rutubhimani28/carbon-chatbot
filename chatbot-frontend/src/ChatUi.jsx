@@ -1106,15 +1106,12 @@ const ChatUI = () => {
       // Typing animation
       const chars = result.response.split("");
       let currentText = "";
-      const BATCH_SIZE = 3; // Process multiple characters at once
-      const TYPING_DELAY = 10;
 
-      for (let i = 0; i < chars.length; i += BATCH_SIZE) {
+      for (let i = 0; i < chars.length; i += 5) {
         if (isStoppedRef.current) break;
 
-        // Add a batch of characters
-        const batch = chars.slice(i, i + BATCH_SIZE).join("");
-        currentText += batch;
+        // currentText += chars[i];
+        currentText += chars.slice(i, i + 5).join("");
 
         setMessageGroups((prev) => {
           const updated = [...prev];
@@ -1133,7 +1130,7 @@ const ChatUI = () => {
           return updated;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, TYPING_DELAY));
+        await new Promise((resolve) => setTimeout(resolve, 5));
       }
     } catch (error) {
       console.error("Failed to send message:", error);

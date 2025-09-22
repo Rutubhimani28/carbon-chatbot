@@ -104,6 +104,153 @@ import { v4 as uuidv4 } from "uuid";
 
 // -----------------------------------------------------
 
+// export const getAIResponse = async (req, res) => {
+//   try {
+//     const { prompt, sessionId, responseLength, email, botName } = req.body;
+
+//     if (!prompt) {
+//       return res.status(400).json({ message: "Prompt is required" });
+//     }
+//     if (!email) {
+//       return res.status(400).json({ message: "Email is required" });
+//     }
+
+//     const currentSessionId = sessionId || uuidv4();
+
+//     // Word count & tokens used
+//     const wordCount = prompt.trim().split(/\s+/).length;
+//     const tokensUsed = wordCount * 1.3;
+
+//     // Find or create user
+//     let user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     } else {
+//       // reset user tokens to 5000
+//       user.remainingTokens = 5000;
+//     }
+
+//     if (user.remainingTokens < tokensUsed) {
+//       return res.status(400).json({
+//         message: "Not enough tokens",
+//         remainingTokens: user.remainingTokens,
+//       });
+//     }
+
+//     user.remainingTokens -= tokensUsed;
+
+//     // Map botName → model
+//     let model = "gpt-3.5-turbo"; // default
+//     if (botName === "gpt-4") model = "gpt-4o";
+//     else if (botName === "assistant-x") model = "gpt-4o-mini";
+//     else if (botName === "custom-ai") model = "gpt-4o-mini";
+
+//     // ====== Apply responseLength optimisation ======
+//     let minWords = 0,
+//       maxWords = Infinity;
+//     if (responseLength === "Short") {
+//       minWords = 50;
+//       maxWords = 100;
+//     } else if (responseLength === "Concise") {
+//       minWords = 150;
+//       maxWords = 250;
+//     } else if (responseLength === "Long") {
+//       minWords = 300;
+//       maxWords = 500;
+//     } else if (responseLength === "NoOptimisation") {
+//       minWords = 0;
+//       maxWords = Infinity;
+//     }
+
+//     // Build messages with word-bound instruction
+//     let messages = [
+//       {
+//         role: "system",
+//         content: `You are an AI assistant. Always write a response between ${minWords} and ${maxWords} words. Do not exceed this limit, and do not write fewer words.`,
+//       },
+//       { role: "user", content: prompt },
+//     ];
+
+//     // 🔥 Dynamic API call
+//     const response = await fetch("https://api.openai.com/v1/chat/completions", {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify({
+//         model,
+//         messages,
+//         temperature: 0.7,
+//       }),
+//     });
+
+//     if (!response.ok) {
+//       const errorData = await response.json();
+//       throw new Error(errorData.error?.message || "API Error");
+//     }
+
+//     const data = await response.json();
+//     let finalReply = data.choices[0].message.content.trim();
+
+//     // Word count check (for debugging/logging)
+//     const responseWordCount = finalReply.split(/\s+/).length;
+//     console.log(`AI Word Count: ${responseWordCount}`);
+
+//     const totalTokensUsed = tokensUsed;
+//     if (user.remainingTokens < totalTokensUsed) {
+//       return res.status(400).json({
+//         message: "Not enough tokens for the response",
+//         remainingTokens: user.remainingTokens,
+//       });
+//     }
+//     user.remainingTokens -= totalTokensUsed;
+
+//     // Find/create session
+//     let session = await ChatSession.findOne({
+//       sessionId: currentSessionId,
+//       email,
+//     });
+//     if (!session) {
+//       session = new ChatSession({
+//         email,
+//         sessionId: currentSessionId,
+//         history: [],
+//       });
+//     }
+
+//     session.history.push({
+//       prompt,
+//       response: finalReply,
+//       wordCount,
+//       tokensUsed,
+//       totalTokensUsed,
+//       botName: botName || "gpt-3.5",
+//       responseLength: responseLength || "NoOptimisation",
+//       create_time: new Date(),
+//     });
+
+//     await user.save();
+//     await session.save();
+
+//     res.json({
+//       sessionId: currentSessionId,
+//       response: finalReply,
+//       responseWordCount,
+//       remainingTokens: parseFloat(user.remainingTokens.toFixed(3)),
+//       tokensUsed: parseFloat(tokensUsed.toFixed(3)),
+//       totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
+//       botName: botName || "gpt-3.5",
+//       responseLength: responseLength || "NoOptimisation",
+//     });
+//   } catch (error) {
+//     console.error("Error in getAIResponse:", error);
+//     res
+//       .status(500)
+//       .json({ message: "Internal Server Error", error: error.message });
+//   }
+// };
+// ------------------------------------------------------------------
 export const getAIResponse = async (req, res) => {
   try {
     const { prompt, sessionId, responseLength, email, botName } = req.body;
@@ -158,7 +305,7 @@ export const getAIResponse = async (req, res) => {
       minWords = 300;
       maxWords = 500;
     } else if (responseLength === "NoOptimisation") {
-      minWords = 0;
+      minWords = 500;
       maxWords = Infinity;
     }
 
@@ -166,7 +313,7 @@ export const getAIResponse = async (req, res) => {
     let messages = [
       {
         role: "system",
-        content: `You are an AI assistant. Always write a response between ${minWords} and ${maxWords} words. Do not exceed this limit, and do not write fewer words.`,
+        content: `You are an AI assistant. Always write a response strictly between ${minWords} and ${maxWords} words. Do not exceed this limit, and do not write fewer words.`,
       },
       { role: "user", content: prompt },
     ];
@@ -193,9 +340,46 @@ export const getAIResponse = async (req, res) => {
     const data = await response.json();
     let finalReply = data.choices[0].message.content.trim();
 
-    // Word count check (for debugging/logging)
-    const responseWordCount = finalReply.split(/\s+/).length;
+    // Word count check
+    let responseWordCount = finalReply.split(/\s+/).length;
     console.log(`AI Word Count: ${responseWordCount}`);
+
+    // ✅ Enforce strict word range (except NoOptimisation)
+    // ✅ Enforce strict word range (all cases, including NoOptimisation)
+if (responseWordCount < minWords || responseWordCount > maxWords) {
+  // Retry: Ask AI to rewrite with stricter condition
+  const retryMessages = [
+    {
+      role: "system",
+      content: `Rewrite the answer strictly between ${minWords} and ${maxWords} words. Ensure word count is within the limit.`,
+    },
+    { role: "user", content: finalReply },
+  ];
+
+  const retryResponse = await fetch(
+    "https://api.openai.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages: retryMessages,
+        temperature: 0.5,
+      }),
+    }
+  );
+
+  if (retryResponse.ok) {
+    const retryData = await retryResponse.json();
+    finalReply = retryData.choices[0].message.content.trim();
+    responseWordCount = finalReply.split(/\s+/).length;
+    console.log(`Retry Word Count: ${responseWordCount}`);
+  }
+}
+
 
     const totalTokensUsed = tokensUsed;
     if (user.remainingTokens < totalTokensUsed) {
