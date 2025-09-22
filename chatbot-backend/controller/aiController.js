@@ -104,153 +104,6 @@ import { v4 as uuidv4 } from "uuid";
 
 // -----------------------------------------------------
 
-// export const getAIResponse = async (req, res) => {
-//   try {
-//     const { prompt, sessionId, responseLength, email, botName } = req.body;
-
-//     if (!prompt) {
-//       return res.status(400).json({ message: "Prompt is required" });
-//     }
-//     if (!email) {
-//       return res.status(400).json({ message: "Email is required" });
-//     }
-
-//     const currentSessionId = sessionId || uuidv4();
-
-//     // Word count & tokens used
-//     const wordCount = prompt.trim().split(/\s+/).length;
-//     const tokensUsed = wordCount * 1.3;
-
-//     // Find or create user
-//     let user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     } else {
-//       // reset user tokens to 5000
-//       user.remainingTokens = 5000;
-//     }
-
-//     if (user.remainingTokens < tokensUsed) {
-//       return res.status(400).json({
-//         message: "Not enough tokens",
-//         remainingTokens: user.remainingTokens,
-//       });
-//     }
-
-//     user.remainingTokens -= tokensUsed;
-
-//     // Map botName → model
-//     let model = "gpt-3.5-turbo"; // default
-//     if (botName === "gpt-4") model = "gpt-4o";
-//     else if (botName === "assistant-x") model = "gpt-4o-mini";
-//     else if (botName === "custom-ai") model = "gpt-4o-mini";
-
-//     // ====== Apply responseLength optimisation ======
-//     let minWords = 0,
-//       maxWords = Infinity;
-//     if (responseLength === "Short") {
-//       minWords = 50;
-//       maxWords = 100;
-//     } else if (responseLength === "Concise") {
-//       minWords = 150;
-//       maxWords = 250;
-//     } else if (responseLength === "Long") {
-//       minWords = 300;
-//       maxWords = 500;
-//     } else if (responseLength === "NoOptimisation") {
-//       minWords = 0;
-//       maxWords = Infinity;
-//     }
-
-//     // Build messages with word-bound instruction
-//     let messages = [
-//       {
-//         role: "system",
-//         content: `You are an AI assistant. Always write a response between ${minWords} and ${maxWords} words. Do not exceed this limit, and do not write fewer words.`,
-//       },
-//       { role: "user", content: prompt },
-//     ];
-
-//     // 🔥 Dynamic API call
-//     const response = await fetch("https://api.openai.com/v1/chat/completions", {
-//       method: "POST",
-//       headers: {
-//         Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({
-//         model,
-//         messages,
-//         temperature: 0.7,
-//       }),
-//     });
-
-//     if (!response.ok) {
-//       const errorData = await response.json();
-//       throw new Error(errorData.error?.message || "API Error");
-//     }
-
-//     const data = await response.json();
-//     let finalReply = data.choices[0].message.content.trim();
-
-//     // Word count check (for debugging/logging)
-//     const responseWordCount = finalReply.split(/\s+/).length;
-//     console.log(`AI Word Count: ${responseWordCount}`);
-
-//     const totalTokensUsed = tokensUsed;
-//     if (user.remainingTokens < totalTokensUsed) {
-//       return res.status(400).json({
-//         message: "Not enough tokens for the response",
-//         remainingTokens: user.remainingTokens,
-//       });
-//     }
-//     user.remainingTokens -= totalTokensUsed;
-
-//     // Find/create session
-//     let session = await ChatSession.findOne({
-//       sessionId: currentSessionId,
-//       email,
-//     });
-//     if (!session) {
-//       session = new ChatSession({
-//         email,
-//         sessionId: currentSessionId,
-//         history: [],
-//       });
-//     }
-
-//     session.history.push({
-//       prompt,
-//       response: finalReply,
-//       wordCount,
-//       tokensUsed,
-//       totalTokensUsed,
-//       botName: botName || "gpt-3.5",
-//       responseLength: responseLength || "NoOptimisation",
-//       create_time: new Date(),
-//     });
-
-//     await user.save();
-//     await session.save();
-
-//     res.json({
-//       sessionId: currentSessionId,
-//       response: finalReply,
-//       responseWordCount,
-//       remainingTokens: parseFloat(user.remainingTokens.toFixed(3)),
-//       tokensUsed: parseFloat(tokensUsed.toFixed(3)),
-//       totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
-//       botName: botName || "gpt-3.5",
-//       responseLength: responseLength || "NoOptimisation",
-//     });
-//   } catch (error) {
-//     console.error("Error in getAIResponse:", error);
-//     res
-//       .status(500)
-//       .json({ message: "Internal Server Error", error: error.message });
-//   }
-// };
-
 export const getAIResponse = async (req, res) => {
   try {
     const { prompt, sessionId, responseLength, email, botName } = req.body;
@@ -266,7 +119,6 @@ export const getAIResponse = async (req, res) => {
 
     // Word count & tokens used
     const wordCount = prompt.trim().split(/\s+/).length;
-    // const tokensUsed = Math.ceil(wordCount * 1.3);
     const tokensUsed = wordCount * 1.3;
 
     // Find or create user
@@ -274,16 +126,10 @@ export const getAIResponse = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     } else {
-      // જો user already DB માં છે → એને પણ 5000 tokens reset કરી દો
+      // reset user tokens to 5000
       user.remainingTokens = 5000;
     }
 
-    // if (!user) {
-    //   user = new User({ email, remainingTokens: 5000 });
-    // }
-    console.log("remainingTokens<<<<<<<<<<", user.remainingTokens);
-
-    // Check tokens
     if (user.remainingTokens < tokensUsed) {
       return res.status(400).json({
         message: "Not enough tokens",
@@ -291,40 +137,17 @@ export const getAIResponse = async (req, res) => {
       });
     }
 
-    // Deduct tokens
     user.remainingTokens -= tokensUsed;
 
-    // Generate static reply (replace later with real model call)
-    // const staticReply =
-    //   "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?";
+    // Map botName → model
+    let model = "gpt-3.5-turbo"; // default
+    if (botName === "gpt-4") model = "gpt-4o";
+    else if (botName === "assistant-x") model = "gpt-4o-mini";
+    else if (botName === "custom-ai") model = "gpt-4o-mini";
 
-    // Generate response based on selected bot
-    let response = "";
-    if (botName === "gpt-4") {
-      response =
-        "This is a response from GPT-4 model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
-    } else if (botName === "assistant-x") {
-      response =
-        "This is a response from Assistant X model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
-    } else if (botName === "custom-ai") {
-      response =
-        "This is a response from Custom AI Bot model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
-    } else {
-      // Default to GPT-3.5
-      response =
-        "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today? . As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life. ";
-    }
-
-    // Apply dropdown limit
-    // let finalReply = response;
-
-    // if (maxWords && !isNaN(maxWords)) {
-    //   finalReply = response.split(" ").slice(0, Number(maxWords)).join(" ");
-    // }
-
-    let minWords = 0;
-    let maxWords = Infinity;
-
+    // ====== Apply responseLength optimisation ======
+    let minWords = 0,
+      maxWords = Infinity;
     if (responseLength === "Short") {
       minWords = 50;
       maxWords = 100;
@@ -336,34 +159,54 @@ export const getAIResponse = async (req, res) => {
       maxWords = 500;
     } else if (responseLength === "NoOptimisation") {
       minWords = 0;
-      maxWords = Infinity; // કોઈ limit નહીં
+      maxWords = Infinity;
     }
 
-    let words = response.split(" ");
-    let finalReply = words.slice(0, maxWords).join(" ");
+    // Build messages with word-bound instruction
+    let messages = [
+      {
+        role: "system",
+        content: `You are an AI assistant. Always write a response between ${minWords} and ${maxWords} words. Do not exceed this limit, and do not write fewer words.`,
+      },
+      { role: "user", content: prompt },
+    ];
 
-    // (Optional) જો response બહુ નાનો હોય તો fallback logic
-    if (words.length < minWords) {
-      finalReply = words.join(" "); // અથવા default msg આપી શકાય
+    // 🔥 Dynamic API call
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || "API Error");
     }
 
-    // Calculate tokens for AI response
-    // const aiWordCount = finalReply.trim().split(/\s+/).length;
-    // const aiTokensUsed = Math.ceil(aiWordCount * 1.3);
-    // const totalTokensUsed = tokensUsed + aiTokensUsed;
+    const data = await response.json();
+    let finalReply = data.choices[0].message.content.trim();
+
+    // Word count check (for debugging/logging)
+    const responseWordCount = finalReply.split(/\s+/).length;
+    console.log(`AI Word Count: ${responseWordCount}`);
+
     const totalTokensUsed = tokensUsed;
-
-    // Check tokens again for AI response
     if (user.remainingTokens < totalTokensUsed) {
       return res.status(400).json({
         message: "Not enough tokens for the response",
         remainingTokens: user.remainingTokens,
       });
     }
-    // Deduct tokens
     user.remainingTokens -= totalTokensUsed;
 
-    // Find or create session
+    // Find/create session
     let session = await ChatSession.findOne({
       sessionId: currentSessionId,
       email,
@@ -375,45 +218,202 @@ export const getAIResponse = async (req, res) => {
         history: [],
       });
     }
-    console.log("tokensUsed<<<<<<<<<<", tokensUsed);
-    console.log("totalTokensUsed<<<<<<<<<<", totalTokensUsed);
 
-    const responseWordCount = finalReply.trim().split(/\s+/).length;
-
-    // Push to session history
     session.history.push({
       prompt,
       response: finalReply,
       wordCount,
       tokensUsed,
       totalTokensUsed,
-      botName: botName || "gpt-3.5", // Store botName in history
+      botName: botName || "gpt-3.5",
       responseLength: responseLength || "NoOptimisation",
       create_time: new Date(),
     });
 
-    // Save both
     await user.save();
     await session.save();
-    // console.log("Raw session history >>>", session.history);
 
     res.json({
       sessionId: currentSessionId,
       response: finalReply,
       responseWordCount,
-      remainingTokens: parseFloat(user.remainingTokens.toFixed(3)), //  upto 3 decimals
+      remainingTokens: parseFloat(user.remainingTokens.toFixed(3)),
       tokensUsed: parseFloat(tokensUsed.toFixed(3)),
       totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
-      botName: botName || "gpt-3.5", // Include botName in response
+      botName: botName || "gpt-3.5",
       responseLength: responseLength || "NoOptimisation",
     });
   } catch (error) {
-    console.error("Error in getAIResponse:", error.message);
+    console.error("Error in getAIResponse:", error);
     res
       .status(500)
       .json({ message: "Internal Server Error", error: error.message });
   }
 };
+
+// export const getAIResponse = async (req, res) => {
+//   try {
+//     const { prompt, sessionId, responseLength, email, botName } = req.body;
+
+//     if (!prompt) {
+//       return res.status(400).json({ message: "Prompt is required" });
+//     }
+//     if (!email) {
+//       return res.status(400).json({ message: "Email is required" });
+//     }
+
+//     const currentSessionId = sessionId || uuidv4();
+
+//     // Word count & tokens used
+//     const wordCount = prompt.trim().split(/\s+/).length;
+//     // const tokensUsed = Math.ceil(wordCount * 1.3);
+//     const tokensUsed = wordCount * 1.3;
+
+//     // Find or create user
+//     let user = await User.findOne({ email });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     } else {
+//       // જો user already DB માં છે → એને પણ 5000 tokens reset કરી દો
+//       user.remainingTokens = 5000;
+//     }
+
+//     // if (!user) {
+//     //   user = new User({ email, remainingTokens: 5000 });
+//     // }
+//     console.log("remainingTokens<<<<<<<<<<", user.remainingTokens);
+
+//     // Check tokens
+//     if (user.remainingTokens < tokensUsed) {
+//       return res.status(400).json({
+//         message: "Not enough tokens",
+//         remainingTokens: user.remainingTokens,
+//       });
+//     }
+
+//     // Deduct tokens
+//     user.remainingTokens -= tokensUsed;
+
+//     // Generate static reply (replace later with real model call)
+//     // const staticReply =
+//     //   "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today?";
+
+//     // Generate response based on selected bot
+//     let response = "";
+//     if (botName === "gpt-4") {
+//       response =
+//         "This is a response from GPT-4 model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
+//     } else if (botName === "assistant-x") {
+//       response =
+//         "This is a response from Assistant X model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
+//     } else if (botName === "custom-ai") {
+//       response =
+//         "This is a response from Custom AI Bot model. It builds on the successes of previous GPT models, offering enhanced reasoning, accuracy, and the ability to process extensive inputs, such as entire documents or complex visual information.. As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life";
+//     } else {
+//       // Default to GPT-3.5
+//       response =
+//         "Hello! I'm just a computer program, so I don't have feelings, but I'm here and ready to help you. How can I assist you today? . As a person, a role model exemplifies admirable qualities such as perseverance, kindness, and leadership, serving as a source of motivation and guidance for others to develop similar strengths. As a representation, a model provides a framework to understand and predict behaviors or systems, whether it's a scientific model of planetary motion or a mathematical model in economics. In essence, a model offers a blueprint for imitation or an explanatory structure for complex phenomena. A role model is an inspirational person whom we admire and aspire to be like. They demonstrate qualities like strong work ethic, resilience in the face of challenges, and compassion for others. For instance, a parent might serve as a role model by balancing career and family life. ";
+//     }
+
+//     // Apply dropdown limit
+//     // let finalReply = response;
+
+//     // if (maxWords && !isNaN(maxWords)) {
+//     //   finalReply = response.split(" ").slice(0, Number(maxWords)).join(" ");
+//     // }
+
+//     let minWords = 0;
+//     let maxWords = Infinity;
+
+//     if (responseLength === "Short") {
+//       minWords = 50;
+//       maxWords = 100;
+//     } else if (responseLength === "Concise") {
+//       minWords = 150;
+//       maxWords = 250;
+//     } else if (responseLength === "Long") {
+//       minWords = 300;
+//       maxWords = 500;
+//     } else if (responseLength === "NoOptimisation") {
+//       minWords = 0;
+//       maxWords = Infinity; // કોઈ limit નહીં
+//     }
+
+//     let words = response.split(" ");
+//     let finalReply = words.slice(0, maxWords).join(" ");
+
+//     // (Optional) જો response બહુ નાનો હોય તો fallback logic
+//     if (words.length < minWords) {
+//       finalReply = words.join(" "); // અથવા default msg આપી શકાય
+//     }
+
+//     // Calculate tokens for AI response
+//     // const aiWordCount = finalReply.trim().split(/\s+/).length;
+//     // const aiTokensUsed = Math.ceil(aiWordCount * 1.3);
+//     // const totalTokensUsed = tokensUsed + aiTokensUsed;
+//     const totalTokensUsed = tokensUsed;
+
+//     // Check tokens again for AI response
+//     if (user.remainingTokens < totalTokensUsed) {
+//       return res.status(400).json({
+//         message: "Not enough tokens for the response",
+//         remainingTokens: user.remainingTokens,
+//       });
+//     }
+//     // Deduct tokens
+//     user.remainingTokens -= totalTokensUsed;
+
+//     // Find or create session
+//     let session = await ChatSession.findOne({
+//       sessionId: currentSessionId,
+//       email,
+//     });
+//     if (!session) {
+//       session = new ChatSession({
+//         email,
+//         sessionId: currentSessionId,
+//         history: [],
+//       });
+//     }
+//     console.log("tokensUsed<<<<<<<<<<", tokensUsed);
+//     console.log("totalTokensUsed<<<<<<<<<<", totalTokensUsed);
+
+//     const responseWordCount = finalReply.trim().split(/\s+/).length;
+
+//     // Push to session history
+//     session.history.push({
+//       prompt,
+//       response: finalReply,
+//       wordCount,
+//       tokensUsed,
+//       totalTokensUsed,
+//       botName: botName || "gpt-3.5", // Store botName in history
+//       responseLength: responseLength || "NoOptimisation",
+//       create_time: new Date(),
+//     });
+
+//     // Save both
+//     await user.save();
+//     await session.save();
+//     // console.log("Raw session history >>>", session.history);
+
+//     res.json({
+//       sessionId: currentSessionId,
+//       response: finalReply,
+//       responseWordCount,
+//       remainingTokens: parseFloat(user.remainingTokens.toFixed(3)), //  upto 3 decimals
+//       tokensUsed: parseFloat(tokensUsed.toFixed(3)),
+//       totalTokensUsed: parseFloat(totalTokensUsed.toFixed(3)),
+//       botName: botName || "gpt-3.5", // Include botName in response
+//       responseLength: responseLength || "NoOptimisation",
+//     });
+//   } catch (error) {
+//     console.error("Error in getAIResponse:", error.message);
+//     res
+//       .status(500)
+//       .json({ message: "Internal Server Error", error: error.message });
+//   }
+// };
 
 // const response = await fetch(
 //   "https://openrouter.ai/api/v1/chat/completions",

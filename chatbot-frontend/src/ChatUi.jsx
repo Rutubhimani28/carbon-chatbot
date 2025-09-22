@@ -1106,11 +1106,15 @@ const ChatUI = () => {
       // Typing animation
       const chars = result.response.split("");
       let currentText = "";
+      const BATCH_SIZE = 3; // Process multiple characters at once
+      const TYPING_DELAY = 10;
 
-      for (let i = 0; i < chars.length; i++) {
+      for (let i = 0; i < chars.length; i += BATCH_SIZE) {
         if (isStoppedRef.current) break;
 
-        currentText += chars[i];
+        // Add a batch of characters
+        const batch = chars.slice(i, i + BATCH_SIZE).join("");
+        currentText += batch;
 
         setMessageGroups((prev) => {
           const updated = [...prev];
@@ -1129,7 +1133,7 @@ const ChatUI = () => {
           return updated;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 30));
+        await new Promise((resolve) => setTimeout(resolve, TYPING_DELAY));
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -1566,7 +1570,7 @@ const ChatUI = () => {
       </Box>
 
       {/* models */}
-       {/* <Box
+      {/* <Box
         sx={{
           mt: 3,
           ml: 2,
@@ -1594,57 +1598,58 @@ const ChatUI = () => {
       </Box>  */}
 
       {/* chatbot */}
-<Box  sx={{
-         width:"100%",
-         display:"flex",
-          flexDirection: "column",
-          
-        }}>
-<Box
-        sx={{
-          mt: 3,
-          ml: 2,
-          flexShrink: 0,
-        }}
-      >
-        <FormControl fullWidth size="small">
-          <Select
-            labelId="bot-select-label"
-            value={selectedBot}
-            onChange={(e) => setSelectedBot(e.target.value)}
-            sx={{
-              bgcolor: "#fff",
-              borderRadius: "5px",
-              maxWidth: "175px",
-              width: "175px",
-            }}
-          >
-            <MenuItem value="gpt-3.5">OpenAI GPT-3.5</MenuItem>
-            <MenuItem value="gpt-4">OpenAI GPT-4</MenuItem>
-            <MenuItem value="assistant-x">Assistant X</MenuItem>
-            <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
-          </Select>
-        </FormControl>
-      </Box> 
-
       <Box
-        className="chat-header-box"
         sx={{
-          flexGrow: 1,
+          width: "100%",
           display: "flex",
           flexDirection: "column",
-          transition: "all 0.3s ease",
-          width: "100%",
-          maxWidth: "940px",
-          mx: "auto",
-          px: { xs: 6, sm: 8, md: 10, lg: 12 },
-          height: "100vh",
-          mb:0,
-          pb:0,
         }}
       >
-        {/* 👉 Header (Always Common) */}
-        {/* <Box
+        <Box
+          sx={{
+            mt: 3,
+            ml: 2,
+            flexShrink: 0,
+          }}
+        >
+          <FormControl fullWidth size="small">
+            <Select
+              labelId="bot-select-label"
+              value={selectedBot}
+              onChange={(e) => setSelectedBot(e.target.value)}
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: "5px",
+                maxWidth: "175px",
+                width: "175px",
+              }}
+            >
+              <MenuItem value="gpt-3.5">OpenAI GPT-3.5</MenuItem>
+              <MenuItem value="gpt-4">OpenAI GPT-4</MenuItem>
+              <MenuItem value="assistant-x">Assistant X</MenuItem>
+              <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box
+          className="chat-header-box"
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            flexDirection: "column",
+            transition: "all 0.3s ease",
+            width: "100%",
+            maxWidth: "940px",
+            mx: "auto",
+            px: { xs: 6, sm: 8, md: 10, lg: 12 },
+            height: "100vh",
+            mb: 0,
+            pb: 0,
+          }}
+        >
+          {/* 👉 Header (Always Common) */}
+          {/* <Box
           sx={{
             display: "flex",
             alignItems: "center",
@@ -1673,85 +1678,85 @@ const ChatUI = () => {
           />
           <Typography variant="caption">Online</Typography>
         </Box> */}
-      
 
-
-        {/* 👉 Main Content (Conditional) */}
-        <Box
-          sx={{
-            height: "78vh",
-            p: 2,
-            display: "flex",
-            flexDirection: "column",
-            flexGrow: 1,
-            overflow: "auto",
-          }}
-        >
-          {historyLoading ? (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                py: 8,
-                height: "48.5vh",
-              }}
-            >
-              <Box sx={{ textAlign: "center" }}>
-                <CircularProgress sx={{ mb: 2 }} />
-                <Typography variant="body2" color="text.secondary">
-                  Loading chat history...
-                </Typography>
-              </Box>
-            </Box>
-          ) : messageGroups[0]?.length === 0 ? (
-            // Welcome Screen
-            <Box sx={{ textAlign: "center", py: 12, color: "text.secondary" }}>
-              <leafatar
+          {/* 👉 Main Content (Conditional) */}
+          <Box
+            sx={{
+              height: "78vh",
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              flexGrow: 1,
+              overflow: "auto",
+            }}
+          >
+            {historyLoading ? (
+              <Box
                 sx={{
-                  width: 64,
-                  height: 64,
-                  mx: "auto",
-                  mb: 2,
-                  bgcolor: "#3dafe2",
-                  color: "#fff",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  py: 8,
+                  height: "48.5vh",
                 }}
               >
-                <Logo />
-              </leafatar>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Welcome to the AI Chatbot!
-              </Typography>
-              <Typography variant="body2">
-                Start a conversation by typing a message below.
-              </Typography>
-            </Box>
-          ) : (
-            // Chat Messages
-            <Box sx={{ spaceY: 6, width: "100%" }}>
-              {(messageGroups[0] || []).map((group, idx) => (
-                <Box key={idx} mb={3}>
-                  <Box
-                    display="flex"
-                    justifyContent="flex-end"
-                    flexDirection={"column"}
-                    alignItems={"flex-end"}
-                    mb={1.5}
-                  >
+                <Box sx={{ textAlign: "center" }}>
+                  <CircularProgress sx={{ mb: 2 }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Loading chat history...
+                  </Typography>
+                </Box>
+              </Box>
+            ) : messageGroups[0]?.length === 0 ? (
+              // Welcome Screen
+              <Box
+                sx={{ textAlign: "center", py: 12, color: "text.secondary" }}
+              >
+                <leafatar
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    mx: "auto",
+                    mb: 2,
+                    bgcolor: "#3dafe2",
+                    color: "#fff",
+                  }}
+                >
+                  <Logo />
+                </leafatar>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  Welcome to the AI Chatbot!
+                </Typography>
+                <Typography variant="body2">
+                  Start a conversation by typing a message below.
+                </Typography>
+              </Box>
+            ) : (
+              // Chat Messages
+              <Box sx={{ spaceY: 6, width: "100%" }}>
+                {(messageGroups[0] || []).map((group, idx) => (
+                  <Box key={idx} mb={3}>
                     <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mr: 1,
-                        // fontSize:"19px",
-                      }}
+                      display="flex"
+                      justifyContent="flex-end"
+                      flexDirection={"column"}
+                      alignItems={"flex-end"}
+                      mb={1.5}
                     >
-                      <Typography variant="caption" sx={{ fontSize: "14px" }}>
-                        You
-                      </Typography>
-                    </Box>
-                    {/* <Box
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mr: 1,
+                          // fontSize:"19px",
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ fontSize: "14px" }}>
+                          You
+                        </Typography>
+                      </Box>
+                      {/* <Box
                       sx={{
                         display: "flex",
                         justifyContent: "flex-end", // Right side ma mukse
@@ -1760,165 +1765,171 @@ const ChatUI = () => {
                         mb: 1,
                       }}
                     > */}
-                    <Paper
-                      sx={{
-                        p: 1.5,
-                        bgcolor: "#2F67F6",
-                        color: "#fff",
-                        borderRadius: 3,
-                        maxWidth: { xs: "80%", md: "70%" },
-                      }}
-                    >
-                      <Typography>{group.prompt}</Typography>
-                      <Typography variant="caption">{group.time}</Typography>
-                    </Paper>
-                    {/* </Box> */}
-                  </Box>
-
-                  {/* AI Response */}
-                  <Box>
-                    {/* 🔹 Selected model name upar */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        // p: 1,
-                        // borderBottom: "1px solid #e0e0e0",
-                        mb: 0.5,
-                        color: "text.primary",
-                      }}
-                    >
-                      {/* ✅ Logo */}
-                      {/* <Logo /> */}
-                      <Avatar
-                        src={leaf}
-                        alt="leaf"
+                      <Paper
                         sx={{
-                          border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
-                          bgcolor: "white",
-                          width: 23, // thodu mota rakho
-                          height: 23,
-                          p: "2px", // andar jagya
-                          cursor: "pointer",
-                          // pl: "1px",
-                          mt: 0.5,
+                          p: 1.5,
+                          bgcolor: "#2F67F6",
+                          color: "#fff",
+                          borderRadius: 3,
+                          maxWidth: { xs: "80%", md: "70%" },
                         }}
-                        // onClick={() => setIsCollapsed(false)}
-                      />
-
-                      {/* ✅ Bot name + AI Assistant */}
-                      <Box ml={1}>
-                        <Typography
-                          variant="caption"
-                          sx={{ textDecoration: "underline", fontSize: "16px" }}
-                        >
-                          {group.botName}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          display="block"
-                        >
-                          AI Assistant
-                        </Typography>
-                      </Box>
+                      >
+                        <Typography>{group.prompt}</Typography>
+                        <Typography variant="caption">{group.time}</Typography>
+                      </Paper>
+                      {/* </Box> */}
                     </Box>
 
-                    <Paper
-                      sx={{
-                        p: 1.5,
-                        bgcolor: "#f1f6fc",
-                        borderRadius: 3,
-                        maxWidth: { xs: "80%", md: "70%" },
-                      }}
-                    >
-                      <Box sx={{ mb: 2 }}>
-                        {group.isTyping &&
-                        [
-                          "Thinking...",
-                          "Analyzing...",
-                          "Generating...",
-                        ].includes(group.responses[group.currentSlide]) ? (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography variant="body1">
-                              {group.responses[group.currentSlide]}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <div
-                            dangerouslySetInnerHTML={{
-                              __html: group.responses[group.currentSlide],
-                            }}
-                          />
-                        )}
-                      </Box>
-                      <Divider sx={{ my: 1 }} />
+                    {/* AI Response */}
+                    <Box>
+                      {/* 🔹 Selected model name upar */}
                       <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="flex-end"
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          // p: 1,
+                          // borderBottom: "1px solid #e0e0e0",
+                          mb: 0.5,
+                          color: "text.primary",
+                        }}
                       >
-                        {/* Time on left */}
-                        <Typography
-                          variant="caption"
-                          sx={{ opacity: 0.6, mb: 0.5 }}
-                        >
-                          {group.time}
-                        </Typography>
+                        {/* ✅ Logo */}
+                        {/* <Logo /> */}
+                        <Avatar
+                          src={leaf}
+                          alt="leaf"
+                          sx={{
+                            border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
+                            bgcolor: "white",
+                            width: 23, // thodu mota rakho
+                            height: 23,
+                            p: "2px", // andar jagya
+                            cursor: "pointer",
+                            // pl: "1px",
+                            mt: 0.5,
+                          }}
+                          // onClick={() => setIsCollapsed(false)}
+                        />
 
-                        {/* Icon on right */}
-                        <IconButton
-                          size="small"
-                          onClick={(e) => handleClick(e, idx)}
-                        >
-                          <KeyboardArrowDownTwoToneIcon fontSize="small" />
-                        </IconButton>
-
-                        {/* Popover for usage token */}
-                        <Popover
-                          open={Boolean(anchorEl) && activeGroup === idx}
-                          anchorEl={anchorEl}
-                          onClose={handleClose}
-                          anchorOrigin={{
-                            vertical: "bottom",
-                            horizontal: "right",
-                          }}
-                          transformOrigin={{
-                            vertical: "top",
-                            horizontal: "right",
-                          }}
-                          PaperProps={{
-                            sx: {
-                              p: 1,
-                              borderRadius: 2,
-                              boxShadow: 3,
-                              minWidth: 140,
-                            },
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            Usage Tokens
-                          </Typography>
+                        {/* ✅ Bot name + AI Assistant */}
+                        <Box ml={1}>
                           <Typography
                             variant="caption"
                             sx={{
-                              color: "text.secondary",
-                              display: "block",
-                              mt: 0.5,
+                              textDecoration: "underline",
+                              fontSize: "16px",
                             }}
                           >
-                            {group.tokensUsed !== null &&
-                            group.tokensUsed !== undefined
-                              ? group.tokensUsed
-                              : "N/A"}
+                            {group.botName}
                           </Typography>
-                          {/* <Typography
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            display="block"
+                          >
+                            AI Assistant
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      <Paper
+                        sx={{
+                          p: 1.5,
+                          bgcolor: "#f1f6fc",
+                          borderRadius: 3,
+                          maxWidth: { xs: "80%", md: "70%" },
+                        }}
+                      >
+                        <Box sx={{ mb: 2 }}>
+                          {group.isTyping &&
+                          [
+                            "Thinking...",
+                            "Analyzing...",
+                            "Generating...",
+                          ].includes(group.responses[group.currentSlide]) ? (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                              }}
+                            >
+                              <Typography variant="body1">
+                                {group.responses[group.currentSlide]}
+                              </Typography>
+                            </Box>
+                          ) : (
+                            <div
+                              dangerouslySetInnerHTML={{
+                                __html: group.responses[group.currentSlide],
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <Divider sx={{ my: 1 }} />
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="flex-end"
+                        >
+                          {/* Time on left */}
+                          <Typography
+                            variant="caption"
+                            sx={{ opacity: 0.6, mb: 0.5 }}
+                          >
+                            {group.time}
+                          </Typography>
+
+                          {/* Icon on right */}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleClick(e, idx)}
+                          >
+                            <KeyboardArrowDownTwoToneIcon fontSize="small" />
+                          </IconButton>
+
+                          {/* Popover for usage token */}
+                          <Popover
+                            open={Boolean(anchorEl) && activeGroup === idx}
+                            anchorEl={anchorEl}
+                            onClose={handleClose}
+                            anchorOrigin={{
+                              vertical: "bottom",
+                              horizontal: "right",
+                            }}
+                            transformOrigin={{
+                              vertical: "top",
+                              horizontal: "right",
+                            }}
+                            PaperProps={{
+                              sx: {
+                                p: 1,
+                                borderRadius: 2,
+                                boxShadow: 3,
+                                minWidth: 140,
+                              },
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 500 }}
+                            >
+                              Usage Tokens
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: "text.secondary",
+                                display: "block",
+                                mt: 0.5,
+                              }}
+                            >
+                              {group.tokensUsed !== null &&
+                              group.tokensUsed !== undefined
+                                ? group.tokensUsed
+                                : "N/A"}
+                            </Typography>
+                            {/* <Typography
                             variant="caption"
                             sx={{ color: "text.secondary" }}
                           >
@@ -1926,63 +1937,63 @@ const ChatUI = () => {
                               ? usageTokens
                               : "N/A"}
                           </Typography> */}
-                        </Popover>
-                      </Box>
-                    </Paper>
+                          </Popover>
+                        </Box>
+                      </Paper>
+                    </Box>
                   </Box>
-                </Box>
-              ))}
-              <div ref={messagesEndRef} />
-            </Box>
-          )}
-        </Box>
+                ))}
+                <div ref={messagesEndRef} />
+              </Box>
+            )}
+          </Box>
 
-        {/* 👉 Footer (Always Common) */}
-        <Box sx={{mb:0,pb:0, display:"flex", flexDirection:"column"}}>
-        <Box
-          sx={{
-            height: "45px",
-            p: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderTop: "1px solid #e0e0e0",
-            // p: 1.5,
-            bgcolor: "#fafafa",
-            pb: 0.5,
-          }}
-        >
-          {/* Main Input */}
-          <TextField
-            fullWidth
-            placeholder="Ask me..."
-            variant="outlined"
-            size="small"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            disabled={isSending || isTypingResponse}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "25px",
-                backgroundColor: "#fff",
-              },
-              "& .Mui-disabled": {
-                opacity: 0.5,
-              },
-            }}
-            multiline
-            maxRows={4}
-          />
+          {/* 👉 Footer (Always Common) */}
+          <Box sx={{ mb: 0, pb: 0, display: "flex", flexDirection: "column" }}>
+            <Box
+              sx={{
+                height: "45px",
+                p: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                borderTop: "1px solid #e0e0e0",
+                // p: 1.5,
+                bgcolor: "#fafafa",
+                pb: 0.5,
+              }}
+            >
+              {/* Main Input */}
+              <TextField
+                fullWidth
+                placeholder="Ask me..."
+                variant="outlined"
+                size="small"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                disabled={isSending || isTypingResponse}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "25px",
+                    backgroundColor: "#fff",
+                  },
+                  "& .Mui-disabled": {
+                    opacity: 0.5,
+                  },
+                }}
+                multiline
+                maxRows={4}
+              />
 
-          <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
-            {/* Round Dropdown */}
-            {/* <TextField
+              <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
+                {/* Round Dropdown */}
+                {/* <TextField
               select
               size="small"
               value={maxWords}
@@ -2013,66 +2024,65 @@ const ChatUI = () => {
               ))}
             </TextField> */}
 
-            <TextField
-              select
-              size="small"
-              value={responseLength}
-              onChange={(e) => setResponseLength(e.target.value)}
-              sx={{
-                width: 179,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  backgroundColor: "#fff",
-                  textAlign: "center",
-                },
-              }}
-              SelectProps={{
-                displayEmpty: true,
-                MenuProps: {
-                  disablePortal: true,
-                  PaperProps: {
-                    style: { maxHeight: 200, borderRadius: "10px" },
-                  },
-                },
-              }}
-            >
-              <MenuItem value="Response Length:" disabled>
-                Response Length:
-              </MenuItem>
-              <MenuItem value="Short">Short (50-100 words)</MenuItem>
-              <MenuItem value="Concise">Concise (150-250 words)</MenuItem>
-              <MenuItem value="Long">Long (300-500 words)</MenuItem>
-              <MenuItem value="NoOptimisation">No Optimisation</MenuItem>
-            </TextField>
+                <TextField
+                  select
+                  size="small"
+                  value={responseLength}
+                  onChange={(e) => setResponseLength(e.target.value)}
+                  sx={{
+                    width: 179,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "10px",
+                      backgroundColor: "#fff",
+                      textAlign: "center",
+                    },
+                  }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    MenuProps: {
+                      disablePortal: true,
+                      PaperProps: {
+                        style: { maxHeight: 200, borderRadius: "10px" },
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="Response Length:" disabled>
+                    Response Length:
+                  </MenuItem>
+                  <MenuItem value="Short">Short (50-100 words)</MenuItem>
+                  <MenuItem value="Concise">Concise (150-250 words)</MenuItem>
+                  <MenuItem value="Long">Long (300-500 words)</MenuItem>
+                  <MenuItem value="NoOptimisation">No Optimisation</MenuItem>
+                </TextField>
 
-            <IconButton
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isSending || isTypingResponse}
-              sx={{
-                "&:disabled": {
-                  opacity: 0.5,
-                  cursor: "not-allowed",
-                },
-              }}
-            >
-              <SendIcon />
-            </IconButton>
+                <IconButton
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isSending || isTypingResponse}
+                  sx={{
+                    "&:disabled": {
+                      opacity: 0.5,
+                      cursor: "not-allowed",
+                    },
+                  }}
+                >
+                  <SendIcon />
+                </IconButton>
+              </Box>
+            </Box>
+
+            {/* 👉 Tagline (Always Common) */}
+            <Box textAlign="center">
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "11px" }}
+              >
+                This AI Assistant can help with general information.
+              </Typography>
+            </Box>
           </Box>
         </Box>
-
-        {/* 👉 Tagline (Always Common) */}
-        <Box textAlign="center" >
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ fontSize: "11px" }}
-          >
-            This AI Assistant can help with general information.
-          </Typography>
-        </Box>
-</Box>
-
-      </Box>
       </Box>
 
       <Dialog
