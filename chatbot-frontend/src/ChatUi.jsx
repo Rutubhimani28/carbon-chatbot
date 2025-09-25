@@ -34,6 +34,8 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
+import Swal from "sweetalert2";
+import CloseIcon from "@mui/icons-material/Close";
 
 // Mock logo - replace with your actual logo import
 const Logo = () => (
@@ -61,7 +63,7 @@ const ChatUI = () => {
   const [maxWords, setMaxWords] = useState(10);
   const [skipHistoryLoad, setSkipHistoryLoad] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selectedBot, setSelectedBot] = useState("gpt-3.5");
+  const [selectedBot, setSelectedBot] = useState("chatgpt-5-mini");
   const [openProfile, setOpenProfile] = useState(false);
   const [remainingTokens, setRemainingTokens] = useState(0);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
@@ -522,7 +524,7 @@ const ChatUI = () => {
             isTyping: false,
             isComplete: true,
             tokensUsed: message.tokensUsed || null,
-            botName: message.botName || "gpt-3.5", // Add botName from history
+            botName: message.botName || "chatgpt-5-mini", // Add botName from history
           });
         } else if (message.role === "user") {
           // Fallback for old format - find the corresponding model response
@@ -554,7 +556,7 @@ const ChatUI = () => {
               isTyping: false,
               isComplete: true,
               tokensUsed: tokensUsed,
-              botName: message.botName || "gpt-3.5", // Add botName from history
+              botName: message.botName || "chatgpt-5-mini", // Add botName from history
             });
           } else {
             // Handle case where there's a user message but no response yet
@@ -571,7 +573,7 @@ const ChatUI = () => {
               isTyping: false,
               isComplete: true,
               tokensUsed: null,
-              botName: message.botName || "gpt-3.5", // Add botName from history
+              botName: message.botName || "chatgpt-5-mini", // Add botName from history
             });
           }
         }
@@ -646,6 +648,110 @@ const ChatUI = () => {
   //     }
   //   };
 
+  // const fetchChatbotResponse = async (text, currentSessionId) => {
+  //   if (abortControllerRef.current) {
+  //     abortControllerRef.current.abort();
+  //   }
+
+  //   const controller = new AbortController();
+  //   abortControllerRef.current = controller;
+
+  //   // 🔹 Get user email from localStorage (saved during login)
+  //   const user = JSON.parse(localStorage.getItem("user"));
+  //   const email = user?.email;
+
+  //   if (!email) {
+  //     console.error("No user email found in localStorage");
+  //     return {
+  //       response: "User not logged in. Please login again.",
+  //       sessionId: currentSessionId,
+  //     };
+  //   }
+
+  //   const payload = {
+  //     email, //  dynamic from login
+  //     create_time: new Date().toISOString(),
+  //     prompt: text,
+  //     sessionId: currentSessionId || "",
+  //     responseLength,
+  //     botName: selectedBot, // Include the selected bot name in the request
+  //   };
+
+  //   try {
+  //     const response = await fetch("http://localhost:8080/api/ai/ask", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify(payload),
+  //       signal: controller.signal,
+  //     });
+
+  //     // if (!response.ok) {
+  //     //   throw new Error(`HTTP error! status: ${response.status}`);
+  //     // }
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+
+  //       //  Show SweetAlert if tokens not enough
+  //       if (
+  //         response.status === 400 &&
+  //         errorData.message === "Not enough tokens"
+  //       ) {
+  //         await Swal.fire({
+  //           title: "Not enough tokens!",
+  //           text: "You don’t have enough tokens to continue.",
+  //           icon: "warning",
+  //           showCancelButton: true,
+  //           showDenyButton: true,
+  //           confirmButtonText: "Ok",
+  //           denyButtonText: "Switch to Free Model",
+  //           cancelButtonText: "Purchase Tokens",
+  //         }).then((result) => {
+  //           if (result.isConfirmed) {
+  //             // just close
+  //           } else if (result.isDenied) {
+  //             // switch to free model
+  //             setSelectedBot("chatgpt-5-mini");
+  //           } else if (result.isDismissed) {
+  //             // purchase tokens → redirect
+  //             window.location.href = "/purchase";
+  //           }
+  //         });
+  //       }
+
+  //       throw new Error(
+  //         errorData.message || `HTTP error! status: ${response.status}`
+  //       );
+  //     }
+
+  //     abortControllerRef.current = null;
+  //     const data = await response.json();
+
+  //     console.log("API Response:", data);
+
+  //     return {
+  //       response: data.response?.replace(/\n\n/g, "<br/>") || "",
+  //       sessionId: data.sessionId,
+  //       remainingTokens: data.remainingTokens,
+  //       // tokensUsed: data.tokensUsed ?? null,
+  //       tokensUsed: data.tokensUsed || data.usage?.total_tokens || null,
+  //       totalTokensUsed: data.totalTokensUsed ?? null,
+  //       botName: data.botName || selectedBot, // Return the bot name from the response
+  //     };
+  //   } catch (err) {
+  //     if (err?.name === "AbortError") {
+  //       console.log("Request was aborted");
+  //       return null;
+  //     }
+  //     console.error("fetchChatbotResponse error:", err);
+  //     return {
+  //       response: "Sorry, something went wrong.",
+  //       sessionId: currentSessionId,
+  //       botName: selectedBot, // Return the selected bot name even on error
+  //     };
+  //   }
+  // };
+
   const fetchChatbotResponse = async (text, currentSessionId) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -654,7 +760,6 @@ const ChatUI = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // 🔹 Get user email from localStorage (saved during login)
     const user = JSON.parse(localStorage.getItem("user"));
     const email = user?.email;
 
@@ -667,12 +772,12 @@ const ChatUI = () => {
     }
 
     const payload = {
-      email, // 🔹 dynamic from login
+      email,
       create_time: new Date().toISOString(),
       prompt: text,
       sessionId: currentSessionId || "",
       responseLength,
-      botName: selectedBot, // Include the selected bot name in the request
+      botName: selectedBot,
     };
 
     try {
@@ -683,8 +788,48 @@ const ChatUI = () => {
         signal: controller.signal,
       });
 
+      // 🔹 Check for "Not enough tokens" error specifically
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+
+        // If it's a "Not enough tokens" error, return it directly
+        if (
+          response.status === 400 &&
+          errorData.message === "Not enough tokens"
+        ) {
+          // Show SweetAlert but also return the error message for display
+          await Swal.fire({
+            title: "Not enough tokens!",
+            text: "You don't have enough tokens to continue.",
+            icon: "warning",
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: "Ok",
+            denyButtonText: "Switch to Free Model",
+            cancelButtonText: "Purchase Tokens",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // just close
+            } else if (result.isDenied) {
+              setSelectedBot("chatgpt-5-mini");
+            } else if (result.isDismissed) {
+              window.location.href = "/purchase";
+            }
+          });
+
+          // 🔹 Return the actual error message instead of generic error
+          return {
+            response: "Not enough tokens to process your request.",
+            sessionId: currentSessionId,
+            botName: selectedBot,
+            isError: true, // Add flag to identify this as an error response
+          };
+        }
+
+        // For other errors, throw normally
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       abortControllerRef.current = null;
@@ -696,21 +841,32 @@ const ChatUI = () => {
         response: data.response?.replace(/\n\n/g, "<br/>") || "",
         sessionId: data.sessionId,
         remainingTokens: data.remainingTokens,
-        // tokensUsed: data.tokensUsed ?? null,
         tokensUsed: data.tokensUsed || data.usage?.total_tokens || null,
         totalTokensUsed: data.totalTokensUsed ?? null,
-        botName: data.botName || selectedBot, // Return the bot name from the response
+        botName: data.botName || selectedBot,
       };
     } catch (err) {
       if (err?.name === "AbortError") {
         console.log("Request was aborted");
         return null;
       }
+
       console.error("fetchChatbotResponse error:", err);
+
+      // 🔹 Check if it's a "Not enough tokens" error from the error message
+      if (err.message && err.message.includes("Not enough tokens")) {
+        return {
+          response: "Not enough tokens to process your request.",
+          sessionId: currentSessionId,
+          botName: selectedBot,
+          isError: true,
+        };
+      }
+
       return {
         response: "Sorry, something went wrong.",
         sessionId: currentSessionId,
-        botName: selectedBot, // Return the selected bot name even on error
+        botName: selectedBot,
       };
     }
   };
@@ -724,174 +880,21 @@ const ChatUI = () => {
   //   setIsSending(true);
   //   setIsTypingResponse(true);
 
-  //   let currentSessionId = selectedChatId
-  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-  //     : "";
-
-  //   // Add new message group directly to state
-  //   setMessageGroups((prev) => {
-  //     const updated = [...prev];
-  //     const chatGroups = updated[0] || [];
-  //     chatGroups.push({
-  //       prompt,
-  //       responses: ["Thinking..."],
-  //       time: currentTime(),
-  //       currentSlide: 0,
-  //       isTyping: true,
-  //       isComplete: false,
-  //       tokensUsed: null, // Initialize tokens as null
-  //     });
-  //     return updated;
-  //   });
-
-  //   try {
-  //     const result = await fetchChatbotResponse(prompst, currentSessionId);
-  //     if (isStoppedRef.current || !result) return;
-
-  //     // if (result.remainingTokens !== undefined) {
-  //     //   setRemainingTokens(result.remainingTokens);
-  //     //   // const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //     //   // localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     // }
-  //     // Save tokens
-  //     if (result.remainingTokens !== undefined) {
-  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.sessionId === (currentSessionId || result.sessionId)
-  //             ? { ...chat, remainingTokens: result.remainingTokens }
-  //             : chat
-  //         )
-  //       );
-  //     }
-
-  //     if (
-  //       result.tokensUsed !== undefined ||
-  //       result.totalTokensUsed !== undefined
-  //     ) {
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const chatGroups = updated[0] || [];
-  //         const idx = chatGroups.findIndex((g) => g.prompt === prompt);
-  //         if (idx !== -1) {
-  //           chatGroups[idx] = {
-  //             ...chatGroups[idx],
-  //             tokensUsed: result.tokensUsed,
-  //             totalTokensUsed: result.totalTokensUsed,
-  //           };
-  //         }
-  //         return updated;
-  //       });
-  //     }
-
-  //     if (result) {
-  //       if (result.totalTokensUsed !== undefined) {
-  //         setTotalTokensUsed(result.totalTokensUsed);
-  //       }
-  //     }
-
-  //     // Extract tokens used from response (assuming API returns tokensUsed)
-  //     const tokensUsed =
-  //       result.tokensUsed || result.usage?.total_tokens || null;
-
-  //     // If this was a new chat with no session ID, update it with the one from the response
-  //     if (!currentSessionId && result.sessionId) {
-  //       // Update the selected chat's session ID in the chats array
-  //       setChats((prev) => {
-  //         return prev.map((chat) => {
-  //           if (chat.id === selectedChatId) {
-  //             return {
-  //               ...chat,
-  //               sessionId: result.sessionId,
-  //             };
-  //           }
-  //           return chat;
-  //         });
-  //       });
-
-  //       // Update the current session ID
-  //       currentSessionId = result.sessionId;
-
-  //       // Update localStorage with the new session ID
-  //       localStorage.setItem("lastChatSessionId", selectedChatId);
-  //     }
-
-  //     // Update the response directly in state instead of calling history API
-  //     const chars = result.response.split("");
-  //     let currentText = "";
-
-  //     for (let i = 0; i < chars.length; i++) {
-  //       if (isStoppedRef.current) break;
-
-  //       currentText += chars[i];
-
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const chatGroups = updated[0] || [];
-  //         const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
-  //         if (groupIndex !== -1) {
-  //           chatGroups[groupIndex] = {
-  //             ...chatGroups[groupIndex],
-  //             responses: [currentText],
-  //             isTyping: !isStoppedRef.current,
-  //             isComplete: !isStoppedRef.current,
-  //             tokensUsed: tokensUsed, // Store tokens used
-  //           };
-  //         }
-  //         return updated;
-  //       });
-
-  //       await new Promise((resolve) => setTimeout(resolve, 30));
-  //     }
-
-  //     // Update token count if available
-  //     if (result.remainingTokens !== undefined) {
-  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to send message:", error);
-  //     setMessageGroups((prev) => {
-  //       const updated = [...prev];
-  //       const chatGroups = updated[0] || [];
-  //       const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
-  //       if (groupIndex !== -1) {
-  //         chatGroups[groupIndex] = {
-  //           ...chatGroups[groupIndex],
-  //           isTyping: false,
-  //           isComplete: false,
-  //           responses: ["Sorry, something went wrong."],
-  //           tokensUsed: null,
-  //         };
-  //       }
-  //       return updated;
-  //     });
-  //   } finally {
-  //     setIsSending(false);
-  //     setIsTypingResponse(false);
-  //     scrollToBottom();
-  //   }
-  // };
-  // --------------------------------------------------------
-  // const handleSend = async () => {
-  //   if (!input.trim() || isSending) return;
-
-  //   isStoppedRef.current = false;
-  //   const prompt = input.trim();
-  //   setInput("");
-  //   setIsSending(true);
-  //   setIsTypingResponse(true);
+  //   // ✅ unique id for this message
+  //   const messageId =
+  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
 
   //   let currentSessionId = selectedChatId
   //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
   //     : "";
 
-  //   // Add new message in UI
+  //   // 🔹 PUSH only once
   //   setMessageGroups((prev) => {
   //     const updated = [...prev];
   //     const chatGroups = updated[0] || [];
+
   //     chatGroups.push({
+  //       id: messageId,
   //       prompt,
   //       responses: ["Thinking..."],
   //       time: currentTime(),
@@ -899,56 +902,28 @@ const ChatUI = () => {
   //       isTyping: true,
   //       isComplete: false,
   //       tokensUsed: null,
-  //       totalTokensUsed: totalTokens, // initial
+  //       botName: selectedBot,
   //     });
+
   //     return updated;
   //   });
 
   //   try {
-  //     // 🔹 Call API
+  //     // Call API
   //     const result = await fetchChatbotResponse(prompt, currentSessionId);
   //     if (isStoppedRef.current || !result) return;
 
-  //     // 🔹 Save Remaining Tokens in localStorage + state
+  //     // Update tokens
   //     if (result.remainingTokens !== undefined) {
+  //       setChatRemainingTokens(result.remainingTokens);
   //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
   //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-
-  //       setRemainingTokens(result.remainingTokens); // update profile dialog
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.sessionId === (currentSessionId || result.sessionId)
-  //             ? { ...chat, remainingTokens: result.remainingTokens }
-  //             : chat
-  //         )
-  //       );
   //     }
-
-  //     // 🔹 Update tokens in message group
-  //     if (
-  //       result.tokensUsed !== undefined ||
-  //       result.totalTokensUsed !== undefined
-  //     ) {
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const chatGroups = updated[0] || [];
-  //         const idx = chatGroups.findIndex((g) => g.prompt === prompt);
-  //         if (idx !== -1) {
-  //           chatGroups[idx] = {
-  //             ...chatGroups[idx],
-  //             tokensUsed: result.tokensUsed,
-  //             totalTokensUsed: result.totalTokensUsed,
-  //           };
-  //         }
-  //         return updated;
-  //       });
-  //     }
-
   //     if (result.totalTokensUsed !== undefined) {
   //       setTotalTokensUsed(result.totalTokensUsed);
   //     }
 
-  //     // 🔹 If new chat (no sessionId yet), update session
+  //     // If session not set, assign
   //     if (!currentSessionId && result.sessionId) {
   //       setChats((prev) =>
   //         prev.map((chat) =>
@@ -961,38 +936,39 @@ const ChatUI = () => {
   //       localStorage.setItem("lastChatSessionId", selectedChatId);
   //     }
 
-  //     // 🔹 Typing animation
+  //     // Typing effect → update, not push
   //     const chars = result.response.split("");
   //     let currentText = "";
 
-  //     for (let i = 0; i < chars.length; i++) {
+  //     for (let i = 0; i < chars.length; i += 5) {
   //       if (isStoppedRef.current) break;
-
-  //       currentText += chars[i];
+  //       currentText += chars.slice(i, i + 5).join("");
 
   //       setMessageGroups((prev) => {
   //         const updated = [...prev];
   //         const chatGroups = updated[0] || [];
-  //         const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+  //         const groupIndex = chatGroups.findIndex((g) => g.id === messageId); // use id
   //         if (groupIndex !== -1) {
   //           chatGroups[groupIndex] = {
   //             ...chatGroups[groupIndex],
   //             responses: [currentText],
   //             isTyping: !isStoppedRef.current,
   //             isComplete: !isStoppedRef.current,
+  //             tokensUsed: result.tokensUsed || null,
+  //             botName: result.botName || selectedBot,
   //           };
   //         }
   //         return updated;
   //       });
 
-  //       await new Promise((resolve) => setTimeout(resolve, 30));
+  //       await new Promise((resolve) => setTimeout(resolve, 15));
   //     }
   //   } catch (error) {
   //     console.error("Failed to send message:", error);
   //     setMessageGroups((prev) => {
   //       const updated = [...prev];
   //       const chatGroups = updated[0] || [];
-  //       const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+  //       const groupIndex = chatGroups.findIndex((g) => g.id === messageId);
   //       if (groupIndex !== -1) {
   //         chatGroups[groupIndex] = {
   //           ...chatGroups[groupIndex],
@@ -1008,6 +984,142 @@ const ChatUI = () => {
   //     setIsSending(false);
   //     setIsTypingResponse(false);
   //     scrollToBottom();
+  //     setResponseLength("Response Length:");
+  //     fetchChatSessions();
+  //   }
+  // };
+
+  // const handleSend = async () => {
+  //   if (!input.trim() || isSending) return;
+
+  //   isStoppedRef.current = false;
+  //   const prompt = input.trim();
+  //   setInput("");
+  //   setIsSending(true);
+  //   setIsTypingResponse(true);
+
+  //   // ✅ Unique message ID
+  //   const messageId =
+  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+
+  //   let currentSessionId = selectedChatId
+  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
+  //     : "";
+
+  //   // ✅ PUSH message immutably (prevent duplicates)
+  //   setMessageGroups((prev) => {
+  //     const messages = prev[0] || [];
+
+  //     // Optional: check for duplicate by id (safety)
+  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
+  //     if (alreadyExists) return prev;
+
+  //     const newMessage = {
+  //       id: messageId,
+  //       prompt,
+  //       responses: ["Thinking..."],
+  //       time: currentTime(),
+  //       currentSlide: 0,
+  //       isTyping: true,
+  //       isComplete: false,
+  //       tokensUsed: null,
+  //       botName: selectedBot,
+  //     };
+
+  //     return [[...messages, newMessage]];
+  //   });
+
+  //   try {
+  //     // 🔹 API call
+  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
+  //     if (isStoppedRef.current || !result) return;
+
+  //     // 🔸 Save tokens
+  //     if (result.remainingTokens !== undefined) {
+  //       setChatRemainingTokens(result.remainingTokens);
+  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
+  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
+  //     }
+  //     if (result.totalTokensUsed !== undefined) {
+  //       setTotalTokensUsed(result.totalTokensUsed);
+  //     }
+
+  //     // 🔹 Update session ID if new
+  //     if (!currentSessionId && result.sessionId) {
+  //       setChats((prev) =>
+  //         prev.map((chat) =>
+  //           chat.id === selectedChatId
+  //             ? { ...chat, sessionId: result.sessionId }
+  //             : chat
+  //         )
+  //       );
+  //       currentSessionId = result.sessionId;
+  //       localStorage.setItem("lastChatSessionId", selectedChatId);
+  //     }
+
+  //     // ✅ Typing effect
+  //     const chars = result.response.split("");
+  //     let currentText = "";
+
+  //     for (let i = 0; i < chars.length; i += 5) {
+  //       if (isStoppedRef.current) break;
+  //       currentText += chars.slice(i, i + 5).join("");
+
+  //       setMessageGroups((prev) => {
+  //         const updated = [...prev];
+  //         const messages = updated[0] || [];
+
+  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //         if (groupIndex !== -1) {
+  //           const updatedMessage = {
+  //             ...messages[groupIndex],
+  //             responses: [currentText],
+  //             isTyping: !isStoppedRef.current,
+  //             isComplete: !isStoppedRef.current,
+  //             tokensUsed: result.tokensUsed || null,
+  //             botName: result.botName || selectedBot,
+  //           };
+
+  //           const newMessages = [...messages];
+  //           newMessages[groupIndex] = updatedMessage;
+
+  //           return [newMessages];
+  //         }
+  //         return updated;
+  //       });
+
+  //       await new Promise((resolve) => setTimeout(resolve, 15));
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to send message:", error);
+
+  //     setMessageGroups((prev) => {
+  //       const updated = [...prev];
+  //       const messages = updated[0] || [];
+
+  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //       if (groupIndex !== -1) {
+  //         const errorMessage = {
+  //           ...messages[groupIndex],
+  //           isTyping: false,
+  //           isComplete: false,
+  //           responses: ["Sorry, something went wrong."],
+  //           tokensUsed: null,
+  //         };
+
+  //         const newMessages = [...messages];
+  //         newMessages[groupIndex] = errorMessage;
+
+  //         return [newMessages];
+  //       }
+  //       return updated;
+  //     });
+  //   } finally {
+  //     setIsSending(false);
+  //     setIsTypingResponse(false);
+  //     scrollToBottom();
+  //     setResponseLength("Response Length:");
+  //     fetchChatSessions();
   //   }
   // };
 
@@ -1020,68 +1132,74 @@ const ChatUI = () => {
     setIsSending(true);
     setIsTypingResponse(true);
 
+    const messageId =
+      Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+
     let currentSessionId = selectedChatId
       ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
       : "";
 
-    // Add new message in UI
-    // setMessageGroups((prev) => {
-    //   const updated = [...prev];
-    //   const chatGroups = updated[0] || [];
-    //   chatGroups.push({
-    //     prompt,
-    //     responses: ["Thinking..."],
-    //     time: currentTime(),
-    //     currentSlide: 0,
-    //     isTyping: true,
-    //     isComplete: false,
-    //     tokensUsed: null,
-    //   });
-    //   return updated;
-    // });
-
     setMessageGroups((prev) => {
-      const updated = [...prev];
-      const chatGroups = updated[0] || [];
+      const messages = prev[0] || [];
+      const alreadyExists = messages.some((msg) => msg.id === messageId);
+      if (alreadyExists) return prev;
 
-      // Check if this prompt already exists to prevent duplicates
-      const promptExists = chatGroups.some((g) => g.prompt === prompt);
+      const newMessage = {
+        id: messageId,
+        prompt,
+        responses: ["Thinking..."],
+        time: currentTime(),
+        currentSlide: 0,
+        isTyping: true,
+        isComplete: false,
+        tokensUsed: null,
+        botName: selectedBot,
+      };
 
-      if (!promptExists) {
-        chatGroups.push({
-          prompt,
-          responses: ["Thinking..."],
-          time: currentTime(),
-          currentSlide: 0,
-          isTyping: true,
-          isComplete: false,
-          tokensUsed: null,
-          botName: selectedBot, // Store the bot name at the time of sending
-        });
-      }
-
-      return updated;
+      return [[...messages, newMessage]];
     });
 
     try {
-      // Call API
       const result = await fetchChatbotResponse(prompt, currentSessionId);
       if (isStoppedRef.current || !result) return;
 
-      // Update tokens from the response
+      // 🔹 Check if this is an error response (like "Not enough tokens")
+      if (result.isError) {
+        // Directly show the error message without typing effect
+        setMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+
+          const groupIndex = messages.findIndex((g) => g.id === messageId);
+          if (groupIndex !== -1) {
+            const errorMessage = {
+              ...messages[groupIndex],
+              isTyping: false,
+              isComplete: true,
+              responses: [result.response], // Use the actual error message
+              tokensUsed: null,
+            };
+
+            const newMessages = [...messages];
+            newMessages[groupIndex] = errorMessage;
+
+            return [newMessages];
+          }
+          return updated;
+        });
+        return; // Exit early for error responses
+      }
+
+      // 🔹 Normal successful response processing continues below...
       if (result.remainingTokens !== undefined) {
         setChatRemainingTokens(result.remainingTokens);
-
-        // Save to localStorage for this session
         const storageKey = `tokens_${currentSessionId || result.sessionId}`;
         localStorage.setItem(storageKey, result.remainingTokens.toString());
       }
-
       if (result.totalTokensUsed !== undefined) {
         setTotalTokensUsed(result.totalTokensUsed);
       }
 
-      // If new chat (no sessionId yet), update session
       if (!currentSessionId && result.sessionId) {
         setChats((prev) =>
           prev.map((chat) =>
@@ -1094,58 +1212,59 @@ const ChatUI = () => {
         localStorage.setItem("lastChatSessionId", selectedChatId);
       }
 
-      //   // Save token count for the   new session
-      //   if (result.remainingTokens !== undefined) {
-      //     localStorage.setItem(
-      //       `tokens_${result.sessionId}`,
-      //       result.remainingTokens.toString()
-      //     );
-      //   }
-      // }
-
-      // Typing animation
       const chars = result.response.split("");
       let currentText = "";
 
       for (let i = 0; i < chars.length; i += 5) {
         if (isStoppedRef.current) break;
-
-        // currentText += chars[i];
         currentText += chars.slice(i, i + 5).join("");
 
         setMessageGroups((prev) => {
           const updated = [...prev];
-          const chatGroups = updated[0] || [];
-          const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+          const messages = updated[0] || [];
+
+          const groupIndex = messages.findIndex((g) => g.id === messageId);
           if (groupIndex !== -1) {
-            chatGroups[groupIndex] = {
-              ...chatGroups[groupIndex],
+            const updatedMessage = {
+              ...messages[groupIndex],
               responses: [currentText],
               isTyping: !isStoppedRef.current,
               isComplete: !isStoppedRef.current,
               tokensUsed: result.tokensUsed || null,
-              botName: result.botName || selectedBot, // Update with the bot name from response
+              botName: result.botName || selectedBot,
             };
+
+            const newMessages = [...messages];
+            newMessages[groupIndex] = updatedMessage;
+
+            return [newMessages];
           }
           return updated;
         });
 
-        await new Promise((resolve) => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, 15));
       }
     } catch (error) {
       console.error("Failed to send message:", error);
+
       setMessageGroups((prev) => {
         const updated = [...prev];
-        const chatGroups = updated[0] || [];
-        const groupIndex = chatGroups.findIndex((g) => g.prompt === prompt);
+        const messages = updated[0] || [];
+
+        const groupIndex = messages.findIndex((g) => g.id === messageId);
         if (groupIndex !== -1) {
-          chatGroups[groupIndex] = {
-            ...chatGroups[groupIndex],
+          const errorMessage = {
+            ...messages[groupIndex],
             isTyping: false,
             isComplete: false,
             responses: ["Sorry, something went wrong."],
             tokensUsed: null,
           };
+
+          const newMessages = [...messages];
+          newMessages[groupIndex] = errorMessage;
+
+          return [newMessages];
         }
         return updated;
       });
@@ -1153,10 +1272,7 @@ const ChatUI = () => {
       setIsSending(false);
       setIsTypingResponse(false);
       scrollToBottom();
-
       setResponseLength("Response Length:");
-
-      // Refresh the session list to get updated token counts
       fetchChatSessions();
     }
   };
@@ -1227,18 +1343,21 @@ const ChatUI = () => {
         height: "98.2vh",
         position: "relative",
         overflow: "hidden",
+        width: "100vw", // 🔹 Add this line
       }}
     >
       {/* Sidebar */}
       <Box
         sx={{
-          width: isCollapsed ? 60 : 290,
+          // width: isCollapsed ? 60 : 290,
+          width: { xs: "0px", sm: isCollapsed ? 60 : 290 }, // mobile → hide, tablet/desktop → normal
+          display: { xs: "none", sm: "flex" }, // xs પર sidebar hide
           bgcolor: "#f5f5f5",
           height: "100vh",
           flexShrink: 0,
           transition: "width 0.3s ease",
           boxShadow: { xs: 3, md: 0 },
-          display: "flex",
+          // display: "flex",
           flexDirection: "column",
           alignItems: isCollapsed ? "center" : "flex-start",
         }}
@@ -1436,42 +1555,6 @@ const ChatUI = () => {
               )}
             </Box>
 
-            {/* <Box
-              sx={{
-                position: "sticky",
-                zIndex: 2,
-                bgcolor: "#f5f5f5",
-                borderBottom: "1px solid #e0e0e0",
-                display: "flex",
-                // flexDirection: "column",
-                // alignItems: "center",
-                p: 1,
-                gap:1,
-                // textAlign: "center",
-                width: "100%",
-                // height:"100%",
-              }}
-            >
-              
-                <Avatar
-                  sx={{
-                    bgcolor: "#1976d2",
-                    width: 34,
-                    height: 34,
-                    fontSize: 20,
-                  }}
-                >
-                  {(username || email || "U").charAt(0).toUpperCase()}
-                </Avatar>
-
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: "bold", mt: 1,  }}
-                >
-                  {username || email}
-                </Typography>
-              </Box> */}
-
             <Box
               sx={{
                 position: "sticky",
@@ -1481,12 +1564,24 @@ const ChatUI = () => {
                 display: "flex",
                 alignItems: "center",
                 p: 1,
+                pb: 2,
+                pt: 2,
                 gap: 1,
                 width: "94%",
                 cursor: "pointer",
               }}
               onClick={handleToggleMenu} // toggle use
             >
+              {/* Divider Top */}
+              <Divider
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                }}
+              />
+
               <Avatar
                 sx={{
                   bgcolor: "#1976d2",
@@ -1499,7 +1594,9 @@ const ChatUI = () => {
               </Avatar>
 
               <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                {username || email}
+                {/* {username || email} */}
+                {(username || email)?.charAt(0).toUpperCase() +
+                  (username || email)?.slice(1)}
               </Typography>
 
               {/* Dropdown Menu */}
@@ -1548,20 +1645,6 @@ const ChatUI = () => {
                 </MenuItem>
               </Menu>
             </Box>
-
-            {/* Logout Button */}
-            {/* <Button
-                onClick={() => {
-                  localStorage.clear();
-                  window.location.href = "/login";
-                }}
-                variant="text"
-                color="error"
-                size="small"
-                sx={{ mt: 1 }}
-              >
-                Logout
-              </Button> */}
           </>
         )}
       </Box>
@@ -1600,6 +1683,8 @@ const ChatUI = () => {
           width: "100%",
           display: "flex",
           flexDirection: "column",
+          minWidth: 0, // 🔹 Important for flexbox
+          overflow: "hidden", // 🔹 Prevent horizontal scroll
         }}
       >
         <Box
@@ -1609,7 +1694,7 @@ const ChatUI = () => {
             flexShrink: 0,
           }}
         >
-          <FormControl fullWidth size="small">
+          {/* <FormControl fullWidth size="small">
             <Select
               labelId="bot-select-label"
               value={selectedBot}
@@ -1626,6 +1711,23 @@ const ChatUI = () => {
               <MenuItem value="assistant-x">Assistant X</MenuItem>
               <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
             </Select>
+          </FormControl> */}
+          <FormControl fullWidth size="small">
+            <Select
+              labelId="bot-select-label"
+              value={selectedBot}
+              onChange={(e) => setSelectedBot(e.target.value)}
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: "5px",
+                maxWidth: "175px",
+                width: "175px",
+              }}
+            >
+              <MenuItem value="chatgpt-5-mini">ChatGPT 5 Mini</MenuItem>
+              <MenuItem value="deepseek">DeepSeek</MenuItem>
+              <MenuItem value="grok">Grok</MenuItem>
+            </Select>
           </FormControl>
         </Box>
 
@@ -1637,10 +1739,14 @@ const ChatUI = () => {
             flexDirection: "column",
             transition: "all 0.3s ease",
             width: "100%",
-            maxWidth: "940px",
+            // maxWidth: "940px",
+            maxWidth: { xs: "100%", md: "940px" },
             mx: "auto",
-            px: { xs: 6, sm: 8, md: 10, lg: 12 },
-            height: "100vh",
+            // px: { xs: 6, sm: 8, md: 10, lg: 12 },
+            // px: { xs: 2, sm: 4, md: 6, lg: 12 }, // padding responsive
+            // height: "100vh",
+            px: { xs: 1, sm: 2, md: 4 }, // 🔹 Reduced padding for 1024x768
+            height: "calc(100vh - 100px)", // 🔹 Better height calculation
             mb: 0,
             pb: 0,
           }}
@@ -1685,6 +1791,8 @@ const ChatUI = () => {
               flexDirection: "column",
               flexGrow: 1,
               overflow: "auto",
+              p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+              minHeight: 0, // 🔹 Important for flex scrolling
             }}
           >
             {historyLoading ? (
@@ -1706,9 +1814,7 @@ const ChatUI = () => {
               </Box>
             ) : messageGroups[0]?.length === 0 ? (
               // Welcome Screen
-              <Box
-                sx={{ textAlign: "center", py: 12, color: "text.secondary" }}
-              >
+              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
                 <leafatar
                   sx={{
                     width: 64,
@@ -1719,10 +1825,10 @@ const ChatUI = () => {
                     color: "#fff",
                   }}
                 >
-                  <Logo />
+                  {/* <Logo /> */}
                 </leafatar>
                 <Typography variant="h6" sx={{ mb: 1 }}>
-                  Welcome to the AI Chatbot!
+                  Welcome to the WORDS
                 </Typography>
                 <Typography variant="body2">
                   Start a conversation by typing a message below.
@@ -1730,7 +1836,7 @@ const ChatUI = () => {
               </Box>
             ) : (
               // Chat Messages
-              <Box sx={{ spaceY: 6, width: "100%" }}>
+              <Box sx={{ spaceY: 6, width: "100%", minWidth: 0 }}>
                 {(messageGroups[0] || []).map((group, idx) => (
                   <Box key={idx} mb={3}>
                     <Box
@@ -1764,14 +1870,20 @@ const ChatUI = () => {
                     > */}
                       <Paper
                         sx={{
-                          p: 1.5,
+                          // p: 1.5,
+                          p: { xs: 1, sm: 1.5 }, // 🔹 Responsive padding
                           bgcolor: "#2F67F6",
                           color: "#fff",
                           borderRadius: 3,
-                          maxWidth: { xs: "80%", md: "70%" },
+                          // maxWidth: { xs: "80%", md: "70%" },
+                          // maxWidth: { xs: "85%", sm: "80%", md: "70%" },
+                          maxWidth: { xs: "95%", sm: "90%", md: "80%" },
                         }}
                       >
-                        <Typography>{group.prompt}</Typography>
+                        <Typography>
+                          {group.prompt.charAt(0).toUpperCase() +
+                            group.prompt.slice(1)}
+                        </Typography>
                         <Typography variant="caption">{group.time}</Typography>
                       </Paper>
                       {/* </Box> */}
@@ -1817,24 +1929,28 @@ const ChatUI = () => {
                               fontSize: "16px",
                             }}
                           >
-                            {group.botName}
+                            {/* {group.botName} */}
+                            {group.botName.charAt(0).toUpperCase() +
+                              group.botName.slice(1)}
                           </Typography>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             display="block"
                           >
-                            AI Assistant
+                            WORDS
                           </Typography>
                         </Box>
                       </Box>
 
                       <Paper
                         sx={{
-                          p: 1.5,
+                          // p: 1.5,
+                          p: { xs: 1, sm: 1.5 },
                           bgcolor: "#f1f6fc",
                           borderRadius: 3,
-                          maxWidth: { xs: "80%", md: "70%" },
+                          // maxWidth: { xs: "80%", md: "70%" },
+                          maxWidth: { xs: "95%", sm: "90%", md: "80%" },
                         }}
                       >
                         <Box sx={{ mb: 2 }}>
@@ -1911,7 +2027,7 @@ const ChatUI = () => {
                               variant="body2"
                               sx={{ fontWeight: 500 }}
                             >
-                              Usage Tokens
+                              Token Count
                             </Typography>
                             <Typography
                               variant="caption"
@@ -1950,6 +2066,7 @@ const ChatUI = () => {
             <Box
               sx={{
                 height: "45px",
+                minHeight: "60px", // 🔹 Use minHeight instead of fixed height
                 p: 1,
                 display: "flex",
                 alignItems: "center",
@@ -1958,6 +2075,7 @@ const ChatUI = () => {
                 // p: 1.5,
                 bgcolor: "#fafafa",
                 pb: 0.5,
+                flexWrap: { xs: "wrap", sm: "nowrap" }, // 🔹 Wrap on small screens
               }}
             >
               {/* Main Input */}
@@ -1983,51 +2101,25 @@ const ChatUI = () => {
                   "& .Mui-disabled": {
                     opacity: 0.5,
                   },
+                  // fontSize: { xs: "14px", sm: "16px" }, // responsive font size
+                  fontSize: { xs: "14px", sm: "16px" },
+                  minWidth: { xs: "100%", sm: "200px" }, // 🔹 Responsive min-width
+                  mb: { xs: 1, sm: 0 }, // 🔹 Margin on mobile
                 }}
                 multiline
-                maxRows={4}
+                // maxRows={4}
+                maxRows={3} // 🔹 Reduced from 4
               />
 
               <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
-                {/* Round Dropdown */}
-                {/* <TextField
-              select
-              size="small"
-              value={maxWords}
-              onChange={(e) => setMaxWords(Number(e.target.value))}
-              sx={{
-                width: 80,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "25px",
-                  backgroundColor: "#fff",
-                  textAlign: "center",
-                },
-              }}
-              SelectProps={{
-                MenuProps: {
-                  disablePortal: true,
-                  PaperProps: {
-                    style: {
-                      maxHeight: 200,
-                    },
-                  },
-                },
-              }}
-            >
-              {[5, 10, 15, 20, 25, 50].map((num) => (
-                <MenuItem key={num} value={num}>
-                  {num}
-                </MenuItem>
-              ))}
-            </TextField> */}
-
                 <TextField
                   select
                   size="small"
                   value={responseLength}
                   onChange={(e) => setResponseLength(e.target.value)}
                   sx={{
-                    width: 179,
+                    // width: 179,
+                    width: { xs: "140px", sm: "179px" }, // 🔹 Responsive width
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
                       backgroundColor: "#fff",
@@ -2088,7 +2180,7 @@ const ChatUI = () => {
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle
+        {/* <DialogTitle
           sx={{
             textAlign: "center",
             fontWeight: "bold",
@@ -2096,6 +2188,30 @@ const ChatUI = () => {
           }}
         >
           User Profile
+        </DialogTitle> */}
+        <DialogTitle
+          sx={{
+            textAlign: "center",
+            fontWeight: "bold",
+            borderBottom: "1px solid #e0e0e0",
+            position: "relative", // જરૂરી
+          }}
+        >
+          User Profile
+          {/* Close Button */}
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenProfile(false)}
+            size="small"
+            sx={{
+              position: "absolute",
+              right: 6,
+              top: 7,
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon sx={{ fontSize: 20 }} />
+          </IconButton>
         </DialogTitle>
 
         <DialogContent sx={{ textAlign: "center", p: 3 }}>
@@ -2124,7 +2240,9 @@ const ChatUI = () => {
               Username:
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-              {username || "Unknown User"}
+              {/* {(username || "Unknown User")} */}
+              {(username || "Unknown User")?.charAt(0).toUpperCase() +
+                (username || "Unknown User")?.slice(1)}
             </Typography>
           </Box>
 

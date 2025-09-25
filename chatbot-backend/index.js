@@ -27,12 +27,12 @@ import connectDB from "./db/connectDB.js";
 // Load environment variables first
 dotenv.config();
 
-console.log("API Key exists:", !!process.env.OPENROUTER_API_KEY); // Debug check
+console.log("API Key exists:", !!process.env.OPENAI_API_KEY); // Debug check
 
 // Debug log to verify env loading
 console.log(
   "OpenRouter Key:",
-  process.env.OPENROUTER_API_KEY ? "Loaded" : "Missing"
+  process.env.OPENAI_API_KEY ? "Loaded" : "Missing"
 );
 
 const app = express();
