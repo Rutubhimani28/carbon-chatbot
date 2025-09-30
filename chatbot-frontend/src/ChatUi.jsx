@@ -27,6 +27,9 @@ import {
   Add as AddIcon,
   Send as SendIcon,
   Search as SearchIcon,
+  AttachFile as AttachFileIcon,
+  Close as CloseIcon,
+  InsertDriveFile,
 } from "@mui/icons-material";
 import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
@@ -35,7 +38,7 @@ import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
 import Swal from "sweetalert2";
-import CloseIcon from "@mui/icons-material/Close";
+// import CloseIcon from "@mui/icons-material/Close";
 
 // Mock logo - replace with your actual logo import
 const Logo = () => (
@@ -71,7 +74,7 @@ const ChatUI = () => {
   // 🔹 नवी state add करो
   const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
   const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
-
+  const [selectedFiles, setSelectedFiles] = useState([]);
   // In your state initialization
   // const [messageGroups, setMessageGroups] = useState([]);
 
@@ -113,6 +116,21 @@ const ChatUI = () => {
   const username = user?.username;
   const email = user?.email;
 
+  // Add this function to remove individual files
+  const removeFile = (indexToRemove) => {
+    setSelectedFiles((prevFiles) => {
+      const newFiles = prevFiles.filter(
+        (file, index) => index !== indexToRemove
+      );
+      return newFiles;
+    });
+  };
+
+  // Add this function to clear all files
+  const clearAllFiles = () => {
+    setSelectedFiles([]);
+  };
+
   useEffect(() => {
     const lastSessionId = localStorage.getItem("lastChatSessionId");
     if (lastSessionId) {
@@ -142,6 +160,100 @@ const ChatUI = () => {
 
   const currentTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const fetchChatbotResponseWithFiles = async (formData, currentSessionId) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      const response = await fetch("http://localhost:8080/api/ai/ask", {
+        method: "POST",
+        body: formData, // No Content-Type header - browser will set it with boundary
+        signal: controller.signal,
+      });
+
+      // Handle "Not enough tokens" error
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        if (
+          response.status === 400 &&
+          errorData.message === "Not enough tokens"
+        ) {
+          await Swal.fire({
+            title: "Not enough tokens!",
+            text: "You don't have enough tokens to continue.",
+            icon: "warning",
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: "Ok",
+            denyButtonText: "Switch to Free Model",
+            cancelButtonText: "Purchase Tokens",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              // just close
+            } else if (result.isDenied) {
+              setSelectedBot("chatgpt-5-mini");
+            } else if (result.isDismissed) {
+              // window.location.href = "/purchase";
+            }
+          });
+
+          return {
+            response: "Not enough tokens to process your request.",
+            sessionId: currentSessionId,
+            botName: selectedBot,
+            isError: true,
+          };
+        }
+
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      abortControllerRef.current = null;
+      const data = await response.json();
+
+      console.log("API Response with files:", data);
+
+      return {
+        response: data.response?.replace(/\n\n/g, "<br/>") || "",
+        sessionId: data.sessionId,
+        remainingTokens: data.remainingTokens,
+        tokensUsed: data.tokensUsed || null,
+        totalTokensUsed: data.totalTokensUsed ?? null,
+        botName: data.botName || selectedBot,
+        files: data.files || [], // Include file info from backend
+      };
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        console.log("Request was aborted");
+        return null;
+      }
+
+      console.error("fetchChatbotResponseWithFiles error:", err);
+
+      if (err.message && err.message.includes("Not enough tokens")) {
+        return {
+          response: "Not enough tokens to process your request.",
+          sessionId: currentSessionId,
+          botName: selectedBot,
+          isError: true,
+        };
+      }
+
+      return {
+        response: "Sorry, something went wrong.",
+        sessionId: currentSessionId,
+        botName: selectedBot,
+      };
+    }
+  };
 
   // const fetchChatSessions = async () => {
   //   setSessionLoading(true);
@@ -355,9 +467,9 @@ const ChatUI = () => {
         setChatRemainingTokens(data.remainingTokens);
       }
 
-      // if (data.totalTokensUsed !== undefined) {
-      //   setTotalTokensUsed(data.totalTokensUsed);
-      // }
+      if (data.totalTokensUsed !== undefined) {
+        setTotalTokensUsed(data.totalTokensUsed);
+      }
 
       return data.response || [];
     } catch (error) {
@@ -525,6 +637,7 @@ const ChatUI = () => {
             isComplete: true,
             tokensUsed: message.tokensUsed || null,
             botName: message.botName || "chatgpt-5-mini", // Add botName from history
+             files: message.files || [], // Include files from history
           });
         } else if (message.role === "user") {
           // Fallback for old format - find the corresponding model response
@@ -557,6 +670,7 @@ const ChatUI = () => {
               isComplete: true,
               tokensUsed: tokensUsed,
               botName: message.botName || "chatgpt-5-mini", // Add botName from history
+               files: message.files || [], // Include files from history
             });
           } else {
             // Handle case where there's a user message but no response yet
@@ -574,6 +688,7 @@ const ChatUI = () => {
               isComplete: true,
               tokensUsed: null,
               botName: message.botName || "chatgpt-5-mini", // Add botName from history
+               files: message.files || [], // Include files from history
             });
           }
         }
@@ -880,124 +995,6 @@ const ChatUI = () => {
   //   setIsSending(true);
   //   setIsTypingResponse(true);
 
-  //   // ✅ unique id for this message
-  //   const messageId =
-  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-
-  //   let currentSessionId = selectedChatId
-  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-  //     : "";
-
-  //   // 🔹 PUSH only once
-  //   setMessageGroups((prev) => {
-  //     const updated = [...prev];
-  //     const chatGroups = updated[0] || [];
-
-  //     chatGroups.push({
-  //       id: messageId,
-  //       prompt,
-  //       responses: ["Thinking..."],
-  //       time: currentTime(),
-  //       currentSlide: 0,
-  //       isTyping: true,
-  //       isComplete: false,
-  //       tokensUsed: null,
-  //       botName: selectedBot,
-  //     });
-
-  //     return updated;
-  //   });
-
-  //   try {
-  //     // Call API
-  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
-  //     if (isStoppedRef.current || !result) return;
-
-  //     // Update tokens
-  //     if (result.remainingTokens !== undefined) {
-  //       setChatRemainingTokens(result.remainingTokens);
-  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     }
-  //     if (result.totalTokensUsed !== undefined) {
-  //       setTotalTokensUsed(result.totalTokensUsed);
-  //     }
-
-  //     // If session not set, assign
-  //     if (!currentSessionId && result.sessionId) {
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.id === selectedChatId
-  //             ? { ...chat, sessionId: result.sessionId }
-  //             : chat
-  //         )
-  //       );
-  //       currentSessionId = result.sessionId;
-  //       localStorage.setItem("lastChatSessionId", selectedChatId);
-  //     }
-
-  //     // Typing effect → update, not push
-  //     const chars = result.response.split("");
-  //     let currentText = "";
-
-  //     for (let i = 0; i < chars.length; i += 5) {
-  //       if (isStoppedRef.current) break;
-  //       currentText += chars.slice(i, i + 5).join("");
-
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const chatGroups = updated[0] || [];
-  //         const groupIndex = chatGroups.findIndex((g) => g.id === messageId); // use id
-  //         if (groupIndex !== -1) {
-  //           chatGroups[groupIndex] = {
-  //             ...chatGroups[groupIndex],
-  //             responses: [currentText],
-  //             isTyping: !isStoppedRef.current,
-  //             isComplete: !isStoppedRef.current,
-  //             tokensUsed: result.tokensUsed || null,
-  //             botName: result.botName || selectedBot,
-  //           };
-  //         }
-  //         return updated;
-  //       });
-
-  //       await new Promise((resolve) => setTimeout(resolve, 15));
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to send message:", error);
-  //     setMessageGroups((prev) => {
-  //       const updated = [...prev];
-  //       const chatGroups = updated[0] || [];
-  //       const groupIndex = chatGroups.findIndex((g) => g.id === messageId);
-  //       if (groupIndex !== -1) {
-  //         chatGroups[groupIndex] = {
-  //           ...chatGroups[groupIndex],
-  //           isTyping: false,
-  //           isComplete: false,
-  //           responses: ["Sorry, something went wrong."],
-  //           tokensUsed: null,
-  //         };
-  //       }
-  //       return updated;
-  //     });
-  //   } finally {
-  //     setIsSending(false);
-  //     setIsTypingResponse(false);
-  //     scrollToBottom();
-  //     setResponseLength("Response Length:");
-  //     fetchChatSessions();
-  //   }
-  // };
-
-  // const handleSend = async () => {
-  //   if (!input.trim() || isSending) return;
-
-  //   isStoppedRef.current = false;
-  //   const prompt = input.trim();
-  //   setInput("");
-  //   setIsSending(true);
-  //   setIsTypingResponse(true);
-
   //   // ✅ Unique message ID
   //   const messageId =
   //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
@@ -1123,12 +1120,185 @@ const ChatUI = () => {
   //   }
   // };
 
+  // const handleSend = async () => {
+  //   if (!input.trim() || isSending) return;
+
+  //   // 🔹 Prepare files data if any files are selected
+  //   if (selectedFiles.length > 0) {
+  //     console.log("Sending files:", selectedFiles);
+  //     // અહીં તમે files ને server પર upload કરવાનો logic ઉમેરી શકો
+  //     // Example: FormData બનાવીને files ઉમેરો
+  //     const formData = new FormData();
+  //     formData.append("prompt", input.trim());
+  //     formData.append("email", user.email);
+  //     formData.append("botName", selectedBot);
+  //     formData.append("responseLength", responseLength);
+
+  //     selectedFiles.forEach((file, index) => {
+  //       formData.append(`files`, file);
+  //     });
+
+  //     // અહીં તમારો file upload API call ઉમેરો
+  //   }
+
+  //   isStoppedRef.current = false;
+  //   const prompt = input.trim();
+  //   setInput("");
+  //   setIsSending(true);
+  //   setIsTypingResponse(true);
+
+  //   const messageId =
+  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+
+  //   let currentSessionId = selectedChatId
+  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
+  //     : "";
+
+  //   setMessageGroups((prev) => {
+  //     const messages = prev[0] || [];
+  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
+  //     if (alreadyExists) return prev;
+
+  //     const newMessage = {
+  //       id: messageId,
+  //       prompt,
+  //       responses: ["Thinking..."],
+  //       time: currentTime(),
+  //       currentSlide: 0,
+  //       isTyping: true,
+  //       isComplete: false,
+  //       tokensUsed: null,
+  //       botName: selectedBot,
+  //     };
+
+  //     return [[...messages, newMessage]];
+  //   });
+
+  //   try {
+  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
+  //     if (isStoppedRef.current || !result) return;
+
+  //     // 🔹 Check if this is an error response (like "Not enough tokens")
+  //     if (result.isError) {
+  //       // Directly show the error message without typing effect
+  //       setMessageGroups((prev) => {
+  //         const updated = [...prev];
+  //         const messages = updated[0] || [];
+
+  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //         if (groupIndex !== -1) {
+  //           const errorMessage = {
+  //             ...messages[groupIndex],
+  //             isTyping: false,
+  //             isComplete: true,
+  //             responses: [result.response], // Use the actual error message
+  //             tokensUsed: null,
+  //           };
+
+  //           const newMessages = [...messages];
+  //           newMessages[groupIndex] = errorMessage;
+
+  //           return [newMessages];
+  //         }
+  //         return updated;
+  //       });
+  //       return; // Exit early for error responses
+  //     }
+
+  //     // 🔹 Normal successful response processing continues below...
+  //     if (result.remainingTokens !== undefined) {
+  //       setChatRemainingTokens(result.remainingTokens);
+  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
+  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
+  //     }
+  //     if (result.totalTokensUsed !== undefined) {
+  //       setTotalTokensUsed(result.totalTokensUsed);
+  //     }
+
+  //     if (!currentSessionId && result.sessionId) {
+  //       setChats((prev) =>
+  //         prev.map((chat) =>
+  //           chat.id === selectedChatId
+  //             ? { ...chat, sessionId: result.sessionId }
+  //             : chat
+  //         )
+  //       );
+  //       currentSessionId = result.sessionId;
+  //       localStorage.setItem("lastChatSessionId", selectedChatId);
+  //     }
+
+  //     const chars = result.response.split("");
+  //     let currentText = "";
+
+  //     for (let i = 0; i < chars.length; i += 5) {
+  //       if (isStoppedRef.current) break;
+  //       currentText += chars.slice(i, i + 5).join("");
+
+  //       setMessageGroups((prev) => {
+  //         const updated = [...prev];
+  //         const messages = updated[0] || [];
+
+  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //         if (groupIndex !== -1) {
+  //           const updatedMessage = {
+  //             ...messages[groupIndex],
+  //             responses: [currentText],
+  //             isTyping: !isStoppedRef.current,
+  //             isComplete: !isStoppedRef.current,
+  //             tokensUsed: result.tokensUsed || null,
+  //             botName: result.botName || selectedBot,
+  //           };
+
+  //           const newMessages = [...messages];
+  //           newMessages[groupIndex] = updatedMessage;
+
+  //           return [newMessages];
+  //         }
+  //         return updated;
+  //       });
+
+  //       await new Promise((resolve) => setTimeout(resolve, 15));
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to send message:", error);
+
+  //     setMessageGroups((prev) => {
+  //       const updated = [...prev];
+  //       const messages = updated[0] || [];
+
+  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //       if (groupIndex !== -1) {
+  //         const errorMessage = {
+  //           ...messages[groupIndex],
+  //           isTyping: false,
+  //           isComplete: false,
+  //           responses: ["Sorry, something went wrong."],
+  //           tokensUsed: null,
+  //         };
+
+  //         const newMessages = [...messages];
+  //         newMessages[groupIndex] = errorMessage;
+
+  //         return [newMessages];
+  //       }
+  //       return updated;
+  //     });
+  //   } finally {
+  //     setIsSending(false);
+  //     setIsTypingResponse(false);
+  //     scrollToBottom();
+  //     setResponseLength("Response Length:");
+  //     fetchChatSessions();
+  //   }
+  // };
+
   const handleSend = async () => {
-    if (!input.trim() || isSending) return;
+    if ((!input.trim() && selectedFiles.length === 0) || isSending) return;
 
     isStoppedRef.current = false;
     const prompt = input.trim();
     setInput("");
+    setSelectedFiles([]);
     setIsSending(true);
     setIsTypingResponse(true);
 
@@ -1139,6 +1309,7 @@ const ChatUI = () => {
       ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
       : "";
 
+    // Add message to UI
     setMessageGroups((prev) => {
       const messages = prev[0] || [];
       const alreadyExists = messages.some((msg) => msg.id === messageId);
@@ -1146,7 +1317,8 @@ const ChatUI = () => {
 
       const newMessage = {
         id: messageId,
-        prompt,
+        prompt:
+          prompt || `Files: ${selectedFiles.map((f) => f.name).join(", ")}`,
         responses: ["Thinking..."],
         time: currentTime(),
         currentSlide: 0,
@@ -1154,43 +1326,37 @@ const ChatUI = () => {
         isComplete: false,
         tokensUsed: null,
         botName: selectedBot,
+        files: selectedFiles.map((f) => ({ name: f.name })), // Store file info for display
       };
 
       return [[...messages, newMessage]];
     });
 
     try {
-      const result = await fetchChatbotResponse(prompt, currentSessionId);
+      // Create FormData for file upload
+      const formData = new FormData();
+
+      // Add text data
+      formData.append("prompt", prompt);
+      formData.append("email", user.email);
+      formData.append("botName", selectedBot);
+      formData.append("responseLength", responseLength);
+      formData.append("sessionId", currentSessionId);
+
+      // Add files
+      selectedFiles.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      // Call the API with FormData
+      const result = await fetchChatbotResponseWithFiles(
+        formData,
+        currentSessionId
+      );
+
       if (isStoppedRef.current || !result) return;
 
-      // 🔹 Check if this is an error response (like "Not enough tokens")
-      if (result.isError) {
-        // Directly show the error message without typing effect
-        setMessageGroups((prev) => {
-          const updated = [...prev];
-          const messages = updated[0] || [];
-
-          const groupIndex = messages.findIndex((g) => g.id === messageId);
-          if (groupIndex !== -1) {
-            const errorMessage = {
-              ...messages[groupIndex],
-              isTyping: false,
-              isComplete: true,
-              responses: [result.response], // Use the actual error message
-              tokensUsed: null,
-            };
-
-            const newMessages = [...messages];
-            newMessages[groupIndex] = errorMessage;
-
-            return [newMessages];
-          }
-          return updated;
-        });
-        return; // Exit early for error responses
-      }
-
-      // 🔹 Normal successful response processing continues below...
+      // Handle token updates and response (same as before)
       if (result.remainingTokens !== undefined) {
         setChatRemainingTokens(result.remainingTokens);
         const storageKey = `tokens_${currentSessionId || result.sessionId}`;
@@ -1212,41 +1378,46 @@ const ChatUI = () => {
         localStorage.setItem("lastChatSessionId", selectedChatId);
       }
 
-      const chars = result.response.split("");
-      let currentText = "";
+      // Clear files after successful send
+      // setSelectedFiles([]);
 
-      for (let i = 0; i < chars.length; i += 5) {
-        if (isStoppedRef.current) break;
-        currentText += chars.slice(i, i + 5).join("");
+      // Typing effect for response
+      if (!result.isError) {
+        const chars = result.response.split("");
+        let currentText = "";
 
-        setMessageGroups((prev) => {
-          const updated = [...prev];
-          const messages = updated[0] || [];
+        for (let i = 0; i < chars.length; i += 5) {
+          if (isStoppedRef.current) break;
+          currentText += chars.slice(i, i + 5).join("");
 
-          const groupIndex = messages.findIndex((g) => g.id === messageId);
-          if (groupIndex !== -1) {
-            const updatedMessage = {
-              ...messages[groupIndex],
-              responses: [currentText],
-              isTyping: !isStoppedRef.current,
-              isComplete: !isStoppedRef.current,
-              tokensUsed: result.tokensUsed || null,
-              botName: result.botName || selectedBot,
-            };
+          setMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
 
-            const newMessages = [...messages];
-            newMessages[groupIndex] = updatedMessage;
+            const groupIndex = messages.findIndex((g) => g.id === messageId);
+            if (groupIndex !== -1) {
+              const updatedMessage = {
+                ...messages[groupIndex],
+                responses: [currentText],
+                isTyping: !isStoppedRef.current,
+                isComplete: !isStoppedRef.current,
+                tokensUsed: result.tokensUsed || null,
+                botName: result.botName || selectedBot,
+              };
 
-            return [newMessages];
-          }
-          return updated;
-        });
+              const newMessages = [...messages];
+              newMessages[groupIndex] = updatedMessage;
 
-        await new Promise((resolve) => setTimeout(resolve, 15));
+              return [newMessages];
+            }
+            return updated;
+          });
+
+          await new Promise((resolve) => setTimeout(resolve, 15));
+        }
       }
     } catch (error) {
       console.error("Failed to send message:", error);
-
       setMessageGroups((prev) => {
         const updated = [...prev];
         const messages = updated[0] || [];
@@ -1786,7 +1957,7 @@ const ChatUI = () => {
           <Box
             sx={{
               height: "78vh",
-              p: 2,
+              // p: 2,
               display: "flex",
               flexDirection: "column",
               flexGrow: 1,
@@ -1868,6 +2039,76 @@ const ChatUI = () => {
                         mb: 1,
                       }}
                     > */}
+
+                      {group.files && group.files.length > 0 && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            backgroundColor: "#f0f4ff",
+                            borderRadius: "6px",
+                            padding: "2px 8px",
+                            border: "1px solid #2F67F6",
+                            maxWidth: "120px",
+                            mb: 0.5,
+                            // size: "20px",
+                          }}
+                        >
+                          <InsertDriveFile
+                            sx={{
+                              fontSize: "14px",
+                              color: "#2F67F6",
+                              mr: 1,
+                            }}
+                          />
+
+                          {/* <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#2F67F6",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                            }}
+                          >
+                           
+                            {group.files.map((f) => f.name).join(", ")}
+                          </Typography> */}
+                          <Box sx={{ overflow: "hidden" }}>
+                            {group.files.map((f, idx) => (
+                              <Typography
+                                key={idx}
+                                component="a"
+                                href={f.cloudinaryUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                variant="caption"
+                                sx={{
+                                  color: "#2F67F6",
+                                  display: "block",
+                                  textDecoration: "none",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "11px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {/* {f.filename} ({f.wordCount}w / {f.tokenCount}t) */}
+                                {/* Try these different properties */}
+                                {f.name ||
+                                  f.filename ||
+                                  f.originalName ||
+                                  f.fileName}{" "}
+                                {/* ({f.wordCount}w / {f.tokenCount}t) */}
+                              </Typography>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
+
                       <Paper
                         sx={{
                           // p: 1.5,
@@ -1880,10 +2121,26 @@ const ChatUI = () => {
                           maxWidth: { xs: "95%", sm: "90%", md: "80%" },
                         }}
                       >
+                        {/* <Typography>
+                          {group.prompt.charAt(0).toUpperCase() +
+                            group.prompt.slice(1)}
+                        </Typography> */}
+
                         <Typography>
                           {group.prompt.charAt(0).toUpperCase() +
                             group.prompt.slice(1)}
                         </Typography>
+
+                        {/* Show attached files */}
+                        {/* {group.files && group.files.length > 0 && (
+                          <Box sx={{ mt: 1, fontSize: "12px", opacity: 0.9 }}>
+                            <Typography variant="caption">
+                              Attached:{" "}
+                              {group.files.map((f) => f.name).join(", ")}
+                            </Typography>
+                          </Box>
+                        )} */}
+
                         <Typography variant="caption">{group.time}</Typography>
                       </Paper>
                       {/* </Box> */}
@@ -2062,23 +2319,102 @@ const ChatUI = () => {
           </Box>
 
           {/* 👉 Footer (Always Common) */}
+          {/* 👉 Footer (Always Common) */}
           <Box sx={{ mb: 0, pb: 0, display: "flex", flexDirection: "column" }}>
             <Box
               sx={{
-                height: "45px",
-                minHeight: "60px", // 🔹 Use minHeight instead of fixed height
+                minHeight: "60px",
                 p: 1,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 borderTop: "1px solid #e0e0e0",
-                // p: 1.5,
                 bgcolor: "#fafafa",
                 pb: 0.5,
-                flexWrap: { xs: "wrap", sm: "nowrap" }, // 🔹 Wrap on small screens
+                position: "relative",
+                flexWrap: { xs: "wrap", sm: "nowrap" },
+                // position: "relative",
               }}
             >
-              {/* Main Input */}
+              {/* File Attachment Button - Positioned absolutely inside the container */}
+              {/* <IconButton
+                component="label"
+                sx={{
+                  color: "#2F67F6",
+                  position: "absolute",
+                  left: "15px",
+                  top: "52%",
+                  transform: "translateY(-50%)",
+                  zIndex: 2,
+                  backgroundColor: "white",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  // boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  
+                }}
+              >
+                <input
+                  type="file"
+                  hidden
+                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      console.log("File selected:", file);
+                    }
+                  }}
+                />
+                <AttachFileIcon fontSize="small" />
+              </IconButton> */}
+              <IconButton
+                component="label"
+                sx={{
+                  color: "#2F67F6",
+                  position: "absolute",
+                  left: "15px",
+                  bottom: "14px", // 👈 bottom ma fix karva
+                  zIndex: 2,
+                  // backgroundColor: "white",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                }}
+              >
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                  // onChange={(e) => {
+                  //   const files = e.target.files;
+                  //   if (files && files.length > 0) {
+                  //     setSelectedFile(files); // 🔹 array of files સેટ કરો
+                  //     console.log("Files selected:", files);
+                  //   }
+                  // }}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files); // Convert FileList to Array
+                    // if (files.length > 0) {
+                    //   // setSelectedFiles(files);
+                    //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
+                    //   console.log("Files selected:", files);
+                    // }
+                    if (files.length > 0) {
+                      setSelectedFiles((prevFiles) => {
+                        // Limit to 5 files maximum (matches backend limit)
+                        const newFiles = [...prevFiles, ...files];
+                        return newFiles.slice(0, 5);
+                      });
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <AttachFileIcon fontSize="small" />
+              </IconButton>
+
+              {/* Main Input with extra left padding for file icon */}
               <TextField
                 fullWidth
                 placeholder="Ask me..."
@@ -2097,29 +2433,102 @@ const ChatUI = () => {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "25px",
                     backgroundColor: "#fff",
+                    paddingLeft: "37px", // Space for file icon
+                    height: selectedFiles.length > 0 ? "auto" : "40px",
+                    minHeight: "40px",
+                    paddingbottom: "0px",
+                    paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    padding: "8px",
+                    height: "auto",
+                    minHeight: "24px",
+                    marginTop: selectedFiles.length > 0 ? "24px" : "0px",
                   },
                   "& .Mui-disabled": {
                     opacity: 0.5,
                   },
-                  // fontSize: { xs: "14px", sm: "16px" }, // responsive font size
                   fontSize: { xs: "14px", sm: "16px" },
-                  minWidth: { xs: "100%", sm: "200px" }, // 🔹 Responsive min-width
-                  mb: { xs: 1, sm: 0 }, // 🔹 Margin on mobile
+                  minWidth: { xs: "100%", sm: "200px" },
+                  mb: { xs: 1, sm: 0 },
                 }}
                 multiline
-                // maxRows={4}
-                maxRows={3} // 🔹 Reduced from 4
+                maxRows={selectedFiles.length > 0 ? 4 : 3}
+                InputProps={{
+                  startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "8px",
+                        left: "11px",
+                        display: "flex",
+                        alignItems: "center",
+                        flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
+                        gap: 0.5, // 🔹 Files વચ્ચે gap
+                        // maxWidth: "200px", // 🔹 Maximum width
+                        maxWidth: "calc(100% - 50px)", // Prevent overflow
+                      }}
+                    >
+                      {/* File Name Display */}
+                      {selectedFiles.map((file, index) => (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            backgroundColor: "#f0f4ff",
+                            borderRadius: "12px",
+                            padding: "2px 8px",
+                            border: "1px solid #2F67F6",
+                            maxWidth: "120px",
+                            mb: 0.5,
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#2F67F6",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            {/* {file.name} */}
+                            {file.name.length > 15
+                              ? file.name.substring(0, 12) + "..."
+                              : file.name}
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            // onClick={() => setSelectedFiles(null)}
+                            onClick={() => removeFile(index)} // 🔹 index પાસ કરો
+                            sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  ),
+                }}
               />
 
-              <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  ml: 1,
+                  flexShrink: 0,
+                }}
+              >
                 <TextField
                   select
                   size="small"
                   value={responseLength}
                   onChange={(e) => setResponseLength(e.target.value)}
                   sx={{
-                    // width: 179,
-                    width: { xs: "140px", sm: "179px" }, // 🔹 Responsive width
+                    width: { xs: "140px", sm: "179px" },
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
                       backgroundColor: "#fff",
@@ -2153,6 +2562,7 @@ const ChatUI = () => {
                       opacity: 0.5,
                       cursor: "not-allowed",
                     },
+                    ml: 1,
                   }}
                 >
                   <SendIcon />

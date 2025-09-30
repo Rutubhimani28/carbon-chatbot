@@ -1,16 +1,42 @@
 // import mongoose from "mongoose";
 
-// const chatSessionSchema = new mongoose.Schema({
-//    email: { type: String, required: true },
-//   sessionId: { type: String, required: true },
-//   prompt: { type: String, required: true },
-//   response: { type: String, required: true },
-//   create_time: { type: Date, default: Date.now },
-// });
+// const messageSchema = new mongoose.Schema(
+//   {
+//     prompt: String,
+//     response: String,
+//     wordCount: Number,
+//     tokensUsed: Number,
+//     totalTokensUsed: Number,
+//     botName: String,
+//     create_time: { type: Date, default: Date.now }
+//   },
+//   { _id: false }
+// );
+
+// const chatSessionSchema = new mongoose.Schema(
+//   {
+//     sessionId: { type: String, required: true },
+//     email: { type: String, required: true }, // link with user
+//     history: [messageSchema],
+//     create_time: { type: Date, default: Date.now }
+//   },
+//   { timestamps: true }
+// );
 
 // export default mongoose.model("ChatSession", chatSessionSchema);
 
 import mongoose from "mongoose";
+
+const fileSchema = new mongoose.Schema(
+  {
+    filename: String,
+    cloudinaryUrl: String, // Store Cloudinary URL
+    publicId: String, // Store Cloudinary public ID for deletion if needed
+    content: String, // Extracted content
+    wordCount: Number,
+  },
+  { _id: false }
+);
 
 const messageSchema = new mongoose.Schema(
   {
@@ -19,8 +45,12 @@ const messageSchema = new mongoose.Schema(
     wordCount: Number,
     tokensUsed: Number,
     totalTokensUsed: Number,
-    botName: String, 
-    create_time: { type: Date, default: Date.now }
+    botName: String,
+    create_time: { type: Date, default: Date.now },
+    // File attachment fields
+    files: [fileSchema],
+    hasFiles: Boolean,
+    fileWordCount: Number,
   },
   { _id: false }
 );
@@ -30,10 +60,9 @@ const chatSessionSchema = new mongoose.Schema(
     sessionId: { type: String, required: true },
     email: { type: String, required: true }, // link with user
     history: [messageSchema],
-    create_time: { type: Date, default: Date.now }
+    create_time: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );
 
 export default mongoose.model("ChatSession", chatSessionSchema);
-
