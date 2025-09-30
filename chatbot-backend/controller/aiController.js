@@ -7,6 +7,7 @@ import cloudinary from "../config/cloudinary.js";
 import upload from "../middleware/uploadMiddleware.js";
 import path from "path";
 import { countTokens } from "../utils/tokenCounter.js";
+import Tesseract from "tesseract.js";
 
 // Import the legacy build for Node.js compatibility
 // import * as pdfjs from "pdfjs-dist/legacy/build/pdf.js";
@@ -20,6 +21,9 @@ const countWords = (text) => {
     .split(/\s+/)
     .filter((word) => word.length > 0).length;
 };
+
+
+
 // const countWords = (text) => {
 //   if (!text || typeof text !== "string") return 0;
 
@@ -372,6 +376,89 @@ export const handleTokens = (sessions, session, payload) => {
 //     };
 //   }
 // }
+// export async function processFile(file, modelName = "gpt-4o-mini") {
+//   const ext = path.extname(file.originalname).toLowerCase();
+//   let content = "";
+
+//   try {
+//     switch (ext) {
+//       case ".txt": {
+//         const textResponse = await fetch(file.path);
+//         content = await textResponse.text();
+//         break;
+//       }
+//       case ".docx": {
+//         const docxResponse = await fetch(file.path);
+//         const buffer = await docxResponse.arrayBuffer();
+//         const result = await mammoth.extractRawText({
+//           buffer: Buffer.from(buffer),
+//         });
+//         content = result.value || "[No text found in DOCX]";
+//         break;
+//       }
+//       case ".pdf": {
+//         console.log("Processing as PDF file");
+//         try {
+//           const pdfResponse = await fetch(file.path);
+//           if (!pdfResponse.ok) {
+//             throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
+//           }
+
+//           const arrayBuffer = await pdfResponse.arrayBuffer();
+//           const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+//           let pdfText = "";
+//           console.log(`PDF has ${pdf.numPages} pages`);
+
+//           for (let i = 1; i <= pdf.numPages; i++) {
+//             const page = await pdf.getPage(i);
+//             const textContent = await page.getTextContent();
+//             const pageText = textContent.items
+//               .map((item) => item.str)
+//               .join(" ")
+//               .trim();
+
+//             pdfText += pageText + " ";
+//             console.log(`Page ${i}: ${pageText.length} chars`);
+//           }
+
+//           content = pdfText.trim() || "[No readable text found in PDF]";
+//         } catch (pdfError) {
+//           console.error("PDF processing error:", pdfError);
+//           content = `[Error extracting PDF text: ${pdfError.message}]`;
+//         }
+//         break;
+//       }
+
+//       default:
+//         content = `[Unsupported file: ${file.originalname}]`;
+//         break;
+//     }
+
+//     const cleanedContent = content.replace(/\s+/g, " ").trim();
+//     const wordCount = countWords(cleanedContent);
+//     const tokenCount = countTokens(cleanedContent, modelName);
+
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: cleanedContent,
+//       wordCount,
+//       tokenCount,
+//     };
+//   } catch (err) {
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: `[Error processing file: ${err.message}]`,
+//       wordCount: 0,
+//       tokenCount: 0,
+//     };
+//   }
+// }
+
 export async function processFile(file, modelName = "gpt-4o-mini") {
   const ext = path.extname(file.originalname).toLowerCase();
   let content = "";
@@ -383,15 +470,23 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
         content = await textResponse.text();
         break;
       }
+
       case ".docx": {
         const docxResponse = await fetch(file.path);
         const buffer = await docxResponse.arrayBuffer();
         const result = await mammoth.extractRawText({
           buffer: Buffer.from(buffer),
         });
-        content = result.value || "[No text found in DOCX]";
+        content = result.value || "";
+
+        // 🟢 OCR fallback if no text found
+        if (!content.trim()) {
+          const { data } = await Tesseract.recognize(file.path, "eng");
+          content = data.text || "[No text found in DOCX]";
+        }
         break;
       }
+
       case ".pdf": {
         console.log("Processing as PDF file");
         try {
@@ -414,7 +509,22 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
               .join(" ")
               .trim();
 
-            pdfText += pageText + " ";
+            if (pageText) {
+              pdfText += pageText + " ";
+            } else {
+              // 🟢 OCR fallback → convert page to image & run Tesseract
+              const converter = fromPath(file.path, {
+                density: 150,
+                saveFilename: `page_${i}`,
+                savePath: "./temp",
+                format: "png",
+              });
+
+              const image = await converter(i); // convert page to PNG
+              const { data } = await Tesseract.recognize(image.path, "eng");
+              pdfText += data.text + " ";
+            }
+
             console.log(`Page ${i}: ${pageText.length} chars`);
           }
 
@@ -425,53 +535,7 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
         }
         break;
       }
-      // case ".pdf": {
-      //   console.log("Processing as PDF file");
-      //   try {
-      //     const pdfResponse = await fetch(file.path);
-      //     if (!pdfResponse.ok) {
-      //       throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
-      //     }
 
-      //     const arrayBuffer = await pdfResponse.arrayBuffer();
-      //     console.log(pdfjs, "pdfjs:______________________________");
-      //     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-
-      //     let pdfText = "";
-      //     console.log(`PDF has ${pdf.numPages} pages`);
-
-      //     for (let i = 1; i <= pdf.numPages; i++) {
-      //       const page = await pdf.getPage(i);
-      //       const textContent = await page.getTextContent();
-      //       const pageText = textContent.items
-      //         .map((item) => item.str)
-      //         .join(" ")
-      //         .trim();
-
-      //       pdfText += pageText + " ";
-      //       console.log(
-      //         `Page ${i}: ${
-      //           pageText.length
-      //         } chars, Sample: ${pageText.substring(0, 50)}...`
-      //       );
-      //     }
-
-      //     content = pdfText.trim();
-
-      //     if (!content || content.length < 10) {
-      //       content =
-      //         "[No readable text found in PDF - may be scanned/image-based]";
-      //     }
-
-      //     console.log(
-      //       `PDF processing completed. Total text: ${content.length} characters`
-      //     );
-      //   } catch (pdfError) {
-      //     console.error("PDF processing error:", pdfError);
-      //     content = `[Error extracting PDF text: ${pdfError.message}]`;
-      //   }
-      //   break;
-      // }
       default:
         content = `[Unsupported file: ${file.originalname}]`;
         break;

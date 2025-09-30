@@ -60,6 +60,7 @@ export function countTokens(text, modelName = "gpt-4o-mini") {
       `tiktoken failed for model ${modelName}, falling back to word count`,
       error
     );
-    return text.split(/\s+/).length;
+    // return text.split(/\s+/).length;
+    return (text || "").trim().split(/\s+/).length;
   }
 }
