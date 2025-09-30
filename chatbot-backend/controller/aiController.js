@@ -125,7 +125,10 @@ export const handleTokens = (sessions, session, payload) => {
   );
 
   const totalTokensUsed = sessionTotalBefore + tokensUsed;
-  const remainingTokens = Math.max(0, 500000 - (grandTotalTokensUsed + tokensUsed));
+  const remainingTokens = Math.max(
+    0,
+    500000 - (grandTotalTokensUsed + tokensUsed)
+  );
 
   // Push current payload into session history
   session.history.push({
@@ -152,7 +155,9 @@ export const handleTokens = (sessions, session, payload) => {
     totalWords,
     tokensUsed,
     totalTokensUsed,
-    grandTotalTokensUsed: parseFloat((grandTotalTokensUsed + tokensUsed).toFixed(3)),
+    grandTotalTokensUsed: parseFloat(
+      (grandTotalTokensUsed + tokensUsed).toFixed(3)
+    ),
     remainingTokens: parseFloat(remainingTokens.toFixed(3)),
   };
 };
@@ -1380,13 +1385,13 @@ export const getAIResponse = async (req, res) => {
     // Calculate tokens/words and update session history
     const counts = handleTokens(sessions, session, tokenPayload);
 
-// Check if remaining tokens are sufficient
-if (counts.remainingTokens <= 0) {
-  return res.status(400).json({ 
-    message: "Not enough tokens available",
-    remainingTokens: counts.remainingTokens
-  });
-}
+    // Check if remaining tokens are sufficient
+    if (counts.remainingTokens <= 0) {
+      return res.status(400).json({
+        message: "Not enough tokens available",
+        remainingTokens: counts.remainingTokens,
+      });
+    }
 
     // Save session
     await session.save();
@@ -1477,7 +1482,9 @@ export const getChatHistory = async (req, res) => {
   try {
     const { sessionId, email } = req.body;
     if (!sessionId || !email) {
-      return res.status(400).json({ message: "sessionId and email are required" });
+      return res
+        .status(400)
+        .json({ message: "sessionId and email are required" });
     }
 
     const session = await ChatSession.findOne({ sessionId, email });
@@ -1487,15 +1494,17 @@ export const getChatHistory = async (req, res) => {
 
     // Get ALL sessions to calculate global totals
     const allSessions = await ChatSession.find({ email });
-    
+
     // Calculate grand total tokens across all sessions
     const grandTotalTokens = allSessions.reduce((sum, s) => {
-      return sum + s.history.reduce((entrySum, e) => entrySum + (e.tokensUsed || 0), 0);
+      return (
+        sum +
+        s.history.reduce((entrySum, e) => entrySum + (e.tokensUsed || 0), 0)
+      );
     }, 0);
 
     const remainingTokens = parseFloat((500000 - grandTotalTokens).toFixed(3));
 
-    
     // Format history for frontend
     const formattedHistory = session.history.map((entry) => {
       return {
@@ -1504,7 +1513,7 @@ export const getChatHistory = async (req, res) => {
         tokensUsed: entry.tokensUsed || 0,
         botName: entry.botName || "chatgpt-5-mini",
         create_time: entry.create_time,
-        files: entry.files || []
+        files: entry.files || [],
       };
     });
 
@@ -1513,9 +1522,9 @@ export const getChatHistory = async (req, res) => {
       response: formattedHistory, // This is the key field frontend expects
       sessionId: session.sessionId,
       remainingTokens: remainingTokens,
-      totalTokensUsed: grandTotalTokens
+      totalTokensUsed: grandTotalTokens,
     });
-    
+
     // Calculate current session totals
     // let totalPromptTokens = 0,
     //   totalResponseTokens = 0,
@@ -1571,7 +1580,9 @@ export const getChatHistory = async (req, res) => {
     //   },
     // });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 // ------------------------------------------------------------------
@@ -1652,17 +1663,22 @@ export const getAllSessions = async (req, res) => {
         totalResponseTokens += entry.responseTokens || 0;
         totalFileTokens += entry.fileTokenCount || 0;
         totalPromptWords += entry.promptWords || entry.promptWordCount || 0;
-        totalResponseWords += entry.responseWords || entry.responseWordCount || 0;
+        totalResponseWords +=
+          entry.responseWords || entry.responseWordCount || 0;
         totalFileWords += entry.fileWordCount || 0;
         sessionTotalTokensUsed += entry.tokensUsed || 0;
       });
 
       grandTotalTokens += sessionTotalTokensUsed;
 
+      // 👇 heading: first user prompt (if available)
+      const heading = session.history?.[0]?.prompt || "No Heading";
+
       return {
         sessionId: session.sessionId,
+        heading,
         email: session.email,
-        createdAt: session.create_time,
+        create_time: session.create_time,
         history: session.history,
         stats: {
           totalPromptTokens,
@@ -1686,7 +1702,9 @@ export const getAllSessions = async (req, res) => {
       remainingTokens,
     });
   } catch (err) {
-    res.status(500).json({ message: "Internal Server Error", error: err.message });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
   }
 };
 

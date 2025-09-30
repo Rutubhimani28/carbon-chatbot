@@ -374,29 +374,41 @@ const ChatUI = () => {
         setSessionRemainingTokens(userRemainingTokens);
       }
 
-      if (data.grandtotaltokenUsed !== undefined) {
-        userTotalTokensUsed = data.grandtotaltokenUsed;
+      if (data.grandTotalTokens !== undefined) {
+        userTotalTokensUsed = data.grandTotalTokens;
         setTotalTokensUsed(userTotalTokensUsed);
       }
 
       // Handle different response structures
-      if (data.response && Array.isArray(data.response)) {
+      if (data && Array.isArray(data.sessions)) {
         // Structure 1: response: [{ user_sessions: [...] }]
-        if (data.response[0] && data.response[0].user_sessions) {
-          sessions = data.response[0].user_sessions.map((session) => {
+        if (data && data?.session?.length > 0) {
+          console.log("data.response_if:::::", data);
+          console.log(
+            "data?.sessions?.history?.length:::::",
+            data?.sessions?.history?.length
+          );
+          // alert("hhhhhhhhh");
+
+          sessions = data?.sessions?.reverse().map((session) => {
+            console.log(
+              "session?.history?.[0]?.totalTokensUsed",
+              session?.history?.[0]?.totalTokensUsed
+            );
             // Save token count to localStorage
-            if (session.totalTokensUsed !== undefined) {
+            if (session?.history?.[0]?.totalTokensUsed !== undefined) {
               localStorage.setItem(
-                `tokens_${session.session_id}`,
-                session.totalTokensUsed.toString()
+                `tokens_${session.sessionId}`,
+                session?.history?.[0]?.totalTokensUsed?.toString()
               );
             }
             return {
-              id: session.session_id,
-              name:
-                session.session_heading ||
-                `Chat ${session.session_id.slice(0, 8)}`,
-              sessionId: session.session_id,
+              id: session.sessionId,
+              // name:
+              //   session.heading ||
+              //   `Chat ${session.sessionId.slice(0, 8)}`,
+              name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
+              sessionId: session.sessionId,
               createTime: session.create_time || new Date().toISOString(),
               totalTokensUsed: session.totalTokensUsed || 0,
             };
@@ -404,32 +416,38 @@ const ChatUI = () => {
         }
         // Structure 2: response: [{ session_id, session_heading, ... }]
         else {
-          sessions = data.response.map((session) => {
-            if (session.totalTokensUsed !== undefined) {
+          console.log(
+            "data?.sessions?.history?.length > 0_else:::====",
+            data?.sessions?.history?.length > 0
+          );
+          console.log("data.response_else:::::", data);
+          sessions = data?.sessions?.reverse().map((session) => {
+            if (session?.history?.[0]?.totalTokensUsed !== undefined) {
               localStorage.setItem(
-                `tokens_${session.session_id}`,
-                session.totalTokensUsed.toString()
+                `tokens_${session.sessionId}`,
+                session?.history?.[0]?.totalTokensUsed?.toString()
               );
             }
             return {
-              id: session.session_id,
-              name:
-                session.session_heading ||
-                session.name ||
-                `Chat ${session.session_id.slice(0, 8)}`,
-              sessionId: session.session_id,
+              id: session.sessionId,
+              // name:
+              //   session.heading ||
+              //   session.name ||
+              //   `Chat ${session.sessionId.slice(0, 8)}`,
+              name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
+              sessionId: session.sessionId,
               createTime:
                 session.create_time ||
                 session.createTime ||
                 new Date().toISOString(),
-              totalTokensUsed: session.totalTokensUsed || 0,
+              totalTokensUsed: session?.history?.[0]?.totalTokensUsed || 0,
             };
           });
         }
       }
 
       setChats(sessions);
-
+      console.log("response::::::::", initialLoad, sessions, !selectedChatId); // Debug log); // Debug log
       // Select the first chat if none is selected
       if (initialLoad && sessions.length > 0 && !selectedChatId) {
         const firstSessionId = sessions[0].id;
@@ -445,6 +463,40 @@ const ChatUI = () => {
     }
   };
 
+  // const getChatHistory = async (sessionId) => {
+  //   try {
+  //     const user = JSON.parse(localStorage.getItem("user"));
+  //     if (!user || !user.email) return [];
+
+  //     const response = await fetch("http://localhost:8080/api/ai/history", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ sessionId, email: user.email }),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
+
+  //     const data = await response.json();
+
+  //     // Extract token information from the response
+  //     if (data.remainingTokens !== undefined) {
+  //       setChatRemainingTokens(data.remainingTokens);
+  //     }
+
+  //     // if (data.totalTokensUsed !== undefined) {
+  //     //   setTotalTokensUsed(data.totalTokensUsed);
+  //     // }
+
+  //     return data.response || [];
+  //   } catch (error) {
+  //     console.error("API Error:", error);
+  //     return [];
+  //   } finally {
+  //     setHistoryLoading(false);
+  //   }
+  // };
   const getChatHistory = async (sessionId) => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
@@ -461,17 +513,21 @@ const ChatUI = () => {
       }
 
       const data = await response.json();
+      console.log("dataaaaaaaaaaaaaaaaaaaaaaaaaaa:", data); // Debug log
 
       // Extract token information from the response
       if (data.remainingTokens !== undefined) {
         setChatRemainingTokens(data.remainingTokens);
       }
 
-      if (data.totalTokensUsed !== undefined) {
-        setTotalTokensUsed(data.totalTokensUsed);
-      }
-
-      return data.response || [];
+      // Return the response array, ensuring it's always an array
+      return Array.isArray(data.response)
+        ? data.response
+        : Array.isArray(data.messages)
+        ? data.messages
+        : Array.isArray(data)
+        ? data
+        : [];
     } catch (error) {
       console.error("API Error:", error);
       return [];
@@ -512,197 +568,197 @@ const ChatUI = () => {
     fetchChatSessions();
   }, []);
 
-  useEffect(() => {
-    if (!selectedChatId) return;
+  // useEffect(() => {
+  //   if (!selectedChatId) return;
 
-    const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+  //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
 
-    if (!selectedChat) return;
-    if (skipHistoryLoad) {
-      setSkipHistoryLoad(false);
-      return;
-    }
+  //   if (!selectedChat) return;
+  //   if (skipHistoryLoad) {
+  //     setSkipHistoryLoad(false);
+  //     return;
+  //   }
 
-    // if (selectedChatId) {
-    //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-    //   if (selectedChat) {
+  //   // if (selectedChatId) {
+  //   //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+  //   //   if (selectedChat) {
 
-    if (selectedChat.sessionId) {
-      loadChatHistory(selectedChat.sessionId);
+  //   if (selectedChat.sessionId) {
+  //     loadChatHistory(selectedChat.sessionId);
 
-      // Load the latest token count for this session
-      const savedTokens = localStorage.getItem(
-        `tokens_${selectedChat.sessionId}`
-      );
-      if (savedTokens) {
-        setRemainingTokens(Number(savedTokens)); // ✅ add this line
-        console.log("Current tokens:", savedTokens);
-      }
-    } else {
-      setMessageGroups([[]]);
-    }
-  }, [selectedChatId, skipHistoryLoad]);
+  //     // Load the latest token count for this session
+  //     const savedTokens = localStorage.getItem(
+  //       `tokens_${selectedChat.sessionId}`
+  //     );
+  //     if (savedTokens) {
+  //       setRemainingTokens(Number(savedTokens)); // ✅ add this line
+  //       console.log("Current tokens:", savedTokens);
+  //     }
+  //   } else {
+  //     setMessageGroups([[]]);
+  //   }
+  // }, [selectedChatId, skipHistoryLoad]);
 
-  const loadChatHistory = async (sessionId) => {
-    if (!sessionId) {
-      setMessageGroups([[]]);
-      return;
-    }
+  // const loadChatHistory = async (sessionId) => {
+  //   if (!sessionId) {
+  //     setMessageGroups([[]]);
+  //     return;
+  //   }
 
-    setHistoryLoading(true);
+  //   setHistoryLoading(true);
 
-    try {
-      // Fetch from API
-      const rawHistory = await getChatHistory(sessionId);
+  //   try {
+  //     // Fetch from API
+  //     const rawHistory = await getChatHistory(sessionId);
 
-      // Load token count from localStorage
-      // const savedTokens = localStorage.getItem(`tokens_${sessionId}`);
-      // const tokenCount = savedTokens ? parseInt(savedTokens) : null;
+  //     // Load token count from localStorage
+  //     // const savedTokens = localStorage.getItem(`tokens_${sessionId}`);
+  //     // const tokenCount = savedTokens ? parseInt(savedTokens) : null;
 
-      // Process the history into message groups
-      const processedGroups = [];
+  //     // Process the history into message groups
+  //     const processedGroups = [];
 
-      for (let i = 0; i < rawHistory.length; i++) {
-        const message = rawHistory[i];
+  //     for (let i = 0; i < rawHistory.length; i++) {
+  //       const message = rawHistory[i];
 
-        // if (message.role === "user") {
-        //   // Find the corresponding model response
-        //   let modelResponse = null;
-        //   let tokensUsed = null;
-        //   let j = i + 1;
+  //       // if (message.role === "user") {
+  //       //   // Find the corresponding model response
+  //       //   let modelResponse = null;
+  //       //   let tokensUsed = null;
+  //       //   let j = i + 1;
 
-        //   while (j < rawHistory.length && rawHistory[j].role !== "user") {
-        //     if (rawHistory[j].role === "model") {
-        //       modelResponse = rawHistory[j];
-        //       // Extract tokens used from the response if available
-        //       tokensUsed = modelResponse.tokensUsed || null;
-        //       break;
-        //     }
-        //     j++;
-        //   }
+  //       //   while (j < rawHistory.length && rawHistory[j].role !== "user") {
+  //       //     if (rawHistory[j].role === "model") {
+  //       //       modelResponse = rawHistory[j];
+  //       //       // Extract tokens used from the response if available
+  //       //       tokensUsed = modelResponse.tokensUsed || null;
+  //       //       break;
+  //       //     }
+  //       //     j++;
+  //       //   }
 
-        //   if (modelResponse) {
-        //     processedGroups.push({
-        //       prompt: message.content,
-        //       responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
-        //       time: new Date(
-        //         message.timestamp || message.create_time || Date.now()
-        //       ).toLocaleTimeString([], {
-        //         hour: "2-digit",
-        //         minute: "2-digit",
-        //       }),
-        //       currentSlide: 0,
-        //       isTyping: false,
-        //       isComplete: true,
-        //       // tokensUsed: message.tokensUsed || null, // Add this line
-        //       tokensUsed: tokensUsed, // Store tokens used
-        //     });
-        //   } else {
-        //     // Handle case where there's a user message but no response yet
-        //     processedGroups.push({
-        //       prompt: message.content,
-        //       responses: ["No response available"],
-        //       time: new Date(
-        //         message.timestamp || message.create_time || Date.now()
-        //       ).toLocaleTimeString([], {
-        //         hour: "2-digit",
-        //         minute: "2-digit",
-        //       }),
-        //       currentSlide: 0,
-        //       isTyping: false,
-        //       isComplete: true,
-        //       tokensUsed: null,
-        //     });
-        //   }
-        // }
+  //       //   if (modelResponse) {
+  //       //     processedGroups.push({
+  //       //       prompt: message.content,
+  //       //       responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
+  //       //       time: new Date(
+  //       //         message.timestamp || message.create_time || Date.now()
+  //       //       ).toLocaleTimeString([], {
+  //       //         hour: "2-digit",
+  //       //         minute: "2-digit",
+  //       //       }),
+  //       //       currentSlide: 0,
+  //       //       isTyping: false,
+  //       //       isComplete: true,
+  //       //       // tokensUsed: message.tokensUsed || null, // Add this line
+  //       //       tokensUsed: tokensUsed, // Store tokens used
+  //       //     });
+  //       //   } else {
+  //       //     // Handle case where there's a user message but no response yet
+  //       //     processedGroups.push({
+  //       //       prompt: message.content,
+  //       //       responses: ["No response available"],
+  //       //       time: new Date(
+  //       //         message.timestamp || message.create_time || Date.now()
+  //       //       ).toLocaleTimeString([], {
+  //       //         hour: "2-digit",
+  //       //         minute: "2-digit",
+  //       //       }),
+  //       //       currentSlide: 0,
+  //       //       isTyping: false,
+  //       //       isComplete: true,
+  //       //       tokensUsed: null,
+  //       //     });
+  //       //   }
+  //       // }
 
-        // The backend now returns objects with prompt, response, tokensUsed, etc.
-        if (message.prompt) {
-          // This is a user message with a prompt field
-          processedGroups.push({
-            prompt: message.prompt,
-            responses: [
-              message.response
-                ? message.response.replace(/\n\n/g, "<br/>")
-                : "No response available",
-            ],
-            time: new Date(
-              message.create_time || Date.now()
-            ).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            currentSlide: 0,
-            isTyping: false,
-            isComplete: true,
-            tokensUsed: message.tokensUsed || null,
-            botName: message.botName || "chatgpt-5-mini", // Add botName from history
-             files: message.files || [], // Include files from history
-          });
-        } else if (message.role === "user") {
-          // Fallback for old format - find the corresponding model response
-          let modelResponse = null;
-          let tokensUsed = null;
-          let j = i + 1;
+  //       // The backend now returns objects with prompt, response, tokensUsed, etc.
+  //       if (message.prompt) {
+  //         // This is a user message with a prompt field
+  //         processedGroups.push({
+  //           prompt: message.prompt,
+  //           responses: [
+  //             message.response
+  //               ? message.response.replace(/\n\n/g, "<br/>")
+  //               : "No response available",
+  //           ],
+  //           time: new Date(
+  //             message.create_time || Date.now()
+  //           ).toLocaleTimeString([], {
+  //             hour: "2-digit",
+  //             minute: "2-digit",
+  //           }),
+  //           currentSlide: 0,
+  //           isTyping: false,
+  //           isComplete: true,
+  //           tokensUsed: message.tokensUsed || null,
+  //           botName: message.botName || "chatgpt-5-mini", // Add botName from history
+  //           files: message.files || [], // Include files from history
+  //         });
+  //       } else if (message.role === "user") {
+  //         // Fallback for old format - find the corresponding model response
+  //         let modelResponse = null;
+  //         let tokensUsed = null;
+  //         let j = i + 1;
 
-          while (j < rawHistory.length && rawHistory[j].role !== "user") {
-            if (rawHistory[j].role === "model") {
-              modelResponse = rawHistory[j];
-              // Extract tokens used from the response if available
-              tokensUsed = modelResponse.tokensUsed || null;
-              break;
-            }
-            j++;
-          }
+  //         while (j < rawHistory.length && rawHistory[j].role !== "user") {
+  //           if (rawHistory[j].role === "model") {
+  //             modelResponse = rawHistory[j];
+  //             // Extract tokens used from the response if available
+  //             tokensUsed = modelResponse.tokensUsed || null;
+  //             break;
+  //           }
+  //           j++;
+  //         }
 
-          if (modelResponse) {
-            processedGroups.push({
-              prompt: message.content,
-              responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
-              time: new Date(
-                message.timestamp || message.create_time || Date.now()
-              ).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              currentSlide: 0,
-              isTyping: false,
-              isComplete: true,
-              tokensUsed: tokensUsed,
-              botName: message.botName || "chatgpt-5-mini", // Add botName from history
-               files: message.files || [], // Include files from history
-            });
-          } else {
-            // Handle case where there's a user message but no response yet
-            processedGroups.push({
-              prompt: message.content,
-              responses: ["No response available"],
-              time: new Date(
-                message.timestamp || message.create_time || Date.now()
-              ).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-              currentSlide: 0,
-              isTyping: false,
-              isComplete: true,
-              tokensUsed: null,
-              botName: message.botName || "chatgpt-5-mini", // Add botName from history
-               files: message.files || [], // Include files from history
-            });
-          }
-        }
-      }
+  //         if (modelResponse) {
+  //           processedGroups.push({
+  //             prompt: message.content,
+  //             responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
+  //             time: new Date(
+  //               message.timestamp || message.create_time || Date.now()
+  //             ).toLocaleTimeString([], {
+  //               hour: "2-digit",
+  //               minute: "2-digit",
+  //             }),
+  //             currentSlide: 0,
+  //             isTyping: false,
+  //             isComplete: true,
+  //             tokensUsed: tokensUsed,
+  //             botName: message.botName || "chatgpt-5-mini", // Add botName from history
+  //             files: message.files || [], // Include files from history
+  //           });
+  //         } else {
+  //           // Handle case where there's a user message but no response yet
+  //           processedGroups.push({
+  //             prompt: message.content,
+  //             responses: ["No response available"],
+  //             time: new Date(
+  //               message.timestamp || message.create_time || Date.now()
+  //             ).toLocaleTimeString([], {
+  //               hour: "2-digit",
+  //               minute: "2-digit",
+  //             }),
+  //             currentSlide: 0,
+  //             isTyping: false,
+  //             isComplete: true,
+  //             tokensUsed: null,
+  //             botName: message.botName || "chatgpt-5-mini", // Add botName from history
+  //             files: message.files || [], // Include files from history
+  //           });
+  //         }
+  //       }
+  //     }
 
-      setMessageGroups([processedGroups]);
-    } catch (error) {
-      console.error("Error loading chat history:", error);
-      setMessageGroups([[]]);
-    } finally {
-      setHistoryLoading(false);
-      setTimeout(() => scrollToBottom(), 200);
-    }
-  };
+  //     setMessageGroups([processedGroups]);
+  //   } catch (error) {
+  //     console.error("Error loading chat history:", error);
+  //     setMessageGroups([[]]);
+  //   } finally {
+  //     setHistoryLoading(false);
+  //     setTimeout(() => scrollToBottom(), 200);
+  //   }
+  // };
 
   // const fetchChatbotResponse = async (text, currentSessionId) => {
   //     if (abortControllerRef.current) {
@@ -866,6 +922,178 @@ const ChatUI = () => {
   //     };
   //   }
   // };
+  useEffect(() => {
+    if (!selectedChatId) return;
+
+    const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+
+    if (!selectedChat) return;
+    if (skipHistoryLoad) {
+      setSkipHistoryLoad(false);
+      return;
+    }
+
+    console.log("Loading chat history for session:", selectedChat.sessionId); // Debug log
+
+    if (selectedChat.sessionId) {
+      loadChatHistory(selectedChat.sessionId);
+
+      // Load the latest token count for this session
+      const savedTokens = localStorage.getItem(
+        `tokens_${selectedChat.sessionId}`
+      );
+      if (savedTokens) {
+        setRemainingTokens(Number(savedTokens));
+        console.log("Current tokens:", savedTokens);
+      }
+    } else {
+      setMessageGroups([[]]);
+    }
+  }, [selectedChatId, skipHistoryLoad]);
+
+  const loadChatHistory = async (sessionId) => {
+    console.log("Fetching history for sessionId:::::::::::::", loadChatHistory); // Debug log
+    if (!sessionId) {
+      setMessageGroups([[]]);
+      return;
+    }
+
+    setHistoryLoading(true);
+
+    try {
+      // Fetch from API
+      const rawHistory = await getChatHistory(sessionId);
+
+      // Process the history into message groups
+      const processedGroups = [];
+
+      for (let i = 0; i < rawHistory.length; i++) {
+        const message = rawHistory[i];
+
+        // Handle both new format (with prompt field) and old format
+        if (message.prompt) {
+          // New format - user message with prompt
+          processedGroups.push({
+            id: message.id || `msg_${i}`,
+            prompt: message.prompt,
+            responses: [
+              message.response
+                ? message.response.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed: message.tokensUsed || null,
+            botName: message.botName || "chatgpt-5-mini",
+            files: message.files || [],
+          });
+        } else if (message.role === "user") {
+          // Old format - user message
+          let modelResponse = null;
+          let tokensUsed = null;
+          let botName = "chatgpt-5-mini";
+          let j = i + 1;
+
+          // Look for the corresponding model response
+          while (j < rawHistory.length && rawHistory[j].role !== "user") {
+            if (rawHistory[j].role === "model") {
+              modelResponse = rawHistory[j];
+              tokensUsed = modelResponse.tokensUsed || null;
+              botName = modelResponse.botName || "chatgpt-5-mini";
+              break;
+            }
+            j++;
+          }
+
+          processedGroups.push({
+            id: message.id || `msg_${i}`,
+            prompt: message.content,
+            responses: [
+              modelResponse
+                ? modelResponse.content.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.timestamp || message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed: tokensUsed,
+            botName: botName,
+            files: message.files || [],
+          });
+        } else if (message.role === "model" && i === 0) {
+          // Handle case where first message is from model (no preceding user message)
+          processedGroups.push({
+            id: `msg_${i}`,
+            prompt: "System initiated conversation",
+            responses: [message.content.replace(/\n\n/g, "<br/>")],
+            time: new Date(
+              message.timestamp || message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed: message.tokensUsed || null,
+            botName: message.botName || "chatgpt-5-mini",
+            files: message.files || [],
+          });
+        }
+      }
+
+      // If no messages were processed but we have raw history, create fallback messages
+      if (processedGroups.length === 0 && rawHistory.length > 0) {
+        rawHistory.forEach((message, index) => {
+          if (message.content) {
+            processedGroups.push({
+              id: `msg_${index}`,
+              prompt:
+                message.role === "user" ? message.content : "System message",
+              responses: [
+                message.role === "model"
+                  ? message.content.replace(/\n\n/g, "<br/>")
+                  : "Waiting for response...",
+              ],
+              time: new Date(
+                message.timestamp || message.create_time || Date.now()
+              ).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              currentSlide: 0,
+              isTyping: false,
+              isComplete: true,
+              tokensUsed: message.tokensUsed || null,
+              botName: message.botName || "chatgpt-5-mini",
+              files: message.files || [],
+            });
+          }
+        });
+      }
+
+      setMessageGroups([processedGroups]);
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+      setMessageGroups([[]]);
+    } finally {
+      setHistoryLoading(false);
+      setTimeout(() => scrollToBottom(), 200);
+    }
+  };
 
   const fetchChatbotResponse = async (text, currentSessionId) => {
     if (abortControllerRef.current) {
