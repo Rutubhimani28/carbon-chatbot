@@ -170,7 +170,7 @@ const ChatUI = () => {
     abortControllerRef.current = controller;
 
     try {
-      const response = await fetch("http://localhost:8080/api/ai/ask", {
+      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
         method: "POST",
         body: formData, // No Content-Type header - browser will set it with boundary
         signal: controller.signal,
@@ -262,7 +262,7 @@ const ChatUI = () => {
   //     if (!user || !user.email) return;
 
   //     const response = await fetch(
-  //       "http://localhost:8080/api/ai/get_user_sessions",
+  //       "https://carbon-chatbot.onrender.com/api/ai/get_user_sessions",
   //       {
   //         method: "POST",
   //         headers: { "Content-Type": "application/json" },
@@ -348,7 +348,7 @@ const ChatUI = () => {
       if (!user || !user.email) return;
 
       const response = await fetch(
-        "http://localhost:8080/api/ai/get_user_sessions",
+        "https://carbon-chatbot.onrender.com/api/ai/get_user_sessions",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -468,7 +468,7 @@ const ChatUI = () => {
   //     const user = JSON.parse(localStorage.getItem("user"));
   //     if (!user || !user.email) return [];
 
-  //     const response = await fetch("http://localhost:8080/api/ai/history", {
+  //     const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/history", {
   //       method: "POST",
   //       headers: { "Content-Type": "application/json" },
   //       body: JSON.stringify({ sessionId, email: user.email }),
@@ -502,7 +502,7 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.email) return [];
 
-      const response = await fetch("http://localhost:8080/api/ai/history", {
+      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, email: user.email }),
@@ -777,7 +777,7 @@ const ChatUI = () => {
   //     };
 
   //     try {
-  //       const response = await fetch("http://localhost:8080/api/ai/ask", {
+  //       const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
   //         method: "POST",
   //         headers: { "Content-Type": "application/json" },
   //         body: JSON.stringify(payload),
@@ -849,7 +849,7 @@ const ChatUI = () => {
   //   };
 
   //   try {
-  //     const response = await fetch("http://localhost:8080/api/ai/ask", {
+  //     const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
   //       method: "POST",
   //       headers: { "Content-Type": "application/json" },
   //       body: JSON.stringify(payload),
@@ -1125,7 +1125,7 @@ const ChatUI = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:8080/api/ai/ask", {
+      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

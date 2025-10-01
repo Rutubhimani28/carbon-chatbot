@@ -59,7 +59,7 @@ import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
 //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 //   }, 0);
 
-//   const remainingTokens = parseFloat((500000 - grandtotaltokenUsed).toFixed(3));
+//   const remainingTokens = parseFloat((10000 - grandtotaltokenUsed).toFixed(3));
 
 //   // Session total tokens
 //   const sessionTotal = session.history.reduce(
@@ -131,7 +131,7 @@ import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
 //   const totalTokensUsed = sessionTotalBefore + tokensUsed;
 //   const remainingTokens = Math.max(
 //     0,
-//     500000 - (grandTotalTokensUsed + tokensUsed)
+//     10000 - (grandTotalTokensUsed + tokensUsed)
 //   );
 
 //   // Push current payload into session history
@@ -212,7 +212,7 @@ import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
 //   const totalTokensUsed = sessionTotalBefore + tokensUsed;
 //   const remainingTokens = Math.max(
 //     0,
-//     500000 - (grandTotalTokensUsed + tokensUsed)
+//     10000 - (grandTotalTokensUsed + tokensUsed)
 //   );
 
 //   session.history.push({
@@ -292,7 +292,7 @@ export const handleTokens = async (sessions, session, payload) => {
   const totalTokensUsed = sessionTotalBefore + tokensUsed;
   const remainingTokens = Math.max(
     0,
-    500000 - (grandTotalTokensUsed + tokensUsed)
+    10000 - (grandTotalTokensUsed + tokensUsed)
   );
 
   // ✅ Save in session history
@@ -2057,7 +2057,7 @@ export const getAIResponse = async (req, res) => {
 //     }, 0);
 
 //     const remainingTokens = parseFloat(
-//       (500000 - grandtotaltokenUsed).toFixed(3)
+//       (10000 - grandtotaltokenUsed).toFixed(3)
 //     );
 
 //     res.json({
@@ -2100,7 +2100,7 @@ export const getChatHistory = async (req, res) => {
       );
     }, 0);
 
-    const remainingTokens = parseFloat((500000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
 
     // Format history for frontend
     const formattedHistory = session.history.map((entry) => {
@@ -2220,7 +2220,7 @@ export const getChatHistory = async (req, res) => {
 //     );
 
 //     const remainingTokens = parseFloat(
-//       (500000 - grandtotaltokenUsed).toFixed(3)
+//       (10000 - grandtotaltokenUsed).toFixed(3)
 //     );
 
 //     res.json({
@@ -2290,7 +2290,7 @@ export const getAllSessions = async (req, res) => {
       };
     });
 
-    const remainingTokens = parseFloat((500000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
     const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
 
     res.json({
@@ -2363,7 +2363,7 @@ export const getAllSessions = async (req, res) => {
 //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 //   }, 0);
 
-//   const remainingTokens = parseFloat((500000 - grandtotaltokenUsed).toFixed(3));
+//   const remainingTokens = parseFloat((10000 - grandtotaltokenUsed).toFixed(3));
 
 //   // Step 3: Update session
 //   const sessionTotal = session.history.reduce(
@@ -2418,7 +2418,7 @@ export const getAllSessions = async (req, res) => {
 // //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 // //   }, 0);
 
-// //   const remainingTokens = parseFloat((500000 - grandtotaltokenUsed).toFixed(3));
+// //   const remainingTokens = parseFloat((10000 - grandtotaltokenUsed).toFixed(3));
 
 // //   // Step 3: Update session
 // //   const sessionTotal = session.history.reduce(
@@ -3497,7 +3497,7 @@ export const getAllSessions = async (req, res) => {
 //     }, 0);
 
 //     const remainingTokens = parseFloat(
-//       (500000 - grandtotaltokenUsed).toFixed(3)
+//       (10000 - grandtotaltokenUsed).toFixed(3)
 //     );
 
 //     res.json({
@@ -3554,7 +3554,7 @@ export const getAllSessions = async (req, res) => {
 //     );
 
 //     const remainingTokens = parseFloat(
-//       (50000000 - grandtotaltokenUsed).toFixed(3)
+//       (1000000 - grandtotaltokenUsed).toFixed(3)
 //     );
 
 //     res.json({
@@ -3636,7 +3636,7 @@ export const getAllSessions = async (req, res) => {
 //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 //   }, 0);
 
-//   const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//   const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //   // Step 3: Update session
 //   const sessionTotal = session.history.reduce(
@@ -4077,7 +4077,7 @@ export const getAllSessions = async (req, res) => {
 //       );
 //     }, 0);
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: formattedHistory,
@@ -4132,7 +4132,7 @@ export const getAllSessions = async (req, res) => {
 //       0
 //     );
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: [{ user_sessions: sessionList }],
@@ -4212,7 +4212,7 @@ export const getAllSessions = async (req, res) => {
 //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 //   }, 0);
 
-//   const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//   const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //   // Step 3: Update session
 //   const sessionTotal = session.history.reduce(
@@ -4575,7 +4575,7 @@ export const getAllSessions = async (req, res) => {
 //       );
 //     }, 0);
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: formattedHistory,
@@ -4628,7 +4628,7 @@ export const getAllSessions = async (req, res) => {
 //       0
 //     );
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: [{ user_sessions: sessionList }],
@@ -4658,7 +4658,7 @@ export const getAllSessions = async (req, res) => {
 //     return sum + chat.history.reduce((s, msg) => s + (msg.tokensUsed || 0), 0);
 //   }, 0);
 
-//   const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//   const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //   // Step 3: Update session
 //   const sessionTotal = session.history.reduce(
@@ -4871,7 +4871,7 @@ export const getAllSessions = async (req, res) => {
 //       );
 //     }, 0);
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: formattedHistory,
@@ -4917,7 +4917,7 @@ export const getAllSessions = async (req, res) => {
 //       0
 //     );
 
-//     const remainingTokens = parseFloat((50000000 - grandtotaltokenUsed).toFixed(3));
+//     const remainingTokens = parseFloat((1000000 - grandtotaltokenUsed).toFixed(3));
 
 //     res.json({
 //       response: [{ user_sessions: sessionList }],
