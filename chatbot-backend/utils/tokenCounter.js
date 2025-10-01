@@ -1,66 +1,132 @@
-// import fs from "fs";
 // import { encoding_for_model } from "tiktoken";
-// import { Tokenizer } from "@huggingface/tokenizers";
 
-// // Preload Hugging Face tokenizers
-// const hfTokenizers = {};
-
-// // Example: load Hugging Face tokenizer JSON files
-// // You need to have tokenizer JSON for each HF model locally
-// // or use pre-built HF tokenizers.
-// function loadHFTokenizer(modelName, tokenizerPath) {
-//   if (!hfTokenizers[modelName]) {
-//     hfTokenizers[modelName] = Tokenizer.fromFile(tokenizerPath);
+// // Count tokens for any OpenAI model
+// export function countTokens(text, modelName = "gpt-4o-mini") {
+//   try {
+//     const enc = encoding_for_model(modelName);
+//     const tokens = enc.encode(text).length;
+//     enc.free(); // free memory
+//     return tokens;
+//   } catch (error) {
+//     console.warn(
+//       `tiktoken failed for model ${modelName}, falling back to word count`,
+//       error
+//     );
+//     // return text.split(/\s+/).length;
+//     return (text || "").trim().split(/\s+/).length;
 //   }
-//   return hfTokenizers[modelName];
 // }
 
-// // Count tokens
-// export function countTokens(text, botName) {
-//   let tokens = 0;
-
-//   // OpenAI models
-//   if (botName === "chatgpt-5-mini" || botName === "gpt-4o-mini") {
-//     const enc = encoding_for_model("gpt-4o-mini"); // Replace with exact model
-//     tokens = enc.encode(text).length;
-//     enc.free();
-//   }
-//   // Hugging Face models
-//   else if (botName === "deepseek") {
-//     const tokenizer = loadHFTokenizer(
-//       "deepseek",
-//       "./tokenizers/deepseek-tokenizer.json"
-//     );
-//     tokens = tokenizer.encode(text).length;
-//   } else if (botName === "grok") {
-//     const tokenizer = loadHFTokenizer(
-//       "grok",
-//       "./tokenizers/grok-tokenizer.json"
-//     );
-//     tokens = tokenizer.encode(text).length;
-//   } else {
-//     // fallback: simple word-based approximation
-//     tokens = text.split(/\s+/).length;
-//   }
-
-//   return tokens;
-// }
-
+// tokenCounter.js
 import { encoding_for_model } from "tiktoken";
+import { AutoTokenizer } from "@xenova/transformers";
 
-// Count tokens for any OpenAI model
-export function countTokens(text, modelName = "gpt-4o-mini") {
-  try {
-    const enc = encoding_for_model(modelName);
-    const tokens = enc.encode(text).length;
-    enc.free(); // free memory
-    return tokens;
-  } catch (error) {
-    console.warn(
-      `tiktoken failed for model ${modelName}, falling back to word count`,
-      error
+let grokTokenizer = null;
+
+// Lazy-load Grok tokenizer
+async function getGrokTokenizer() {
+  if (!grokTokenizer) {
+    grokTokenizer = await AutoTokenizer.from_pretrained(
+      "Xenova/grok-1-tokenizer"
     );
-    // return text.split(/\s+/).length;
-    return (text || "").trim().split(/\s+/).length;
   }
+  return grokTokenizer;
+}
+
+// Async function to count tokens
+// export async function countTokens(text, modelName = "gpt-4o-mini") {
+//   try {
+//     if (!text) return 0;
+
+//     // Case 1: Grok models
+//     if (modelName.toLowerCase().startsWith("grok")) {
+//       const tokenizer = await getGrokTokenizer();
+//       const tokens = tokenizer.encode(text);
+//       return tokens.length;
+//     }
+
+//     // Case 2: OpenAI models
+//     const enc = encoding_for_model(modelName);
+//     const tokens = enc.encode(text).length;
+//     enc.free();
+//     return tokens;
+//   } catch (error) {
+//     console.warn(
+//       `Tokenizer failed for model ${modelName}, fallback to word count`,
+//       error
+//     );
+//     return (text || "").trim().split(/\s+/).length;
+//   }
+// }
+// export async function countTokens(text, modelName = "gpt-4o-mini") {
+//   try {
+//     if (!text) return 0;
+
+//     // Map invalid model names to valid ones
+//     let validModel = modelName;
+//     if (modelName === "chatgpt-5-mini") validModel = "gpt-4o-mini";
+//     // Add more mappings if needed, e.g., grok models
+//     else if (modelName.toLowerCase().startsWith("grok")) {
+//       // For grok, fallback to word count (or implement Grok tokenizer if available)
+//       return text.trim().split(/\s+/).length;
+//     }
+
+//     // OpenAI model tokenization
+//     const enc = encoding_for_model(validModel);
+//     const tokenCount = enc.encode(text).length;
+//     enc.free();
+//     return tokenCount;
+//   } catch (err) {
+//     console.warn(
+//       `Tokenizer failed for model ${modelName}, fallback to word count`,
+//       err
+//     );
+//     return text.trim().split(/\s+/).length;
+//   }
+// }
+
+export async function countTokens(text, modelName = "gpt-4o-mini") {
+  try {
+    if (!text) return 0;
+
+    let validModel = modelName;
+
+    // ✅ Map aliases
+    if (modelName === "chatgpt-5-mini") {
+      validModel = "gpt-4o-mini";
+    }
+
+    // ✅ Case 1: Grok models → use Xenova tokenizer
+    if (validModel.toLowerCase().startsWith("grok")) {
+      const tokenizer = await getGrokTokenizer();
+      const tokens = await tokenizer.encode(text);
+      return tokens.length;
+    }
+
+    // ✅ Case 2: OpenAI models → use tiktoken
+    const enc = encoding_for_model(validModel);
+    const tokenCount = enc.encode(text).length;
+    enc.free();
+    return tokenCount;
+  } catch (err) {
+    console.warn(
+      `Tokenizer failed for model ${modelName}, fallback to word count`,
+      err
+    );
+    return text.trim().split(/\s+/).length;
+  }
+}
+
+// Word counter stays sync
+// export function countWords(text) {
+//   if (!text) return 0;
+//   return text.trim().split(/\s+/).length;
+// }
+
+export function countWords(text) {
+  if (!text || typeof text !== "string") return 0;
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
 }

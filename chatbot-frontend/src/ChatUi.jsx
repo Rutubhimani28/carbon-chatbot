@@ -991,7 +991,8 @@ const ChatUI = () => {
             isTyping: false,
             isComplete: true,
             tokensUsed: message.tokensUsed || null,
-            botName: message.botName || "chatgpt-5-mini",
+            // botName: message.botName || "chatgpt-5-mini",
+            botName: message.botName || selectedBot,
             files: message.files || [],
           });
         } else if (message.role === "user") {
@@ -1049,7 +1050,7 @@ const ChatUI = () => {
             isTyping: false,
             isComplete: true,
             tokensUsed: message.tokensUsed || null,
-            botName: message.botName || "chatgpt-5-mini",
+            botName: message.botName || selectedBot,
             files: message.files || [],
           });
         }
@@ -1078,7 +1079,7 @@ const ChatUI = () => {
               isTyping: false,
               isComplete: true,
               tokensUsed: message.tokensUsed || null,
-              botName: message.botName || "chatgpt-5-mini",
+              botName: message.botName || selectedBot,
               files: message.files || [],
             });
           }
@@ -1641,7 +1642,7 @@ const ChatUI = () => {
             return updated;
           });
 
-          await new Promise((resolve) => setTimeout(resolve, 15));
+          await new Promise((resolve) => setTimeout(resolve, 10));
         }
       }
     } catch (error) {
@@ -2661,7 +2662,7 @@ const ChatUI = () => {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "25px",
                     backgroundColor: "#fff",
-                    height: selectedFiles.length > 0 ? "auto" : "40px",
+                    height: "auto",
                     minHeight: "40px",
                     padding:
                       selectedFiles.length > 0

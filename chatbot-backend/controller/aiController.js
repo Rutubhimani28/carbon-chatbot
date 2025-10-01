@@ -6,23 +6,23 @@ import mammoth from "mammoth";
 import cloudinary from "../config/cloudinary.js";
 import upload from "../middleware/uploadMiddleware.js";
 import path from "path";
-import { countTokens } from "../utils/tokenCounter.js";
+import { countTokens, countWords } from "../utils/tokenCounter.js";
 import Tesseract from "tesseract.js";
+import { fromPath } from "pdf2pic";
+import fs from "fs";
 
 // Import the legacy build for Node.js compatibility
 // import * as pdfjs from "pdfjs-dist/legacy/build/pdf.js";
 import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
 
 // ------------------------------------------------------------------
-const countWords = (text) => {
-  if (!text || typeof text !== "string") return 0;
-  return text
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0).length;
-};
-
-
+// const countWords = (text) => {
+//   if (!text || typeof text !== "string") return 0;
+//   return text
+//     .trim()
+//     .split(/\s+/)
+//     .filter((word) => word.length > 0).length;
+// };
 
 // const countWords = (text) => {
 //   if (!text || typeof text !== "string") return 0;
@@ -95,34 +95,195 @@ const countWords = (text) => {
 //     remainingTokens,
 //   };
 // };
+// -------------------------------------------------------------
+// export const handleTokens = (sessions, session, payload) => {
+//   const promptTokens = countTokens(payload.prompt, payload.botName);
+//   const responseTokens = countTokens(payload.response, payload.botName);
 
-export const handleTokens = (sessions, session, payload) => {
-  const promptTokens = countTokens(payload.prompt, payload.botName);
-  const responseTokens = countTokens(payload.response, payload.botName);
+//   const promptWords = countWords(payload.prompt);
+//   const responseWords = countWords(payload.response);
+
+//   const fileWordCount = payload.files
+//     ? payload.files.reduce((sum, f) => sum + (f.wordCount || 0), 0)
+//     : 0;
+
+//   const fileTokenCount = payload.files
+//     ? payload.files.reduce((sum, f) => sum + (f.tokenCount || 0), 0)
+//     : 0;
+
+//   const totalWords = promptWords + responseWords + fileWordCount;
+//   const tokensUsed = promptTokens + responseTokens + fileTokenCount;
+
+//   // Calculate total tokens used across ALL sessions for this user
+//   const grandTotalTokensUsed = sessions.reduce((totalSum, chatSession) => {
+//     const sessionTotal = chatSession.history.reduce((sessionSum, msg) => {
+//       return sessionSum + (msg.tokensUsed || 0);
+//     }, 0);
+//     return totalSum + sessionTotal;
+//   }, 0);
+
+//   // Calculate tokens used in current session (before adding current message)
+//   const sessionTotalBefore = session.history.reduce(
+//     (sum, msg) => sum + (msg.tokensUsed || 0),
+//     0
+//   );
+
+//   const totalTokensUsed = sessionTotalBefore + tokensUsed;
+//   const remainingTokens = Math.max(
+//     0,
+//     500000 - (grandTotalTokensUsed + tokensUsed)
+//   );
+
+//   // Push current payload into session history
+//   session.history.push({
+//     ...payload,
+//     promptTokens,
+//     responseTokens,
+//     fileTokenCount,
+//     promptWords,
+//     responseWords,
+//     fileWordCount,
+//     totalWords,
+//     tokensUsed,
+//     totalTokensUsed,
+//     create_time: new Date(),
+//   });
+
+//   return {
+//     promptTokens,
+//     responseTokens,
+//     fileTokenCount,
+//     promptWords,
+//     responseWords,
+//     fileWordCount,
+//     totalWords,
+//     tokensUsed,
+//     totalTokensUsed,
+//     grandTotalTokensUsed: parseFloat(
+//       (grandTotalTokensUsed + tokensUsed).toFixed(3)
+//     ),
+//     remainingTokens: parseFloat(remainingTokens.toFixed(3)),
+//   };
+// };
+
+// aicontroller.js
+// ----------------------------------------------
+// export const handleTokens = async (sessions, session, payload) => {
+//   const promptTokens = await countTokens(payload.prompt, payload.botName);
+//   const responseTokens = await countTokens(payload.response, payload.botName);
+
+//   const promptWords = countWords(payload.prompt);
+//   const responseWords = countWords(payload.response);
+
+//   // const fileWordCount = payload.files
+//   //   ? payload.files.reduce((sum, f) => sum + (f.wordCount || 0), 0)
+//   //   : 0;
+
+//   // const fileTokenCount = payload.files
+//   //   ? payload.files.reduce((sum, f) => sum + (f.tokenCount || 0), 0)
+//   //   : 0;
+
+//   // ✅ fileTokenCount માટે await countTokens
+//   let fileWordCount = 0;
+//   let fileTokenCount = 0;
+
+//   if (payload.files && payload.files.length > 0) {
+//     for (const f of payload.files) {
+//       fileWordCount += f.wordCount || 0;
+//       fileTokenCount += await countTokens(f.content, payload.botName); // async-safe
+//     }
+//   }
+
+//   const totalWords = promptWords + responseWords + fileWordCount;
+//   const tokensUsed = promptTokens + responseTokens + fileTokenCount;
+
+//   const grandTotalTokensUsed = sessions.reduce((totalSum, chatSession) => {
+//     const sessionTotal = chatSession.history.reduce((sessionSum, msg) => {
+//       return sessionSum + (msg.tokensUsed || 0);
+//     }, 0);
+//     return totalSum + sessionTotal;
+//   }, 0);
+
+//   const sessionTotalBefore = session.history.reduce(
+//     (sum, msg) => sum + (msg.tokensUsed || 0),
+//     0
+//   );
+
+//   const totalTokensUsed = sessionTotalBefore + tokensUsed;
+//   const remainingTokens = Math.max(
+//     0,
+//     500000 - (grandTotalTokensUsed + tokensUsed)
+//   );
+
+//   session.history.push({
+//     ...payload,
+//     promptTokens,
+//     responseTokens,
+//     fileTokenCount,
+//     promptWords,
+//     responseWords,
+//     fileWordCount,
+//     totalWords,
+//     tokensUsed,
+//     totalTokensUsed,
+//     create_time: new Date(),
+//   });
+
+//   return {
+//     promptTokens,
+//     responseTokens,
+//     fileTokenCount,
+//     promptWords,
+//     responseWords,
+//     fileWordCount,
+//     totalWords,
+//     tokensUsed,
+//     totalTokensUsed,
+//     grandTotalTokensUsed: parseFloat(
+//       (grandTotalTokensUsed + tokensUsed).toFixed(3)
+//     ),
+//     remainingTokens: parseFloat(remainingTokens.toFixed(3)),
+//   };
+// };
+export const handleTokens = async (sessions, session, payload) => {
+  // ✅ Prompt & Response
+  // const promptTokens = await countTokens(payload.prompt, payload.botName);
+
+  let tokenizerModel = payload.botName;
+  if (payload.botName === "chatgpt-5-mini")
+    tokenizerModel = "gpt-4o-mini"; // valid model
+  else if (payload.botName === "grok") tokenizerModel = "grok-3-mini"; // if supported
+
+  const promptTokens = await countTokens(payload.prompt, tokenizerModel);
+
+  const responseTokens = await countTokens(payload.response, payload.botName);
 
   const promptWords = countWords(payload.prompt);
   const responseWords = countWords(payload.response);
 
-  const fileWordCount = payload.files
-    ? payload.files.reduce((sum, f) => sum + (f.wordCount || 0), 0)
-    : 0;
+  // ✅ Files: word + token count (async-safe)
+  let fileWordCount = 0;
+  let fileTokenCount = 0;
 
-  const fileTokenCount = payload.files
-    ? payload.files.reduce((sum, f) => sum + (f.tokenCount || 0), 0)
-    : 0;
+  if (payload.files && payload.files.length > 0) {
+    for (const f of payload.files) {
+      fileWordCount += f.wordCount || countWords(f.content || "");
+      fileTokenCount += await countTokens(f.content || "", payload.botName);
+    }
+  }
 
   const totalWords = promptWords + responseWords + fileWordCount;
   const tokensUsed = promptTokens + responseTokens + fileTokenCount;
 
-  // Calculate total tokens used across ALL sessions for this user
+  // ✅ Grand total tokens across all sessions
   const grandTotalTokensUsed = sessions.reduce((totalSum, chatSession) => {
-    const sessionTotal = chatSession.history.reduce((sessionSum, msg) => {
-      return sessionSum + (msg.tokensUsed || 0);
-    }, 0);
+    const sessionTotal = chatSession.history.reduce(
+      (sessionSum, msg) => sessionSum + (msg.tokensUsed || 0),
+      0
+    );
     return totalSum + sessionTotal;
   }, 0);
 
-  // Calculate tokens used in current session (before adding current message)
   const sessionTotalBefore = session.history.reduce(
     (sum, msg) => sum + (msg.tokensUsed || 0),
     0
@@ -134,7 +295,7 @@ export const handleTokens = (sessions, session, payload) => {
     500000 - (grandTotalTokensUsed + tokensUsed)
   );
 
-  // Push current payload into session history
+  // ✅ Save in session history
   session.history.push({
     ...payload,
     promptTokens,
@@ -459,111 +620,137 @@ export const handleTokens = (sessions, session, payload) => {
 //   }
 // }
 
-export async function processFile(file, modelName = "gpt-4o-mini") {
-  const ext = path.extname(file.originalname).toLowerCase();
-  let content = "";
+// export async function processFile(file, modelName = "gpt-4o-mini") {
+//   const ext = path.extname(file.originalname).toLowerCase();
+//   let content = "";
 
-  try {
-    switch (ext) {
-      case ".txt": {
-        const textResponse = await fetch(file.path);
-        content = await textResponse.text();
-        break;
-      }
+//   try {
+//     switch (ext) {
+//       case ".txt": {
+//         const textResponse = await fetch(file.path);
+//         content = await textResponse.text();
+//         break;
+//       }
 
-      case ".docx": {
-        const docxResponse = await fetch(file.path);
-        const buffer = await docxResponse.arrayBuffer();
-        const result = await mammoth.extractRawText({
-          buffer: Buffer.from(buffer),
-        });
-        content = result.value || "";
+//       case ".docx": {
+//         const docxResponse = await fetch(file.path);
+//         const buffer = await docxResponse.arrayBuffer();
+//         const result = await mammoth.extractRawText({
+//           buffer: Buffer.from(buffer),
+//         });
+//         content = result.value || "";
 
-        // 🟢 OCR fallback if no text found
-        if (!content.trim()) {
-          const { data } = await Tesseract.recognize(file.path, "eng");
-          content = data.text || "[No text found in DOCX]";
-        }
-        break;
-      }
+//         // 🟢 OCR fallback if no text found
+//         if (!content.trim()) {
+//           const { data } = await Tesseract.recognize(file.path, "eng");
+//           content = data.text || "[No text found in DOCX]";
+//         }
+//         break;
+//       }
 
-      case ".pdf": {
-        console.log("Processing as PDF file");
-        try {
-          const pdfResponse = await fetch(file.path);
-          if (!pdfResponse.ok) {
-            throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
-          }
+//       case ".pdf": {
+//         console.log("Processing as PDF file");
+//         try {
+//           // Ensure temp folder exists for OCR images
+//           // if (!fs.existsSync("./temp"))
+//           //   fs.mkdirSync("./temp", { recursive: true });
 
-          const arrayBuffer = await pdfResponse.arrayBuffer();
-          const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+//           // // const pdfResponse = await fetch(file.path);
+//           // // if (!pdfResponse.ok) {
+//           // //   throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
+//           // // }
 
-          let pdfText = "";
-          console.log(`PDF has ${pdf.numPages} pages`);
+//           // // const arrayBuffer = await pdfResponse.arrayBuffer();
 
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items
-              .map((item) => item.str)
-              .join(" ")
-              .trim();
+//           // let localPath = file.path;
+//           // if (file.path.startsWith("http")) {
+//           //   localPath = await downloadFile(file.path);
+//           // }
 
-            if (pageText) {
-              pdfText += pageText + " ";
-            } else {
-              // 🟢 OCR fallback → convert page to image & run Tesseract
-              const converter = fromPath(file.path, {
-                density: 150,
-                saveFilename: `page_${i}`,
-                savePath: "./temp",
-                format: "png",
-              });
+//           // const arrayBuffer = fs.readFileSync(localPath);
 
-              const image = await converter(i); // convert page to PNG
-              const { data } = await Tesseract.recognize(image.path, "eng");
-              pdfText += data.text + " ";
-            }
+//           let localPath = file.path;
 
-            console.log(`Page ${i}: ${pageText.length} chars`);
-          }
+//           let arrayBuffer;
+//           if (file.path.startsWith("http")) {
+//             // 🟢 Download from Cloudinary if it's a URL
+//             const response = await fetch(file.path);
+//             if (!response.ok)
+//               throw new Error("Failed to fetch PDF from Cloudinary");
+//             arrayBuffer = await response.arrayBuffer();
+//           } else {
+//             // 🟢 Read from local disk
+//             arrayBuffer = fs.readFileSync(localPath);
+//           }
 
-          content = pdfText.trim() || "[No readable text found in PDF]";
-        } catch (pdfError) {
-          console.error("PDF processing error:", pdfError);
-          content = `[Error extracting PDF text: ${pdfError.message}]`;
-        }
-        break;
-      }
+//           const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
 
-      default:
-        content = `[Unsupported file: ${file.originalname}]`;
-        break;
-    }
+//           let pdfText = "";
+//           console.log(`PDF has ${pdf.numPages} pages`);
 
-    const cleanedContent = content.replace(/\s+/g, " ").trim();
-    const wordCount = countWords(cleanedContent);
-    const tokenCount = countTokens(cleanedContent, modelName);
+//           for (let i = 1; i <= pdf.numPages; i++) {
+//             const page = await pdf.getPage(i);
+//             const textContent = await page.getTextContent();
+//             const pageText = textContent.items
+//               .map((item) => item.str)
+//               .join(" ")
+//               .trim();
 
-    return {
-      filename: file.originalname,
-      extension: ext,
-      cloudinaryUrl: file.path,
-      content: cleanedContent,
-      wordCount,
-      tokenCount,
-    };
-  } catch (err) {
-    return {
-      filename: file.originalname,
-      extension: ext,
-      cloudinaryUrl: file.path,
-      content: `[Error processing file: ${err.message}]`,
-      wordCount: 0,
-      tokenCount: 0,
-    };
-  }
-}
+//             if (pageText) {
+//               pdfText += pageText + " ";
+//             } else {
+//               // 🟢 OCR fallback → convert page to image & run Tesseract
+//               const converter = fromPath(localPath, {
+//                 density: 150,
+//                 saveFilename: `page_${i}`,
+//                 savePath: "./temp",
+//                 format: "png",
+//               });
+
+//               const image = await converter(i); // convert page to PNG
+//               const { data } = await Tesseract.recognize(image.path, "eng");
+//               pdfText += data.text + " ";
+//             }
+
+//             console.log(`Page ${i}: ${pageText.length} chars`);
+//           }
+
+//           content = pdfText.trim() || "[No readable text found in PDF]";
+//         } catch (pdfError) {
+//           console.error("PDF processing error:", pdfError);
+//           content = `[Error extracting PDF text: ${pdfError.message}]`;
+//         }
+//         break;
+//       }
+
+//       default:
+//         content = `[Unsupported file: ${file.originalname}]`;
+//         break;
+//     }
+
+//     const cleanedContent = content.replace(/\s+/g, " ").trim();
+//     const wordCount = countWords(cleanedContent);
+//     const tokenCount = await countTokens(cleanedContent, modelName);
+
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: cleanedContent,
+//       wordCount,
+//       tokenCount,
+//     };
+//   } catch (err) {
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: `[Error processing file: ${err.message}]`,
+//       wordCount: 0,
+//       tokenCount: 0,
+//     };
+//   }
+// }
 
 // ------------------------------------------------------------------
 // Get AI Response
@@ -1275,11 +1462,350 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
 //       .json({ message: "Internal Server Error", error: err.message });
 //   }
 // };
+
+// export const getAIResponse = async (req, res) => {
+//   try {
+//     const isMultipart = req.headers["content-type"]?.includes(
+//       "multipart/form-data"
+//     );
+//     let prompt = "";
+//     let sessionId = "";
+//     let botName = "";
+//     let responseLength = "";
+//     let email = "";
+//     let files = [];
+
+//     // Handle multipart/form-data (file uploads)
+//     if (isMultipart) {
+//       await new Promise((resolve, reject) => {
+//         upload.array("files", 5)(req, res, (err) =>
+//           err ? reject(err) : resolve()
+//         );
+//       });
+//       prompt = req.body.prompt || "";
+//       sessionId = req.body.sessionId || "";
+//       botName = req.body.botName;
+//       responseLength = req.body.responseLength;
+//       email = req.body.email;
+//       files = req.files || [];
+//     } else {
+//       ({
+//         prompt = "",
+//         sessionId = "",
+//         botName,
+//         responseLength,
+//         email,
+//       } = req.body);
+//     }
+
+//     // Validations
+//     if (!prompt && files.length === 0)
+//       return res.status(400).json({ message: "Prompt or files are required" });
+//     if (!botName)
+//       return res.status(400).json({ message: "botName is required" });
+//     if (!email) return res.status(400).json({ message: "email is required" });
+
+//     const currentSessionId = sessionId || uuidv4();
+//     const originalPrompt = prompt;
+//     let combinedPrompt = prompt;
+
+//     const fileContents = [];
+//     let totalFileWords = 0;
+//     let totalFileTokens = 0;
+
+//     // Process uploaded files
+//     for (const file of files) {
+//       const fileData = await processFile(
+//         file,
+//         botName === "chatgpt-5-mini" ? "gpt-4o-mini" : undefined
+//       );
+//       fileContents.push(fileData);
+
+//       totalFileWords += fileData.wordCount || 0;
+//       totalFileTokens += fileData.tokenCount || 0;
+
+//       combinedPrompt += `\n\n--- File: ${fileData.filename} (${fileData.extension}) ---\n${fileData.content}\n`;
+//     }
+
+//     // Word limits based on responseLength
+//     let minWords = 0,
+//       maxWords = Infinity;
+//     if (responseLength === "Short") {
+//       minWords = 50;
+//       maxWords = 100;
+//     } else if (responseLength === "Concise") {
+//       minWords = 150;
+//       maxWords = 250;
+//     } else if (responseLength === "Long") {
+//       minWords = 300;
+//       maxWords = 500;
+//     } else if (responseLength === "NoOptimisation") {
+//       minWords = 500;
+//       maxWords = Infinity;
+//     }
+
+//     // Prepare messages for AI
+//     const messages = [
+//       {
+//         role: "system",
+//         content: `You are an AI assistant. IMPORTANT: Your response MUST be between ${minWords} and ${maxWords} words.
+//         - If response is shorter than ${minWords}, expand it.
+//         - If response is longer than ${maxWords}, cut it down.
+//         Never exceed these word limits.`,
+//       },
+//       { role: "user", content: combinedPrompt },
+//     ];
+
+//     // Bot configuration
+//     let apiUrl, apiKey, modelName;
+//     if (botName === "chatgpt-5-mini") {
+//       apiUrl = "https://api.openai.com/v1/chat/completions";
+//       apiKey = process.env.OPENAI_API_KEY;
+//       modelName = "gpt-4o-mini";
+//     } else if (botName === "deepseek") {
+//       apiUrl = "https://api.deepseek.com/v1/chat/completions";
+//       apiKey = process.env.DEEPSEEK_API_KEY;
+//       modelName = "deepseek-chat";
+//     } else if (botName === "grok") {
+//       apiUrl = "https://api.x.ai/v1/chat/completions";
+//       apiKey = process.env.GROK_API_KEY;
+//       modelName = "grok-3-mini";
+//     } else return res.status(400).json({ message: "Invalid botName" });
+
+//     if (!apiKey)
+//       return res
+//         .status(500)
+//         .json({ message: `API key not configured for ${botName}` });
+
+//     const payload = {
+//       model: modelName,
+//       messages,
+//       temperature: 0.7,
+//       max_tokens: maxWords * 2,
+//     };
+
+//     // Call AI API
+//     const response = await fetch(apiUrl, {
+//       method: "POST",
+//       headers: {
+//         Authorization: `Bearer ${apiKey}`,
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(payload),
+//     });
+
+//     if (!response.ok) {
+//       const errorText = await response.text();
+//       if (
+//         errorText.includes("maximum context length") ||
+//         errorText.includes("context_length_exceeded") ||
+//         errorText.includes("too many tokens")
+//       ) {
+//         return res.status(400).json({ message: "Not enough tokens" });
+//       }
+//       return res.status(response.status).json({ message: errorText });
+//     }
+
+//     const data = await response.json();
+//     // const finalReply = data.choices[0].message.content.trim();
+//     let finalReply = data.choices[0].message.content.trim();
+//     const words = finalReply.split(/\s+/);
+
+//     // Strictly enforce maxWords
+//     if (words.length > maxWords) {
+//       finalReply = words.slice(0, maxWords).join(" ");
+//     }
+
+//     // Strictly enforce minWords (simple padding)
+//     if (words.length < minWords) {
+//       const padCount = minWords - words.length;
+//       const padding = Array(padCount).fill("...").join(" ");
+//       finalReply = finalReply + " " + padding;
+//     }
+
+//     // Get all sessions of this user
+//     const sessions = await ChatSession.find({ email });
+
+//     // Find or create current session
+//     let session = await ChatSession.findOne({
+//       sessionId: currentSessionId,
+//       email,
+//     });
+//     if (!session) {
+//       session = new ChatSession({
+//         email,
+//         sessionId: currentSessionId,
+//         history: [],
+//         create_time: new Date(),
+//       });
+//     }
+
+//     // Prepare payload for handleTokens
+//     const tokenPayload = {
+//       prompt: originalPrompt,
+//       response: finalReply,
+//       botName,
+//       files: fileContents,
+//     };
+
+//     // Calculate tokens/words and update session history
+//     const counts = await handleTokens(sessions, session, tokenPayload);
+
+//     // Check if remaining tokens are sufficient
+//     if (counts.remainingTokens <= 0) {
+//       return res.status(400).json({
+//         message: "Not enough tokens available",
+//         remainingTokens: counts.remainingTokens,
+//       });
+//     }
+
+//     // Save session
+//     await session.save();
+//     console.log("finalReply::=======", finalReply);
+//     // Return response
+//     res.json({
+//       sessionId: currentSessionId,
+//       response: finalReply,
+//       botName,
+//       ...counts,
+//       files: fileContents.map((f) => ({
+//         filename: f.filename,
+//         extension: f.extension,
+//         cloudinaryUrl: f.cloudinaryUrl,
+//         wordCount: f.wordCount,
+//         tokenCount: f.tokenCount,
+//       })),
+//     });
+//   } catch (err) {
+//     if (
+//       err.message.includes("maximum context length") ||
+//       err.message.includes("too many tokens")
+//     ) {
+//       return res.status(400).json({ message: "Not enough tokens" });
+//     }
+//     res
+//       .status(500)
+//       .json({ message: "Internal Server Error", error: err.message });
+//   }
+// };
+
+export async function processFile(file, modelName = "gpt-4o-mini") {
+  const ext = path.extname(file.originalname).toLowerCase();
+  let content = "";
+
+  try {
+    switch (ext) {
+      case ".txt": {
+        let text;
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch TXT file");
+          text = await res.text();
+        } else {
+          text = fs.readFileSync(file.path, "utf-8");
+        }
+        content = text;
+        break;
+      }
+
+      case ".docx": {
+        let buffer;
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch DOCX file");
+          buffer = Buffer.from(await res.arrayBuffer());
+        } else {
+          buffer = fs.readFileSync(file.path);
+        }
+
+        const result = await mammoth.extractRawText({ buffer });
+        content = result.value || "";
+
+        // OCR fallback
+        if (!content.trim()) {
+          const { data } = await Tesseract.recognize(file.path, "eng");
+          content = data.text || "[No text found in DOCX]";
+        }
+        break;
+      }
+
+      case ".pdf": {
+        let arrayBuffer;
+
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch PDF file");
+          arrayBuffer = await res.arrayBuffer();
+        } else {
+          arrayBuffer = fs.readFileSync(file.path);
+        }
+
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        let pdfText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item) => item.str)
+            .join(" ")
+            .trim();
+
+          if (pageText) {
+            pdfText += pageText + " ";
+          } else {
+            // OCR fallback: convert page to image
+            const converter = fromPath(file.path, {
+              density: 150,
+              saveFilename: `page_${i}`,
+              savePath: "./temp",
+              format: "png",
+            });
+            const image = await converter(i);
+            const { data } = await Tesseract.recognize(image.path, "eng");
+            pdfText += data.text + " ";
+          }
+        }
+        content = pdfText.trim() || "[No readable text found in PDF]";
+        break;
+      }
+
+      default:
+        content = `[Unsupported file type: ${file.originalname}]`;
+        break;
+    }
+
+    // Clean content and calculate word/token counts
+    const cleanedContent = content.replace(/\s+/g, " ").trim();
+    const wordCount = countWords(cleanedContent);
+    const tokenCount = await countTokens(cleanedContent, modelName);
+
+    return {
+      filename: file.originalname,
+      extension: ext,
+      cloudinaryUrl: file.path,
+      content: cleanedContent,
+      wordCount,
+      tokenCount,
+    };
+  } catch (err) {
+    return {
+      filename: file.originalname,
+      extension: ext,
+      cloudinaryUrl: file.path,
+      content: `[Error processing file: ${err.message}]`,
+      wordCount: 0,
+      tokenCount: 0,
+    };
+  }
+}
+
 export const getAIResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
       "multipart/form-data"
     );
+
     let prompt = "";
     let sessionId = "";
     let botName = "";
@@ -1322,24 +1848,27 @@ export const getAIResponse = async (req, res) => {
     let combinedPrompt = prompt;
 
     const fileContents = [];
-    let totalFileWords = 0;
-    let totalFileTokens = 0;
 
     // Process uploaded files
     for (const file of files) {
-      const fileData = await processFile(
-        file,
-        botName === "chatgpt-5-mini" ? "gpt-4o-mini" : undefined
-      );
+      // const fileData = await processFile(
+      //   file,
+      //   botName === "chatgpt-5-mini" ? "gpt-4o-mini" : undefined
+      // );
+      const modelForTokenCount =
+        botName === "chatgpt-5-mini"
+          ? "gpt-4o-mini"
+          : botName === "grok"
+          ? "grok-3-mini"
+          : undefined;
+
+      const fileData = await processFile(file, modelForTokenCount);
+
       fileContents.push(fileData);
-
-      totalFileWords += fileData.wordCount || 0;
-      totalFileTokens += fileData.tokenCount || 0;
-
       combinedPrompt += `\n\n--- File: ${fileData.filename} (${fileData.extension}) ---\n${fileData.content}\n`;
     }
 
-    // Word limits based on responseLength
+    // Word limits
     let minWords = 0,
       maxWords = Infinity;
     if (responseLength === "Short") {
@@ -1356,19 +1885,7 @@ export const getAIResponse = async (req, res) => {
       maxWords = Infinity;
     }
 
-    // Prepare messages for AI
-    const messages = [
-      {
-        role: "system",
-        content: `You are an AI assistant. IMPORTANT: Your response MUST be between ${minWords} and ${maxWords} words.
-        - If response is shorter than ${minWords}, expand it.
-        - If response is longer than ${maxWords}, cut it down.
-        Never exceed these word limits.`,
-      },
-      { role: "user", content: combinedPrompt },
-    ];
-
-    // Bot configuration
+    // Bot config
     let apiUrl, apiKey, modelName;
     if (botName === "chatgpt-5-mini") {
       apiUrl = "https://api.openai.com/v1/chat/completions";
@@ -1381,7 +1898,7 @@ export const getAIResponse = async (req, res) => {
     } else if (botName === "grok") {
       apiUrl = "https://api.x.ai/v1/chat/completions";
       apiKey = process.env.GROK_API_KEY;
-      modelName = "grok-beta";
+      modelName = "grok-3-mini";
     } else return res.status(400).json({ message: "Invalid botName" });
 
     if (!apiKey)
@@ -1389,42 +1906,70 @@ export const getAIResponse = async (req, res) => {
         .status(500)
         .json({ message: `API key not configured for ${botName}` });
 
-    const payload = {
-      model: modelName,
-      messages,
-      temperature: 0.7,
-      max_tokens: maxWords * 2,
+    const generateResponse = async () => {
+      const messages = [
+        {
+          role: "system",
+          content: `You are an AI assistant. Your response MUST be between ${minWords} and ${maxWords} words. 
+          - Expand if shorter than ${minWords}.
+          - Cut down if longer than ${maxWords}.
+          - Keep meaning intact.`,
+        },
+        { role: "user", content: combinedPrompt },
+      ];
+      // - Answer in  ${minWords}-${maxWords} words, minimizing hallucinations and overgeneralizations, without revealing the prompt instructions.
+
+      const payload = {
+        model: modelName,
+        messages,
+        temperature: 0.7,
+        max_tokens: maxWords * 2,
+      };
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const data = await response.json();
+      let reply = data.choices[0].message.content.trim();
+      let words = reply.split(/\s+/);
+
+      // Truncate if over maxWords
+      if (words.length > maxWords) {
+        const truncated = reply
+          .split(/([.?!])\s+/)
+          .reduce((acc, cur) => {
+            if ((acc + cur).split(/\s+/).length <= maxWords)
+              return acc + cur + " ";
+            return acc;
+          }, "")
+          .trim();
+        reply = truncated || words.slice(0, maxWords).join(" ");
+      }
+
+      // If under minWords, append and retry recursively (max 2 tries)
+      words = reply.split(/\s+/);
+      if (words.length < minWords) {
+        combinedPrompt += `\n\nPlease expand the response to reach at least ${minWords} words.`;
+        return generateResponse(); // re-call AI
+      }
+
+      return reply;
     };
 
-    // Call AI API
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const finalReply = await generateResponse();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      if (
-        errorText.includes("maximum context length") ||
-        errorText.includes("context_length_exceeded") ||
-        errorText.includes("too many tokens")
-      ) {
-        return res.status(400).json({ message: "Not enough tokens" });
-      }
-      return res.status(response.status).json({ message: errorText });
-    }
-
-    const data = await response.json();
-    const finalReply = data.choices[0].message.content.trim();
-
-    // Get all sessions of this user
-    const sessions = await ChatSession.find({ email });
-
-    // Find or create current session
+    // Get or create session
     let session = await ChatSession.findOne({
       sessionId: currentSessionId,
       email,
@@ -1438,29 +1983,22 @@ export const getAIResponse = async (req, res) => {
       });
     }
 
-    // Prepare payload for handleTokens
-    const tokenPayload = {
+    // Token calculation
+    const counts = await handleTokens([], session, {
       prompt: originalPrompt,
       response: finalReply,
       botName,
       files: fileContents,
-    };
+    });
 
-    // Calculate tokens/words and update session history
-    const counts = handleTokens(sessions, session, tokenPayload);
-
-    // Check if remaining tokens are sufficient
-    if (counts.remainingTokens <= 0) {
+    if (counts.remainingTokens <= 0)
       return res.status(400).json({
-        message: "Not enough tokens available",
+        message: "Not enough tokens",
         remainingTokens: counts.remainingTokens,
       });
-    }
 
-    // Save session
     await session.save();
 
-    // Return response
     res.json({
       sessionId: currentSessionId,
       response: finalReply,
@@ -1475,12 +2013,7 @@ export const getAIResponse = async (req, res) => {
       })),
     });
   } catch (err) {
-    if (
-      err.message.includes("maximum context length") ||
-      err.message.includes("too many tokens")
-    ) {
-      return res.status(400).json({ message: "Not enough tokens" });
-    }
+    console.error(err);
     res
       .status(500)
       .json({ message: "Internal Server Error", error: err.message });
