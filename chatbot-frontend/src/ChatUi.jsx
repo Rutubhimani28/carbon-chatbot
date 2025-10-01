@@ -2661,10 +2661,13 @@ const ChatUI = () => {
                   "& .MuiOutlinedInput-root": {
                     borderRadius: "25px",
                     backgroundColor: "#fff",
-                    paddingLeft: "37px", // Space for file icon
                     height: selectedFiles.length > 0 ? "auto" : "40px",
                     minHeight: "40px",
-                    paddingbottom: "0px",
+                    padding:
+                      selectedFiles.length > 0
+                        ? "30px 14px 8.5px 37px !important"
+                        : "0px !important",
+                    paddingLeft: "37px !important", // Space for file icon
                     paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
                   },
                   "& .MuiOutlinedInput-input": {
@@ -2741,7 +2744,7 @@ const ChatUI = () => {
                   ),
                 }}
               />
-
+              {console.log("selectedFiles length:", selectedFiles.length)}
               <Box
                 sx={{
                   display: "flex",
