@@ -38,13 +38,14 @@ console.log(
 const app = express();
 
 //  CORS middleware add karo
-app.use(
-  cors({
-    origin: "http://localhost:5173", // tamaru React frontend URL
-    methods: ["GET", "POST"],
-    credentials: true,
-  })
-);
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173", // tamaru React frontend URL
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   })
+// );
+app.use(cors());
 
 app.use(cors());
 app.use(express.json());
