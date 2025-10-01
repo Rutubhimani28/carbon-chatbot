@@ -370,7 +370,7 @@
 
 //     try {
 //       const res = await axios.post(
-//         "http://localhost:8080/api/ai/register",
+//         "https://carbon-chatbot.onrender.com/api/ai/register",
 //         formData
 //       );
 //       setMessage(res.data.message);
@@ -453,7 +453,7 @@ const Register = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:8080/api/ai/register",
+        "https://carbon-chatbot.onrender.com/api/ai/register",
         formData
       );
       setMessage(res.data.message);
