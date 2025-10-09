@@ -31,12 +31,17 @@ import {
   Close as CloseIcon,
   InsertDriveFile,
 } from "@mui/icons-material";
+import SearchUI from "./SearchUi";
 import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOutlined";
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
+import Msg_logo from "././assets/Msg_logo.png"; // path adjust karo
+import chat4 from "././assets/chat4.png"; // path adjust karo
+import search6 from "././assets/search6.png"; // path adjust karo
+import Search_logo1 from "././assets/Search_logo1.png"; // path adjust karo
 import Swal from "sweetalert2";
 // import CloseIcon from "@mui/icons-material/Close";
 
@@ -70,17 +75,23 @@ const ChatUI = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const [remainingTokens, setRemainingTokens] = useState(0);
   const [totalTokensUsed, setTotalTokensUsed] = useState(0);
-  const [responseLength, setResponseLength] = useState("Response Length:");
+  const [responseLength, setResponseLength] = useState("");
   // 🔹 नवी state add करो
   const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
   const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [activeView, setActiveView] = useState("chat");
+  const [customValue, setCustomValue] = useState("");
+  const [historyList, setHistoryList] = useState([]); // store user search history
+
   // In your state initialization
   // const [messageGroups, setMessageGroups] = useState([]);
 
   // State for popover
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeGroup, setActiveGroup] = useState(null);
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleClick = (event, idx, tokens) => {
     setAnchorEl(event.currentTarget);
@@ -152,6 +163,37 @@ const ChatUI = () => {
     };
   }, []);
 
+  const fetchSearchHistory = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
+      if (!email) return;
+
+      setHistoryLoading(true);
+
+      const res = await fetch(`${apiBaseUrl}/Searchhistory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (data.history) {
+        // extract only queries
+        setHistoryList(data.history.map((h) => h.query));
+      }
+    } catch (err) {
+      console.error("History fetch error:", err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchSearchHistory();
+  }, [apiBaseUrl, historyLoading]);
+
+  console.log("historyList::::::::::", historyList);
+
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -170,7 +212,7 @@ const ChatUI = () => {
     abortControllerRef.current = controller;
 
     try {
-      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
+      const response = await fetch(`${apiBaseUrl}/api/ai/ask`, {
         method: "POST",
         body: formData, // No Content-Type header - browser will set it with boundary
         signal: controller.signal,
@@ -347,14 +389,11 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.email) return;
 
-      const response = await fetch(
-        "https://carbon-chatbot.onrender.com/api/ai/get_user_sessions",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email }),
-        }
-      );
+      const response = await fetch(`${apiBaseUrl}/api/ai/get_user_sessions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -502,7 +541,7 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.email) return [];
 
-      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/history", {
+      const response = await fetch(`${apiBaseUrl}/api/ai/history`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, email: user.email }),
@@ -513,7 +552,7 @@ const ChatUI = () => {
       }
 
       const data = await response.json();
-      console.log("dataaaaaaaaaaaaaaaaaaaaaaaaaaa:", data); // Debug log
+      // console.log("dataaaaaaaaaaaaaaaaaaaaaaaaaaa:", data); // Debug log
 
       // Extract token information from the response
       if (data.remainingTokens !== undefined) {
@@ -1125,7 +1164,8 @@ const ChatUI = () => {
     };
 
     try {
-      const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
+      // const response = await fetch(`${apiBaseUrl}/api/ai/ask`, {
+      const response = await fetch(`${apiBaseUrl}/api/ai/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -1672,7 +1712,7 @@ const ChatUI = () => {
       setIsSending(false);
       setIsTypingResponse(false);
       scrollToBottom();
-      setResponseLength("Response Length:");
+      setResponseLength(" ");
       fetchChatSessions();
     }
   };
@@ -1805,46 +1845,183 @@ const ChatUI = () => {
               <Box
                 sx={{
                   display: "flex",
-                  gap: 1,
+                  gap: 0,
                   alignItems: "center",
                   justifyContent: "space-between",
-                  pt: 1,
+                  pt: ["2px"],
                   px: 0,
                 }}
               >
-                {/* <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}> */}
-                {/* <Avatar
-                  src={Mainlogo}
-                  alt="Main Logo"
-                  variant="square"
-                  sx={{
-                    width: ["179px"],
-                    height: 32,
-                    objectFit: "contain",
-                    cursor: "pointer",
-                  }}
-                /> */}
-                <Box
+                {/* <Box
                   component="img"
-                  src={Mainlogo}
-                  alt="Main Logo"
+                  src={Msg_logo}
+                  alt="Msg_logo"
                   sx={{
-                    width: ["144px"], // fix logo width
-                    height: ["40px"], // fix height
+                    width: ["126px"], // fix logo width
+                    height: ["62px"], // fix height
                     objectFit: "contain", // keep aspect ratio, no blur
                     cursor: "pointer",
                     ml: 0,
+                    mr: -["25px"],
+                  }}
+                /> */}
+
+                <Box
+                  component="img"
+                  src={Msg_logo}
+                  alt="Msg_logo"
+                  sx={{
+                    width: ["137px"], // fix logo width
+                    height: ["63px"], // fix height
+                    objectFit: "contain", // keep aspect ratio, no blur
+                    cursor: "pointer",
+                    ml: 0,
+                    // mr: -["25px"],
                   }}
                 />
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    mr: 4,
+                    gap: 1,
+                    mt: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      // mr: 4,
+                      gap: 1,
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      pr: 0,
+                      cursor: "pointer",
+                      position: "relative", // needed for underline positioning
+                      pb: "0px", // space for underline
+                    }}
+                    onClick={() => setActiveView("chat")}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        mb: 1,
+                        fontSize: "16px",
+                        fontWeight: activeView === "chat" ? 600 : 400,
+                        color: activeView === "chat" ? "#2F67F6" : "inherit",
+                        transition: "color 0.3s ease",
+                      }}
+                    >
+                      Chat
+                    </Typography>
+
+                    <Box
+                      component="img"
+                      src={chat4}
+                      alt="chat4"
+                      sx={{
+                        width: ["39px"], // fix logo width
+                        height: ["42px"], // fix height
+                        objectFit: "contain", // keep aspect ratio, no blur
+                        cursor: "pointer",
+                        // ml: 0,
+                        // ml: -["10px"],
+                        // mt: ["10px"],
+                      }}
+                      onClick={() => setActiveView("chat")}
+                    />
+
+                    {/* 🔹 Underline (visible only when active) */}
+                    {activeView === "chat" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#2F67F6",
+                          borderRadius: "2px",
+                          transition: "all 0.3s ease",
+                        }}
+                      />
+                    )}
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "row",
+                      // mr: 4,
+                      gap: 1,
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "4px",
+                      // mt:0,
+                    }}
+                    onClick={() => setActiveView("search")}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        mb: 1,
+                        fontSize: "16px",
+                        fontWeight: activeView === "search" ? 600 : 400,
+                        color: activeView === "search" ? "#2F67F6" : "inherit",
+                        transition: "color 0.3s ease",
+                      }}
+                    >
+                      Search
+                    </Typography>
+
+                    <Box
+                      component="img"
+                      src={search6}
+                      alt="search6"
+                      sx={{
+                        width: ["39px"], // fix logo width
+                        height: ["42px"], // fix height
+                        objectFit: "contain", // keep aspect ratio, no blur
+                        cursor: "pointer",
+                        // ml: 0,
+                        // ml: -["10px"],
+                        // mt: ["10px"],
+                      }}
+                      onClick={() => setActiveView("search")}
+                    />
+
+                    {/* 🔹 Underline (visible only when active) */}
+                    {activeView === "search" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#2F67F6",
+                          borderRadius: "2px",
+                          transition: "all 0.3s ease",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+
                 {/* </Box> */}
-                <IconButton onClick={() => setIsCollapsed(true)}>
+                {/* <IconButton onClick={() => setIsCollapsed(true)}
+                >
                   <FeaturedPlayListOutlinedIcon />
-                </IconButton>
+                </IconButton> */}
               </Box>
 
               {/* New Chat */}
               <Box
-                sx={{ display: "flex", alignItems: "center", pt: 1, pl: 1 }}
+                sx={{ display: "flex", alignItems: "center", pt: 0, pl: 1 }}
                 onClick={createNewChat}
               >
                 <AddIcon />
@@ -1908,7 +2085,7 @@ const ChatUI = () => {
                     </Box>
                   ))}
                 </div>
-              ) : (
+              ) : activeView === "chat" ? (
                 <List>
                   {filteredChats
                     ?.filter((item) => item?.name)
@@ -1952,6 +2129,11 @@ const ChatUI = () => {
                       </ListItemButton>
                     ))}
                 </List>
+              ) : (
+                <Typography
+                  variant="body2"
+                  sx={{ p: 2, textAlign: "center", color: "gray" }}
+                ></Typography>
               )}
             </Box>
 
@@ -2087,14 +2269,28 @@ const ChatUI = () => {
           overflow: "hidden", // 🔹 Prevent horizontal scroll
         }}
       >
+        {/* Header */}
         <Box
           sx={{
+            display: "flex",
+            alignItems: "center",
             mt: 3,
             ml: 2,
             flexShrink: 0,
+            // bgcolor: "red",
           }}
         >
-          {/* <FormControl fullWidth size="small">
+          {/* <IconButton onClick={() => setIsCollapsed(true)}> */}
+          <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
+            <FeaturedPlayListOutlinedIcon sx={{ ml: "-11px", mr: "7px" }} />
+          </IconButton>
+
+          <FormControl
+            fullWidth
+            size="small"
+            gap={1}
+            sx={{ mr: 2, display: "flex", flexDirection: "row", gap: 1 }}
+          >
             <Select
               labelId="bot-select-label"
               value={selectedBot}
@@ -2106,29 +2302,67 @@ const ChatUI = () => {
                 width: "175px",
               }}
             >
-              <MenuItem value="gpt-3.5">OpenAI GPT-3.5</MenuItem>
-              <MenuItem value="gpt-4">OpenAI GPT-4</MenuItem>
-              <MenuItem value="assistant-x">Assistant X</MenuItem>
-              <MenuItem value="custom-ai">Custom AI Bot</MenuItem>
-            </Select>
-          </FormControl> */}
-          <FormControl fullWidth size="small">
-            <Select
-              labelId="bot-select-label"
-              value={selectedBot}
-              onChange={(e) => setSelectedBot(e.target.value)}
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: "5px",
-                maxWidth: "175px",
-                width: "175px",
-              }}
-            >
-              <MenuItem value="chatgpt-5-mini">ChatGPT 5 Mini</MenuItem>
+              <MenuItem value="chatgpt-5-mini">ChatGPT5 Mini</MenuItem>
               <MenuItem value="deepseek">DeepSeek</MenuItem>
-              <MenuItem value="grok">Grok</MenuItem>
+              <MenuItem value="grok">Grok 3 Mini</MenuItem>
+            </Select>
+
+            {/* AI history */}
+            <Select
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              displayEmpty
+              IconComponent={() => null} // removes arrow
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: "5px",
+                maxWidth: "175px",
+                width: "175px",
+                "& .MuiSelect-select": {
+                  pl: 1.5, // small padding for text
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                AI History
+              </MenuItem>
+              {historyLoading ? (
+                <MenuItem disabled>Loading...</MenuItem>
+              ) : historyList.length > 0 ? (
+                historyList.map((query, idx) => (
+                  <MenuItem key={idx} value={query}>
+                    {query}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No history found</MenuItem>
+              )}
             </Select>
           </FormControl>
+
+          {/* Custom Dropdown (no arrow) */}
+          {/* <FormControl fullWidth size="small" sx={{ maxWidth: 175 }}>
+            <Select
+              value={customValue}
+              onChange={(e) => setCustomValue(e.target.value)}
+              displayEmpty
+              IconComponent={() => null} // removes arrow
+              sx={{
+                bgcolor: "#fff",
+                borderRadius: "5px",
+                "& .MuiSelect-select": {
+                  pl: 1.5, // small padding for text
+                },
+              }}
+            >
+              <MenuItem value="" disabled>
+                Select Option
+              </MenuItem>
+              <MenuItem value="option1">Option 1</MenuItem>
+              <MenuItem value="option2">Option 2</MenuItem>
+              <MenuItem value="option3">Option 3</MenuItem>
+            </Select>
+          </FormControl> */}
         </Box>
 
         <Box
@@ -2181,85 +2415,91 @@ const ChatUI = () => {
           />
           <Typography variant="caption">Online</Typography>
         </Box> */}
-
-          {/* 👉 Main Content (Conditional) */}
-          <Box
-            sx={{
-              height: "78vh",
-              // p: 2,
-              display: "flex",
-              flexDirection: "column",
-              flexGrow: 1,
-              overflow: "auto",
-              p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
-              minHeight: 0, // 🔹 Important for flex scrolling
-            }}
-          >
-            {historyLoading ? (
+          {activeView === "chat" ? (
+            <>
+              {/* 👉 Main Content (Conditional) */}
               <Box
                 sx={{
+                  height: "78vh",
+                  // p: 2,
                   display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  py: 8,
-                  height: "48.5vh",
+                  flexDirection: "column",
+                  flexGrow: 1,
+                  overflow: "auto",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  minHeight: 0, // 🔹 Important for flex scrolling
                 }}
               >
-                <Box sx={{ textAlign: "center" }}>
-                  <CircularProgress sx={{ mb: 2 }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Loading chat history...
-                  </Typography>
-                </Box>
-              </Box>
-            ) : messageGroups[0]?.length === 0 ? (
-              // Welcome Screen
-              <Box sx={{ textAlign: "center", py: 8, color: "text.secondary" }}>
-                <leafatar
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    mx: "auto",
-                    mb: 2,
-                    bgcolor: "#3dafe2",
-                    color: "#fff",
-                  }}
-                >
-                  {/* <Logo /> */}
-                </leafatar>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Welcome to the WORDS
-                </Typography>
-                <Typography variant="body2">
-                  Start a conversation by typing a message below.
-                </Typography>
-              </Box>
-            ) : (
-              // Chat Messages
-              <Box sx={{ spaceY: 6, width: "100%", minWidth: 0 }}>
-                {(messageGroups[0] || []).map((group, idx) => (
-                  <Box key={idx} mb={3}>
-                    <Box
-                      display="flex"
-                      justifyContent="flex-end"
-                      flexDirection={"column"}
-                      alignItems={"flex-end"}
-                      mb={1.5}
+                {historyLoading ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      py: 8,
+                      height: "48.5vh",
+                    }}
+                  >
+                    <Box sx={{ textAlign: "center" }}>
+                      <CircularProgress sx={{ mb: 2 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Loading chat history...
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : messageGroups[0]?.length === 0 ? (
+                  // Welcome Screen
+                  <Box
+                    sx={{ textAlign: "center", py: 8, color: "text.secondary" }}
+                  >
+                    <leafatar
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: "auto",
+                        mb: 2,
+                        bgcolor: "#3dafe2",
+                        color: "#fff",
+                      }}
                     >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mr: 1,
-                          // fontSize:"19px",
-                        }}
-                      >
-                        <Typography variant="caption" sx={{ fontSize: "14px" }}>
-                          You
-                        </Typography>
-                      </Box>
-                      {/* <Box
+                      {/* <Logo /> */}
+                    </leafatar>
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      Welcome to the Wrds
+                    </Typography>
+                    <Typography variant="body2">
+                      Start a conversation by typing a message below.
+                    </Typography>
+                  </Box>
+                ) : (
+                  // Chat Messages
+                  <Box sx={{ spaceY: 6, width: "100%", minWidth: 0 }}>
+                    {(messageGroups[0] || []).map((group, idx) => (
+                      <Box key={idx} mb={3}>
+                        <Box
+                          display="flex"
+                          justifyContent="flex-end"
+                          flexDirection={"column"}
+                          alignItems={"flex-end"}
+                          mb={1.5}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mr: 1,
+                              // fontSize:"19px",
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{ fontSize: "14px" }}
+                            >
+                              You
+                            </Typography>
+                          </Box>
+                          {/* <Box
                       sx={{
                         display: "flex",
                         justifyContent: "flex-end", // Right side ma mukse
@@ -2269,29 +2509,29 @@ const ChatUI = () => {
                       }}
                     > */}
 
-                      {group.files && group.files.length > 0 && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            backgroundColor: "#f0f4ff",
-                            borderRadius: "6px",
-                            padding: "2px 8px",
-                            border: "1px solid #2F67F6",
-                            maxWidth: "120px",
-                            mb: 0.5,
-                            // size: "20px",
-                          }}
-                        >
-                          <InsertDriveFile
-                            sx={{
-                              fontSize: "14px",
-                              color: "#2F67F6",
-                              mr: 1,
-                            }}
-                          />
+                          {group.files && group.files.length > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                backgroundColor: "#f0f4ff",
+                                borderRadius: "6px",
+                                padding: "2px 8px",
+                                border: "1px solid #2F67F6",
+                                maxWidth: "120px",
+                                mb: 0.5,
+                                // size: "20px",
+                              }}
+                            >
+                              <InsertDriveFile
+                                sx={{
+                                  fontSize: "14px",
+                                  color: "#2F67F6",
+                                  mr: 1,
+                                }}
+                              />
 
-                          {/* <Typography
+                              {/* <Typography
                             variant="caption"
                             sx={{
                               color: "#2F67F6",
@@ -2305,63 +2545,63 @@ const ChatUI = () => {
                            
                             {group.files.map((f) => f.name).join(", ")}
                           </Typography> */}
-                          <Box sx={{ overflow: "hidden" }}>
-                            {group.files.map((f, idx) => (
-                              <Typography
-                                key={idx}
-                                component="a"
-                                href={f.cloudinaryUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                variant="caption"
-                                sx={{
-                                  color: "#2F67F6",
-                                  display: "block",
-                                  textDecoration: "none",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "11px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                {/* {f.filename} ({f.wordCount}w / {f.tokenCount}t) */}
-                                {/* Try these different properties */}
-                                {f.name ||
-                                  f.filename ||
-                                  f.originalName ||
-                                  f.fileName}{" "}
-                                {/* ({f.wordCount}w / {f.tokenCount}t) */}
-                              </Typography>
-                            ))}
-                          </Box>
-                        </Box>
-                      )}
+                              <Box sx={{ overflow: "hidden" }}>
+                                {group.files.map((f, idx) => (
+                                  <Typography
+                                    key={idx}
+                                    component="a"
+                                    href={f.cloudinaryUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      display: "block",
+                                      textDecoration: "none",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {/* {f.filename} ({f.wordCount}w / {f.tokenCount}t) */}
+                                    {/* Try these different properties */}
+                                    {f.name ||
+                                      f.filename ||
+                                      f.originalName ||
+                                      f.fileName}{" "}
+                                    {/* ({f.wordCount}w / {f.tokenCount}t) */}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
 
-                      <Paper
-                        sx={{
-                          // p: 1.5,
-                          p: { xs: 1, sm: 1.5 }, // 🔹 Responsive padding
-                          bgcolor: "#2F67F6",
-                          color: "#fff",
-                          borderRadius: 3,
-                          // maxWidth: { xs: "80%", md: "70%" },
-                          // maxWidth: { xs: "85%", sm: "80%", md: "70%" },
-                          maxWidth: { xs: "95%", sm: "90%", md: "80%" },
-                        }}
-                      >
-                        {/* <Typography>
+                          <Paper
+                            sx={{
+                              // p: 1.5,
+                              p: { xs: 1, sm: 1.5 }, // 🔹 Responsive padding
+                              bgcolor: "#2F67F6",
+                              color: "#fff",
+                              borderRadius: 3,
+                              // maxWidth: { xs: "80%", md: "70%" },
+                              // maxWidth: { xs: "85%", sm: "80%", md: "70%" },
+                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                            }}
+                          >
+                            {/* <Typography>
                           {group.prompt.charAt(0).toUpperCase() +
                             group.prompt.slice(1)}
                         </Typography> */}
 
-                        <Typography>
-                          {group.prompt.charAt(0).toUpperCase() +
-                            group.prompt.slice(1)}
-                        </Typography>
+                            <Typography>
+                              {group.prompt.charAt(0).toUpperCase() +
+                                group.prompt.slice(1)}
+                            </Typography>
 
-                        {/* Show attached files */}
-                        {/* {group.files && group.files.length > 0 && (
+                            {/* Show attached files */}
+                            {/* {group.files && group.files.length > 0 && (
                           <Box sx={{ mt: 1, fontSize: "12px", opacity: 0.9 }}>
                             <Typography variant="caption">
                               Attached:{" "}
@@ -2370,165 +2610,169 @@ const ChatUI = () => {
                           </Box>
                         )} */}
 
-                        <Typography variant="caption">{group.time}</Typography>
-                      </Paper>
-                      {/* </Box> */}
-                    </Box>
-
-                    {/* AI Response */}
-                    <Box>
-                      {/* 🔹 Selected model name upar */}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          // p: 1,
-                          // borderBottom: "1px solid #e0e0e0",
-                          mb: 0.5,
-                          color: "text.primary",
-                        }}
-                      >
-                        {/* ✅ Logo */}
-                        {/* <Logo /> */}
-                        <Avatar
-                          src={leaf}
-                          alt="leaf"
-                          sx={{
-                            border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
-                            bgcolor: "white",
-                            width: 23, // thodu mota rakho
-                            height: 23,
-                            p: "2px", // andar jagya
-                            cursor: "pointer",
-                            // pl: "1px",
-                            mt: 0.5,
-                          }}
-                          // onClick={() => setIsCollapsed(false)}
-                        />
-
-                        {/* ✅ Bot name + AI Assistant */}
-                        <Box ml={1}>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              textDecoration: "underline",
-                              fontSize: "16px",
-                            }}
-                          >
-                            {/* {group.botName} */}
-                            {group.botName.charAt(0).toUpperCase() +
-                              group.botName.slice(1)}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            display="block"
-                          >
-                            WORDS
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Paper
-                        sx={{
-                          // p: 1.5,
-                          p: { xs: 1, sm: 1.5 },
-                          bgcolor: "#f1f6fc",
-                          borderRadius: 3,
-                          // maxWidth: { xs: "80%", md: "70%" },
-                          maxWidth: { xs: "95%", sm: "90%", md: "80%" },
-                        }}
-                      >
-                        <Box sx={{ mb: 2 }}>
-                          {group.isTyping &&
-                          [
-                            "Thinking...",
-                            "Analyzing...",
-                            "Generating...",
-                          ].includes(group.responses[group.currentSlide]) ? (
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Typography variant="body1">
-                                {group.responses[group.currentSlide]}
-                              </Typography>
-                            </Box>
-                          ) : (
-                            <div
-                              dangerouslySetInnerHTML={{
-                                __html: group.responses[group.currentSlide],
-                              }}
-                            />
-                          )}
-                        </Box>
-                        <Divider sx={{ my: 1 }} />
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="flex-end"
-                        >
-                          {/* Time on left */}
-                          <Typography
-                            variant="caption"
-                            sx={{ opacity: 0.6, mb: 0.5 }}
-                          >
-                            {group.time}
-                          </Typography>
-
-                          {/* Icon on right */}
-                          <IconButton
-                            size="small"
-                            onClick={(e) => handleClick(e, idx)}
-                          >
-                            <KeyboardArrowDownTwoToneIcon fontSize="small" />
-                          </IconButton>
-
-                          {/* Popover for usage token */}
-                          <Popover
-                            open={Boolean(anchorEl) && activeGroup === idx}
-                            anchorEl={anchorEl}
-                            onClose={handleClose}
-                            anchorOrigin={{
-                              vertical: "bottom",
-                              horizontal: "right",
-                            }}
-                            transformOrigin={{
-                              vertical: "top",
-                              horizontal: "right",
-                            }}
-                            PaperProps={{
-                              sx: {
-                                p: 1,
-                                borderRadius: 2,
-                                boxShadow: 3,
-                                minWidth: 140,
-                              },
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 500 }}
-                            >
-                              Token Count
+                            <Typography variant="caption">
+                              {group.time}
                             </Typography>
-                            <Typography
-                              variant="caption"
+                          </Paper>
+                          {/* </Box> */}
+                        </Box>
+
+                        {/* AI Response */}
+                        <Box>
+                          {/* 🔹 Selected model name upar */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              // p: 1,
+                              // borderBottom: "1px solid #e0e0e0",
+                              mb: 0.5,
+                              color: "text.primary",
+                            }}
+                          >
+                            {/* ✅ Logo */}
+                            {/* <Logo /> */}
+                            <Avatar
+                              src={leaf}
+                              alt="leaf"
                               sx={{
-                                color: "text.secondary",
-                                display: "block",
+                                border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
+                                bgcolor: "white",
+                                width: 23, // thodu mota rakho
+                                height: 23,
+                                p: "2px", // andar jagya
+                                cursor: "pointer",
+                                // pl: "1px",
                                 mt: 0.5,
                               }}
+                              // onClick={() => setIsCollapsed(false)}
+                            />
+
+                            {/* ✅ Bot name + AI Assistant */}
+                            <Box ml={1}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  textDecoration: "underline",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                {/* {group.botName} */}
+                                {group.botName.charAt(0).toUpperCase() +
+                                  group.botName.slice(1)}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                display="block"
+                              >
+                                WORDS
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Paper
+                            sx={{
+                              // p: 1.5,
+                              p: { xs: 1, sm: 1.5 },
+                              bgcolor: "#f1f6fc",
+                              borderRadius: 3,
+                              // maxWidth: { xs: "80%", md: "70%" },
+                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                            }}
+                          >
+                            <Box sx={{ mb: 2 }}>
+                              {group.isTyping &&
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Typography variant="body1">
+                                    {group.responses[group.currentSlide]}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <div
+                                  dangerouslySetInnerHTML={{
+                                    __html: group.responses[group.currentSlide],
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            <Divider sx={{ my: 1 }} />
+                            <Box
+                              display="flex"
+                              justifyContent="space-between"
+                              alignItems="flex-end"
                             >
-                              {group.tokensUsed !== null &&
-                              group.tokensUsed !== undefined
-                                ? group.tokensUsed
-                                : "N/A"}
-                            </Typography>
-                            {/* <Typography
+                              {/* Time on left */}
+                              <Typography
+                                variant="caption"
+                                sx={{ opacity: 0.6, mb: 0.5 }}
+                              >
+                                {group.time}
+                              </Typography>
+
+                              {/* Icon on right */}
+                              <IconButton
+                                size="small"
+                                onClick={(e) => handleClick(e, idx)}
+                              >
+                                <KeyboardArrowDownTwoToneIcon fontSize="small" />
+                              </IconButton>
+
+                              {/* Popover for usage token */}
+                              <Popover
+                                open={Boolean(anchorEl) && activeGroup === idx}
+                                anchorEl={anchorEl}
+                                onClose={handleClose}
+                                anchorOrigin={{
+                                  vertical: "bottom",
+                                  horizontal: "right",
+                                }}
+                                transformOrigin={{
+                                  vertical: "top",
+                                  horizontal: "right",
+                                }}
+                                PaperProps={{
+                                  sx: {
+                                    p: 1,
+                                    borderRadius: 2,
+                                    boxShadow: 3,
+                                    minWidth: 140,
+                                  },
+                                }}
+                              >
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontWeight: 500 }}
+                                >
+                                  Token Count
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: "text.secondary",
+                                    display: "block",
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  {group.tokensUsed !== null &&
+                                  group.tokensUsed !== undefined
+                                    ? group.tokensUsed
+                                    : "N/A"}
+                                </Typography>
+                                {/* <Typography
                             variant="caption"
                             sx={{ color: "text.secondary" }}
                           >
@@ -2536,37 +2780,38 @@ const ChatUI = () => {
                               ? usageTokens
                               : "N/A"}
                           </Typography> */}
-                          </Popover>
+                              </Popover>
+                            </Box>
+                          </Paper>
                         </Box>
-                      </Paper>
-                    </Box>
+                      </Box>
+                    ))}
+                    <div ref={messagesEndRef} />
                   </Box>
-                ))}
-                <div ref={messagesEndRef} />
+                )}
               </Box>
-            )}
-          </Box>
 
-          {/* 👉 Footer (Always Common) */}
-          {/* 👉 Footer (Always Common) */}
-          <Box sx={{ mb: 0, pb: 0, display: "flex", flexDirection: "column" }}>
-            <Box
-              sx={{
-                minHeight: "60px",
-                p: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                borderTop: "1px solid #e0e0e0",
-                bgcolor: "#fafafa",
-                pb: 0.5,
-                position: "relative",
-                flexWrap: { xs: "wrap", sm: "nowrap" },
-                // position: "relative",
-              }}
-            >
-              {/* File Attachment Button - Positioned absolutely inside the container */}
-              {/* <IconButton
+              {/* 👉 Footer (Always Common) */}
+              <Box
+                sx={{ mb: 0, pb: 0, display: "flex", flexDirection: "column" }}
+              >
+                <Box
+                  sx={{
+                    minHeight: "60px",
+                    p: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid #e0e0e0",
+                    bgcolor: "#fafafa",
+                    pb: 0.5,
+                    position: "relative",
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
+                    // position: "relative",
+                  }}
+                >
+                  {/* File Attachment Button - Positioned absolutely inside the container */}
+                  {/* <IconButton
                 component="label"
                 sx={{
                   color: "#2F67F6",
@@ -2597,222 +2842,230 @@ const ChatUI = () => {
                 />
                 <AttachFileIcon fontSize="small" />
               </IconButton> */}
-              <IconButton
-                component="label"
-                sx={{
-                  color: "#2F67F6",
-                  position: "absolute",
-                  left: "15px",
-                  bottom: "14px", // 👈 bottom ma fix karva
-                  zIndex: 2,
-                  // backgroundColor: "white",
-                  borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
-                }}
-              >
-                <input
-                  type="file"
-                  hidden
-                  multiple
-                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                  // onChange={(e) => {
-                  //   const files = e.target.files;
-                  //   if (files && files.length > 0) {
-                  //     setSelectedFile(files); // 🔹 array of files સેટ કરો
-                  //     console.log("Files selected:", files);
-                  //   }
-                  // }}
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files); // Convert FileList to Array
-                    // if (files.length > 0) {
-                    //   // setSelectedFiles(files);
-                    //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-                    //   console.log("Files selected:", files);
-                    // }
-                    if (files.length > 0) {
-                      setSelectedFiles((prevFiles) => {
-                        // Limit to 5 files maximum (matches backend limit)
-                        const newFiles = [...prevFiles, ...files];
-                        return newFiles.slice(0, 5);
-                      });
-                    }
-                    e.target.value = "";
-                  }}
-                />
-                <AttachFileIcon fontSize="small" />
-              </IconButton>
-
-              {/* Main Input with extra left padding for file icon */}
-              <TextField
-                fullWidth
-                placeholder="Ask me..."
-                variant="outlined"
-                size="small"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                disabled={isSending || isTypingResponse}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "25px",
-                    backgroundColor: "#fff",
-                    height: "auto",
-                    minHeight: "40px",
-                    padding:
-                      selectedFiles.length > 0
-                        ? "30px 14px 8.5px 37px !important"
-                        : "0px !important",
-                    paddingLeft: "37px !important", // Space for file icon
-                    paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    padding: "8px",
-                    height: "auto",
-                    minHeight: "24px",
-                    marginTop: selectedFiles.length > 0 ? "24px" : "0px",
-                  },
-                  "& .Mui-disabled": {
-                    opacity: 0.5,
-                  },
-                  fontSize: { xs: "14px", sm: "16px" },
-                  minWidth: { xs: "100%", sm: "200px" },
-                  mb: { xs: 1, sm: 0 },
-                }}
-                multiline
-                maxRows={selectedFiles.length > 0 ? 4 : 3}
-                InputProps={{
-                  startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        left: "11px",
-                        display: "flex",
-                        alignItems: "center",
-                        flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
-                        gap: 0.5, // 🔹 Files વચ્ચે gap
-                        // maxWidth: "200px", // 🔹 Maximum width
-                        maxWidth: "calc(100% - 50px)", // Prevent overflow
+                  <IconButton
+                    component="label"
+                    sx={{
+                      color: "#2F67F6",
+                      position: "absolute",
+                      left: "15px",
+                      bottom: "14px", // 👈 bottom ma fix karva
+                      zIndex: 2,
+                      // backgroundColor: "white",
+                      borderRadius: "50%",
+                      width: "32px",
+                      height: "32px",
+                    }}
+                  >
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                      // onChange={(e) => {
+                      //   const files = e.target.files;
+                      //   if (files && files.length > 0) {
+                      //     setSelectedFile(files); // 🔹 array of files સેટ કરો
+                      //     console.log("Files selected:", files);
+                      //   }
+                      // }}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files); // Convert FileList to Array
+                        // if (files.length > 0) {
+                        //   // setSelectedFiles(files);
+                        //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
+                        //   console.log("Files selected:", files);
+                        // }
+                        if (files.length > 0) {
+                          setSelectedFiles((prevFiles) => {
+                            // Limit to 5 files maximum (matches backend limit)
+                            const newFiles = [...prevFiles, ...files];
+                            return newFiles.slice(0, 5);
+                          });
+                        }
+                        e.target.value = "";
                       }}
-                    >
-                      {/* File Name Display */}
-                      {selectedFiles.map((file, index) => (
+                    />
+                    <AttachFileIcon fontSize="small" />
+                  </IconButton>
+
+                  {/* Main Input with extra left padding for file icon */}
+                  <TextField
+                    fullWidth
+                    placeholder="Ask me..."
+                    variant="outlined"
+                    size="small"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    disabled={isSending || isTypingResponse}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "25px",
+                        backgroundColor: "#fff",
+                        height: "auto",
+                        minHeight: "40px",
+                        padding:
+                          selectedFiles.length > 0
+                            ? "30px 14px 8.5px 37px !important"
+                            : "0px !important",
+                        paddingLeft: "37px !important", // Space for file icon
+                        paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        padding: "8px",
+                        height: "auto",
+                        minHeight: "24px",
+                        marginTop: selectedFiles.length > 0 ? "24px" : "0px",
+                      },
+                      "& .Mui-disabled": {
+                        opacity: 0.5,
+                      },
+                      fontSize: { xs: "14px", sm: "16px" },
+                      minWidth: { xs: "100%", sm: "200px" },
+                      mb: { xs: 1, sm: 0 },
+                    }}
+                    multiline
+                    maxRows={selectedFiles.length > 0 ? 4 : 3}
+                    InputProps={{
+                      startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
                         <Box
                           sx={{
+                            position: "absolute",
+                            top: "8px",
+                            left: "11px",
                             display: "flex",
                             alignItems: "center",
-                            backgroundColor: "#f0f4ff",
-                            borderRadius: "12px",
-                            padding: "2px 8px",
-                            border: "1px solid #2F67F6",
-                            maxWidth: "120px",
-                            mb: 0.5,
+                            flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
+                            gap: 0.5, // 🔹 Files વચ્ચે gap
+                            // maxWidth: "200px", // 🔹 Maximum width
+                            maxWidth: "calc(100% - 50px)", // Prevent overflow
                           }}
                         >
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: "#2F67F6",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              fontSize: "11px",
-                              fontWeight: "500",
-                            }}
-                          >
-                            {/* {file.name} */}
-                            {file.name.length > 15
-                              ? file.name.substring(0, 12) + "..."
-                              : file.name}
-                          </Typography>
-                          <IconButton
-                            size="small"
-                            // onClick={() => setSelectedFiles(null)}
-                            onClick={() => removeFile(index)} // 🔹 index પાસ કરો
-                            sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
-                          >
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
+                          {/* File Name Display */}
+                          {selectedFiles.map((file, index) => (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                backgroundColor: "#f0f4ff",
+                                borderRadius: "12px",
+                                padding: "2px 8px",
+                                border: "1px solid #2F67F6",
+                                maxWidth: "120px",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#2F67F6",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "11px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {/* {file.name} */}
+                                {file.name.length > 15
+                                  ? file.name.substring(0, 12) + "..."
+                                  : file.name}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                // onClick={() => setSelectedFiles(null)}
+                                onClick={() => removeFile(index)} // 🔹 index પાસ કરો
+                                sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ))}
                         </Box>
-                      ))}
-                    </Box>
-                  ),
-                }}
-              />
-              {console.log("selectedFiles length:", selectedFiles.length)}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  ml: 1,
-                  flexShrink: 0,
-                }}
-              >
-                <TextField
-                  select
-                  size="small"
-                  value={responseLength}
-                  onChange={(e) => setResponseLength(e.target.value)}
-                  sx={{
-                    width: { xs: "140px", sm: "179px" },
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "10px",
-                      backgroundColor: "#fff",
-                      textAlign: "center",
-                    },
-                  }}
-                  SelectProps={{
-                    displayEmpty: true,
-                    MenuProps: {
-                      disablePortal: true,
-                      PaperProps: {
-                        style: { maxHeight: 200, borderRadius: "10px" },
-                      },
-                    },
-                  }}
-                >
-                  <MenuItem value="Response Length:" disabled>
-                    Response Length:
-                  </MenuItem>
-                  <MenuItem value="Short">Short (50-100 words)</MenuItem>
-                  <MenuItem value="Concise">Concise (150-250 words)</MenuItem>
-                  <MenuItem value="Long">Long (300-500 words)</MenuItem>
-                  <MenuItem value="NoOptimisation">No Optimisation</MenuItem>
-                </TextField>
+                      ),
+                    }}
+                  />
+                  {console.log("selectedFiles length:", selectedFiles.length)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <TextField
+                      select
+                      size="small"
+                      value={responseLength}
+                      onChange={(e) => setResponseLength(e.target.value)}
+                      sx={{
+                        width: { xs: "140px", sm: "179px" },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "10px",
+                          backgroundColor: "#fff",
+                          textAlign: "center",
+                        },
+                      }}
+                      SelectProps={{
+                        displayEmpty: true,
+                        MenuProps: {
+                          disablePortal: true,
+                          PaperProps: {
+                            style: { maxHeight: 200, borderRadius: "10px" },
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Response Length:
+                      </MenuItem>
+                      <MenuItem value="Short">Short (50-100 words)</MenuItem>
+                      <MenuItem value="Concise">
+                        Concise (150-250 words)
+                      </MenuItem>
+                      <MenuItem value="Long">Long (300-500 words)</MenuItem>
+                      <MenuItem value="NoOptimisation">
+                        No Optimisation
+                      </MenuItem>
+                    </TextField>
 
-                <IconButton
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isSending || isTypingResponse}
-                  sx={{
-                    "&:disabled": {
-                      opacity: 0.5,
-                      cursor: "not-allowed",
-                    },
-                    ml: 1,
-                  }}
-                >
-                  <SendIcon />
-                </IconButton>
+                    <IconButton
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isSending || isTypingResponse}
+                      sx={{
+                        "&:disabled": {
+                          opacity: 0.5,
+                          cursor: "not-allowed",
+                        },
+                        ml: 1,
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+
+                {/* 👉 Tagline (Always Common) */}
+                <Box textAlign="center">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: "11px" }}
+                  >
+                    This AI Assistant can help with general information.
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-
-            {/* 👉 Tagline (Always Common) */}
-            <Box textAlign="center">
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: "11px" }}
-              >
-                This AI Assistant can help with general information.
-              </Typography>
-            </Box>
-          </Box>
+            </>
+          ) : (
+            <SearchUI setHistoryList={setHistoryList} />
+          )}
         </Box>
       </Box>
 

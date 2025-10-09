@@ -36,18 +36,22 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
+
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid)
-      return res.status(400).json({ error: "Invalid credentials" });
+      return res.status(400).json({ error: "Incorrect Password" });
+
+    // console.log("user from DB:", user);
+    // console.log("password from request:", password);
 
     //  Role no check karvo nathi
     // const token = jwt.sign(
-    //   { id: user._id, username: user.username }, // only id & username
+    //   { id: user._id, email: user.email }, // only id & email
     //   process.env.JWT_SECRET,
     //   { expiresIn: "1d" }
     // );

@@ -259,17 +259,24 @@ import {
   Link,
   CircularProgress,
   InputLabel,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -281,10 +288,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "https://carbon-chatbot.onrender.com/api/ai/login",
-        formData
-      );
+      const res = await axios.post(`${apiBaseUrl}/api/ai/login`, formData);
       setMessage(res.data.message);
 
       setUser(res.data.data);
@@ -298,7 +302,7 @@ const Login = () => {
       };
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // ✅ navigate to home after success
+      //  navigate to home after success
       navigate("/");
     } catch (err) {
       setMessage(err.response?.data?.error || "Login failed");
@@ -345,17 +349,17 @@ const Login = () => {
         <form onSubmit={handleSubmit} style={{ width: "100%", marginTop: 16 }}>
           {/* Username */}
           <InputLabel sx={{ mt: 2 }}>
-            Username <span style={{ color: "red" }}>*</span>
+            Email <span style={{ color: "red" }}>*</span>
           </InputLabel>
           <TextField
             size="small"
             required
             fullWidth
-            id="username"
-            name="username"
-            autoComplete="username"
+            id="email"
+            name="email"
+            autoComplete="email"
             autoFocus
-            value={formData.username}
+            value={formData.email}
             onChange={handleChange}
           />
 
@@ -365,14 +369,31 @@ const Login = () => {
           </InputLabel>
           <TextField
             size="small"
-            required
             fullWidth
             name="password"
-            type="password"
+            // type="password"
+            type={showPassword ? "text" : "password"} // 👁️ show/hide
             id="password"
             autoComplete="current-password"
             value={formData.password}
             onChange={handleChange}
+            required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? (
+                      <VisibilityOffOutlinedIcon />
+                    ) : (
+                      <VisibilityOutlinedIcon />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
 
           {/* Submit Button */}

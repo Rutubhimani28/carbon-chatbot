@@ -430,7 +430,11 @@ import {
   Link,
   CircularProgress,
   InputLabel,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
+import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
+import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -441,6 +445,9 @@ const Register = () => {
   });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -452,10 +459,8 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "https://carbon-chatbot.onrender.com/api/ai/register",
-        formData
-      );
+      const res = await axios.post(`${apiBaseUrl}/api/ai/register`, formData);
+
       setMessage(res.data.message);
 
       // ✅ success pachi login page par navigate
@@ -533,17 +538,51 @@ const Register = () => {
           </Box>
 
           {/* Password */}
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2}}>
             <InputLabel>Password</InputLabel>
             <TextField
               fullWidth
               size="small"
-              type="password"
+              // type="password"
+              type={showPassword ? "text" : "password"} // 👁️ show/hide
               name="password"
               value={formData.password}
               onChange={handleChange}
               required
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                     
+                    >
+                      {showPassword ? (
+                        <VisibilityOffOutlinedIcon />
+                      ) : (
+                        <VisibilityOutlinedIcon />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+            {/* <Tooltip title={showPassword ? "Hide Password" : "Show Password"}>
+              <IconButton
+                onClick={() => setShowPassword(!showPassword)}
+                sx={{
+                  position: "absolute",
+                  right: 8,
+                  top: 40, // 👈 Adjust karo if alignment thodu off hoy
+                }}
+              >
+                {showPassword ? (
+                  <VisibilityOffOutlinedIcon />
+                ) : (
+                  <VisibilityOutlinedIcon />
+                )}
+              </IconButton>
+            </Tooltip> */}
           </Box>
 
           <Button
