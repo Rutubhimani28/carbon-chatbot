@@ -173,36 +173,6 @@ async function smartSearch(query, category) {
   });
 }
 
-/* --- Simple summarizer (<=100 words) --- */
-// function summarizeAsk(query) {
-//   // You could replace this with an AI summary later if needed.
-//   let words = query.split(/\s+/).slice(0, 100);
-//   return words.join(" ") + (words.length >= 100 ? "..." : "");
-// }
-/* --- Improved summarizer using search results --- */
-// function summarizeAsk(query, results) {
-//   if (!results || results.length === 0) return query;
-
-//   // Extract snippets or titles
-//   let combinedText = results
-//     .map((r) => {
-//       const snippet =
-//         r.snippet ||
-//         (r.organic && r.organic[0]?.snippet) ||
-//         (r.organic && r.organic[0]?.title) ||
-//         "";
-//       return snippet;
-//     })
-//     .join(" ");
-
-//   // Fallback if no snippets
-//   if (!combinedText.trim()) combinedText = query;
-
-//   // Split into words and limit to 100
-//   const words = combinedText.split(/\s+/).slice(0, 100);
-//   return words.join(" ") + (words.length >= 100 ? "..." : "");
-// }
-
 
 /**
  * Summarize content from actual trusted source URLs (under 100 words)
@@ -402,7 +372,7 @@ export const getAISearchResults = async (req, res) => {
     console.log("All Trusted Source Results ::::::::::", allResults.length);
 
     // ✅ 2. Take only top 5 sources (limit)
-    const topFiveResults = allResults.slice(0, 5);
+    const topFiveResults = allResults.slice(0, 10);
     console.log("topFiveResults:::====",topFiveResults)
     // ✅ 3. From each site’s results, pick only the 1st organic link
     const verifiedLinks = topFiveResults.map((result) => ({

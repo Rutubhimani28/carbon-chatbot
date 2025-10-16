@@ -10,9 +10,10 @@
 // )
 
 import ReactDOM from "react-dom/client";
- import { StrictMode } from 'react';
+import { StrictMode } from "react";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
+import { GrokProvider } from "./context/GrokContext";
 // import { Provider } from "react-redux";
 // import { store } from "./store/index.js";
 
@@ -21,10 +22,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   //   <App />
   // </>
   <StrictMode>
-    {/* <Provider store={store}> */}
+    <GrokProvider>
       <BrowserRouter>
         <App />
       </BrowserRouter>
-    {/* </Provider> */}
+    </GrokProvider>
   </StrictMode>
 );

@@ -57,7 +57,7 @@ import { TextField, InputAdornment, IconButton, Box } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 export default function SearchUI(props) {
-  const { setHistoryList } = props;
+  const { setHistoryList, selectedQuery } = props;
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState(null);
@@ -98,6 +98,19 @@ export default function SearchUI(props) {
 
     fetchSearchHistory();
   }, [apiBaseUrl]);
+
+  // ✅ Whenever dropdown selects a new query → update input field
+  useEffect(() => {
+    if (selectedQuery) {
+      // if (selectedQuery !== null && selectedQuery !== undefined) {
+
+      setQuery(selectedQuery);
+      handleSearch();
+      // Trigger the search after a small delay to ensure query updates first
+
+      // handleSearch(); // 👈 automatically trigger search
+    }
+  }, [selectedQuery]);
 
   // Source name extraction function
   const getSourceName = (url) => {
@@ -285,9 +298,11 @@ export default function SearchUI(props) {
           {/* <h3>Summary:</h3> */}
           <p
             style={{
-              fontFamily: "Arial, sans-serif",
-              fontWeight: "500",
+              // fontFamily: "Arial, sans-serif",
+              // fontWeight: "500",
               fontSize: "16px",
+               fontFamily: "Calibri, sans-serif",
+    fontWeight: 400, 
             }}
           >
             {results.summary}
@@ -353,7 +368,9 @@ export default function SearchUI(props) {
                     // fontWeight: "bold",
                     fontSize: "16px",
                     color: "#1a0dab",
-                    fontFamily: "Arial, sans-serif",
+                    fontFamily: "Calibri, sans-serif",
+                    fontWeight: 700, 
+                    textDecoration: "none",
                   }}
                 >
                   {item.title}
@@ -367,7 +384,8 @@ export default function SearchUI(props) {
                     margin: "4px 0 0 0",
                     color: "#555",
                     fontSize: "14px",
-                    fontFamily: "Arial, sans-serif",
+                    fontFamily: "Calibri, sans-serif",
+                     fontWeight: 300, 
                   }}
                 >
                   {item.snippet}

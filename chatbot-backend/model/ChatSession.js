@@ -42,6 +42,7 @@ const messageSchema = new mongoose.Schema(
   {
     prompt: String,
     response: String,
+    //  partialResponse: String, 
     wordCount: Number,
     tokensUsed: Number,
     totalTokensUsed: Number,

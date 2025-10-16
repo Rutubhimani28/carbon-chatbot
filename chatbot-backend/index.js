@@ -7,6 +7,8 @@ import searchRoutes from "./routes/searchRoutes.js"; // New search routes
 import bodyParser from "body-parser";
 import { getAISearchResults } from "./controller/searchController.js"; // Import the search controller
 import { getUserSearchHistory } from "./controller/searchController.js";
+import { grokSearchResults } from "./controller/groksearchController.js";
+import { grokUserSearchHistory } from "./controller/groksearchController.js";
 
 // Load environment variables first
 dotenv.config();
@@ -39,8 +41,13 @@ app.use(bodyParser.json());
 app.use("/api/ai", aiRoutes);
 // ✅ New AI Search Routes
 // app.use("/api", searchRoutes);
+
 app.post("/search", getAISearchResults);
 app.post("/Searchhistory", getUserSearchHistory); // changed to POST
+
+app.post("/grokSearch", grokSearchResults); // changed to POST
+app.post("/grokSearchhistory", grokUserSearchHistory); // changed to POST
+
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
