@@ -3208,7 +3208,8 @@ import { styled } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
 import chat from "././assets/chat.webp";
 import Words1 from "././assets/words1.webp"; // path adjust karo
-import Words2 from "././assets/words2.webp"; // path adjust karo
+// import Words2 from "././assets/words2.webp"; // path adjust karo
+import Words2 from "././assets/words2.png"; // path adjust karo
 
 // import StopIcon from "@mui/icons-material/Stop";
 // import CloseIcon from "@mui/icons-material/Close";
@@ -3243,7 +3244,7 @@ const ChatUI = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const [remainingTokens, setRemainingTokens] = useState(0);
   // const [totalTokensUsed, setTotalTokensUsed] = useState(0);
-  const [responseLength, setResponseLength] = useState("");
+  const [responseLength, setResponseLength] = useState("Short");
   // 🔹 नवी state add करो
   // const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
   const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
@@ -4940,6 +4941,9 @@ const ChatUI = () => {
         setTotalTokensUsed(result.totalTokensUsed);
       }
 
+      // ✅ Add this line
+      const tokensUsedFromAPI = result.tokensUsed || 0;
+
       if (!currentSessionId && result.sessionId) {
         setChats((prev) =>
           prev.map((chat) =>
@@ -4956,36 +4960,104 @@ const ChatUI = () => {
       // setSelectedFiles([]);
 
       // Typing effect for response
+      // if (!result.isError) {
+      //   const chars = result.response.split("");
+      //   let currentText = "";
+
+      //   for (let i = 0; i < chars.length; i += 5) {
+      //     if (isStoppedRef.current) break;
+      //     currentText += chars.slice(i, i + 5).join("");
+
+      //     setMessageGroups((prev) => {
+      //       const updated = [...prev];
+      //       const messages = updated[0] || [];
+      //       const index = messages.findIndex((m) => m.id === messageId);
+      //       if (index !== -1) {
+      //         messages[index] = {
+      //           ...messages[index],
+      //           responses: [currentText],
+      //           isTyping: !isStoppedRef.current,
+      //           isComplete: !isStoppedRef.current,
+      //           tokensUsed: Math.floor(
+      //             (result.tokensUsed || 0) * (i / chars.length)
+      //           ),
+      //           botName: result.botName || selectedBot,
+      //         };
+      //         updated[0] = messages;
+      //       }
+      //       return updated;
+      //     });
+
+      //     await new Promise((resolve) => setTimeout(resolve, 10));
+      //   }
+      // }
+
       if (!result.isError) {
-        const chars = result.response.split("");
-        let currentText = "";
+        const lines = result.response.split("\n");
+        let allText = "";
 
-        for (let i = 0; i < chars.length; i += 5) {
+        const LINES_PER_BATCH = 35; // 👉 number of lines to type together
+
+        for (let l = 0; l < lines.length; l += LINES_PER_BATCH) {
           if (isStoppedRef.current) break;
-          currentText += chars.slice(i, i + 5).join("");
 
-          setMessageGroups((prev) => {
-            const updated = [...prev];
-            const messages = updated[0] || [];
-            const index = messages.findIndex((m) => m.id === messageId);
-            if (index !== -1) {
-              messages[index] = {
-                ...messages[index],
-                responses: [currentText],
-                isTyping: !isStoppedRef.current,
-                isComplete: !isStoppedRef.current,
-                tokensUsed: Math.floor(
-                  (result.tokensUsed || 0) * (i / chars.length)
-                ),
-                botName: result.botName || selectedBot,
-              };
-              updated[0] = messages;
-            }
-            return updated;
-          });
+          // take 2–3 lines at once
+          const batch = lines.slice(l, l + LINES_PER_BATCH).join("\n");
 
-          await new Promise((resolve) => setTimeout(resolve, 10));
+          let lineText = "";
+          const chars = batch.split("");
+
+          for (let i = 0; i < chars.length; i += 50) {
+            // 3 chars at a time
+            // 2 chars at a time
+            if (isStoppedRef.current) break;
+            lineText += chars.slice(i, i + 50).join("");
+
+            setMessageGroups((prev) => {
+              const updated = [...prev];
+              const messages = updated[0] || [];
+              const index = messages.findIndex((m) => m.id === messageId);
+              if (index !== -1) {
+                messages[index] = {
+                  ...messages[index],
+                  responses: [allText + lineText],
+                  isTyping: !isStoppedRef.current,
+                  isComplete: false,
+                  //   tokensUsed: Math.floor(
+                  //   (result.tokensUsed || 0) * (i / chars.length)
+                  // ),
+                  tokensUsed: result.tokensUsed || 0,
+                  botName: result.botName || selectedBot,
+                };
+                updated[0] = messages;
+              }
+              return updated;
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 0)); // typing speed
+          }
+
+          allText += lineText + "\n";
+          await new Promise((resolve) => setTimeout(resolve, 0)); // pause between lines
         }
+
+        // Mark as complete
+        //   setMessageGroups((prev) => {
+        //     const updated = [...prev];
+        //     const messages = updated[0] || [];
+        //     const index = messages.findIndex((m) => m.id === messageId);
+        //     if (index !== -1) {
+        //       messages[index] = {
+        //         ...messages[index],
+        //         isTyping: false,
+        //         isComplete: true,
+        //         responses: [allText.trim()],
+        //       };
+        //       updated[0] = messages;
+        //     }
+        //     return updated;
+        //   }
+        // );
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -5080,13 +5152,15 @@ const ChatUI = () => {
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        height: "100vh",
-        position: "relative",
-        overflow: "hidden",
-        width: "100vw", // 🔹 Add this line
-      }}
+      sx={
+        {
+          // display: "flex",
+          // height: "100vh",
+          // position: "relative",
+          // overflow: "hidden",
+          // width: "100vw", // 🔹 Add this line
+        }
+      }
     >
       {/* Sidebar */}
 
@@ -5095,6 +5169,7 @@ const ChatUI = () => {
         sx={{
           width: "100%",
           display: "flex",
+          // height: "100vh",
           flexDirection: "column",
           minWidth: 0, // 🔹 Important for flexbox
           overflow: "hidden", // 🔹 Prevent horizontal scroll
@@ -5105,24 +5180,16 @@ const ChatUI = () => {
           sx={{
             display: "flex",
             alignItems: "center",
-            mt: "1px",
-            // mb:-["20px"],
-            height: "70px",
-            // mb:-["20px"],
-            mb: "0px",
-            // mt: ["7px"],
+            width: "100%",
             ml: 0,
+            px: 2,
             flexShrink: 0,
-            // bgcolor: "#2F67F6",
             bgcolor: "#1268fb",
           }}
         >
-          {/* <IconButton onClick={() => setIsCollapsed(true)}> */}
-          {/* <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-            <FeaturedPlayListOutlinedIcon sx={{ ml: "-11px", mr: "7px" }} />
-          </IconButton> */}
-
-          <Box
+          {/* logo */}
+          <img src={Words2} height={85} width={146} />
+          {/* <Box
             component="img"
             src={Words2}
             alt="Words2"
@@ -5132,33 +5199,16 @@ const ChatUI = () => {
               objectFit: "contain", // keep aspect ratio, no blur
               cursor: "pointer",
               ml: 1.5,
-              mt: "6px",
-              // pl: ["27px"],
-              // mb: 0,
-              // mt: 0,
-              // mr: -["25px"],
+                           
             }}
-          />
-
-          <FormControl fullWidth size="small" gap={1} sx={{ ml: 4 }}>
-            {/* {activeView === "chat" && (
-              <Select
-                labelId="bot-select-label"
-                value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
-                sx={{
-                  bgcolor: "#fff",
-                  borderRadius: "5px",
-                  maxWidth: "175px",
-                  width: "175px",
-                }}
-              >
-                <MenuItem value="chatgpt-5-mini">ChatGPT5 Mini</MenuItem>
-                <MenuItem value="deepseek">DeepSeek</MenuItem>
-                <MenuItem value="grok">Grok 3 Mini</MenuItem>
-              </Select>
-            )} */}
-
+          /> */}
+          {/* history */}
+          <FormControl
+            fullWidth
+            size="small"
+            gap={1}
+            sx={{ ml: 4, display: "flex", flexDirection: "row", gap: 2, mt: 1 }}
+          >
             {/* Chat session dropdown */}
             {activeView === "chat" && (
               <Autocomplete
@@ -5241,6 +5291,26 @@ const ChatUI = () => {
               />
             )}
 
+            {activeView === "chat" && (
+              <Select
+                labelId="bot-select-label"
+                value={selectedBot}
+                onChange={(e) => setSelectedBot(e.target.value)}
+                sx={{
+                  bgcolor: "#fff",
+                  borderRadius: "5px",
+                  mt: "7px",
+                  height: "30px",
+                  width: "157px",
+                  maxWidth: "190px",
+                }}
+              >
+                <MenuItem value="chatgpt-5-mini">ChatGPT5 Mini</MenuItem>
+                <MenuItem value="deepseek">DeepSeek</MenuItem>
+                <MenuItem value="grok">Grok 3 Mini</MenuItem>
+              </Select>
+            )}
+
             {/* AI Grok history */}
             {activeView === "search2" && (
               <Select
@@ -5291,28 +5361,39 @@ const ChatUI = () => {
               </Select>
             )}
           </FormControl>
+          {/* add new */}
+          {activeView === "chat" && (
+            <Box sx={{}} onClick={createNewChat}>
+              <AddIcon sx={{ mr: 138, alignItems: "center", mt: 2 }} />
+              {/* <Button
+                    fullWidth
+                    sx={{
+                      justifyContent: "flex-start",
+                      color: "black",
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "#f5f5f5", color: "black" },
+                    }}
+                  >
+                    New Chat
+                  </Button> */}
+            </Box>
+          )}
 
+          {/* tab */}
           <Box
             sx={{
               display: "flex",
               justifyContent: "center",
               mr: 5,
               gap: 2,
-              mt: 0,
+              mt: 1,
             }}
           >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "row",
-                // mr: 4,
                 gap: 1,
-                alignItems: "center",
-                justifyContent: "space-between",
-                pr: 0,
                 cursor: "pointer",
                 position: "relative", // needed for underline positioning
-                pb: "0px", // space for underline
               }}
               onClick={() => setActiveView("chat")}
             >
@@ -5329,7 +5410,7 @@ const ChatUI = () => {
                 Chat
               </Typography>
 
-              <Box
+              {/* <Box
                 component="img"
                 src={chat}
                 alt="chat"
@@ -5343,7 +5424,7 @@ const ChatUI = () => {
                   // mt: ["10px"],
                 }}
                 onClick={() => setActiveView("chat")}
-              />
+              /> */}
 
               {/* 🔹 Underline (visible only when active) */}
               {activeView === "chat" && (
@@ -5364,16 +5445,10 @@ const ChatUI = () => {
 
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "row",
-                // mr: 4,
                 gap: 1,
-                alignItems: "center",
-                justifyContent: "space-between",
                 cursor: "pointer",
                 position: "relative",
                 pb: "4px",
-                // mt:0,
               }}
               onClick={() => setActiveView("search2")}
             >
@@ -5390,7 +5465,7 @@ const ChatUI = () => {
                 Search
               </Typography>
 
-              <Box
+              {/* <Box
                 component="img"
                 src={search6}
                 alt="search6"
@@ -5404,7 +5479,7 @@ const ChatUI = () => {
                   // mt: ["10px"],
                 }}
                 onClick={() => setActiveView("search2")}
-              />
+              /> */}
 
               {/* 🔹 Underline (visible only when active) */}
               {activeView === "search2" && (
@@ -5429,8 +5504,10 @@ const ChatUI = () => {
           <Box
             sx={{
               display: "flex",
-              alignItems: "center",
+              // alignItems: "center",
+              alignItems: "flex-end",
               gap: 1,
+              mr: 3,
               cursor: "pointer",
               mt: 0,
             }}
@@ -5523,22 +5600,24 @@ const ChatUI = () => {
           sx={{
             flexGrow: 1,
             display: "flex",
+            alignItems: "center",
             // flexDirection: "column",
             transition: "all 0.3s ease",
-            width: "100%",
+            // width: "100%",
             // maxWidth: "940px",
-            maxWidth: { xs: "100%", md: "1100px" },
-            mx: "auto",
+            // maxWidth: { xs: "100%", md: "1100px" },
+            // maxWidth: { xs: "100%", md: "100%" },
+            // mx: "auto",
             // px: { xs: 6, sm: 8, md: 10, lg: 12 },
             // px: { xs: 2, sm: 4, md: 6, lg: 12 }, // padding responsive
             // height: "100vh",
-            px: { xs: 1, sm: 2, md: 2 }, // 🔹 Reduced padding for 1024x768
+            px: { xs: 2, sm: 3, md: 2 }, // 🔹 Reduced padding for 1024x768
             height: "calc(100vh - 53px)", // 🔹 Better height calculation
             mb: 0,
             pb: 0,
           }}
         >
-          {activeView === "chat" && (
+          {/* {activeView === "chat" && (
             <Box
               sx={{
                 // left: { xs: "10px", sm: "40px", md: "80px" }, // aligns with chatbot spacing
@@ -5589,7 +5668,7 @@ const ChatUI = () => {
                 </Box>
               )}
             </Box>
-          )}
+          )} */}
           {activeView === "chat" ? (
             <>
               <Box
@@ -5604,10 +5683,12 @@ const ChatUI = () => {
                   transition: "all 0.3s ease",
                   width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
-                  maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
-                  px: { xs: 1, sm: 2, md: 1 }, // 🔹 Reduced padding for 1024x768
+                  // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
+                  maxWidth: { xs: "100%", sm: "100%", md: "100%" },
+                  px: { xs: 1, sm: 2, md: 11 }, // 🔹 Reduced padding for 1024x768
                   // height: "calc(100vh - 53px)", // 🔹 Better height calculation
                   mb: 0,
+                  mt: "11px",
                   pb: 0,
                 }}
               >
@@ -5841,17 +5922,16 @@ const ChatUI = () => {
                               {/* ✅ Logo */}
                               {/* <Logo /> */}
                               <Avatar
-                                src={leaf}
-                                alt="leaf"
+                                src={chat}
+                                alt="chat"
                                 sx={{
-                                  border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
+                                  // border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
                                   bgcolor: "white",
-                                  width: 23, // thodu mota rakho
-                                  height: 23,
+                                  width: 40, // thodu mota rakho
+                                  height: 40,
                                   p: "2px", // andar jagya
                                   cursor: "pointer",
                                   // pl: "1px",
-                                  mt: 0.5,
                                 }}
                                 // onClick={() => setIsCollapsed(false)}
                               />
@@ -6050,10 +6130,10 @@ const ChatUI = () => {
                     mb: 0,
                     pb: 0,
                     display: "flex",
-                    p: { xs: 1, sm: 1, md: 1.5 }, // 🔹 Reduced padding
+                    p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                     width: "100%",
                     // maxWidth: { xs: "100%", md: "940px" },
-                    maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
+                    // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                     flexDirection: "column",
                   }}
                 >
