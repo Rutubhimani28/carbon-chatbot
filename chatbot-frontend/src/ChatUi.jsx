@@ -124,7 +124,7 @@
 //   const [anchorEl, setAnchorEl] = useState(null);
 //   const [activeGroup, setActiveGroup] = useState(null);
 
-//   const apiBaseUrl = import.meta.env."https://carbon-chatbot.onrender.com";
+//   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
 //   const handleClick = (event, idx, tokens) => {
 //     setAnchorEl(event.currentTarget);
@@ -3281,7 +3281,7 @@ const ChatUI = () => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [activeGroup, setActiveGroup] = useState(null);
 
-  const apiBaseUrl = "https://carbon-chatbot.onrender.com";
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   const handleClick = (event, idx, tokens) => {
     setAnchorEl(event.currentTarget);

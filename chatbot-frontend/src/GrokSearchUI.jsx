@@ -53,7 +53,7 @@ export default function GrokSearchUI(props) {
     totalTokensUsed,
     setTotalTokensUsed,
   } = useGrok();
-  const apiBaseUrl = "https://carbon-chatbot.onrender.com";
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const saved = localStorage.getItem("lastGrokSearch");

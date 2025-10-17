@@ -64,7 +64,7 @@ export default function SearchUI(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiBaseUrl = "https://carbon-chatbot.onrender.com";
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const saved = localStorage.getItem("lastSearch");
