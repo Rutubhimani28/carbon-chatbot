@@ -5361,12 +5361,10 @@ const ChatUI = () => {
                 )}
               </Select>
             )}
-          </FormControl>
-          {/* add new */}
-          {activeView === "chat" && (
-            <Box sx={{}} onClick={createNewChat}>
-              <AddIcon sx={{ mr: 132, alignItems: "center", mt: 2 }} />
-              {/* <Button
+            {activeView === "chat" && (
+              <Box sx={{}} onClick={createNewChat}>
+                <AddIcon sx={{ mr: 132, alignItems: "center", mt: 2 }} />
+                {/* <Button
                     fullWidth
                     sx={{
                       justifyContent: "flex-start",
@@ -5377,8 +5375,11 @@ const ChatUI = () => {
                   >
                     New Chat
                   </Button> */}
-            </Box>
-          )}
+              </Box>
+            )}
+          </FormControl>
+
+          {/* add new */}
 
           {/* tab */}
           <Box
