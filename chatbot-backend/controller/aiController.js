@@ -815,6 +815,17 @@ export const getAIResponse = async (req, res) => {
     //   throw err;
     // }
 
+    // ✅ 2️⃣ Global token re-check after total usage known
+    // try {
+    //   await checkGlobalTokenLimit(email, tokenused);
+    // } catch (err) {
+    //   return res.status(400).json({
+    //     message: "Not enough tokens",
+    //     remainingTokens: 0,
+    //   });
+    // }
+
+    console.log("counts.remainingTokens::::::::", counts.remainingTokens);
     if (counts.remainingTokens <= 0)
       return res.status(400).json({
         message: "Not enough tokens",

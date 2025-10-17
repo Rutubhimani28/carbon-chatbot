@@ -84,7 +84,7 @@ export const grokSearchResults = async (req, res) => {
 // ];
 const generalKeywords = [
   // Greetings & Wishes
-  "greeting", "greetings", "wish", "wishes", "hello", "hi", "hey",
+  "greeting", "greetings", "wish", "wishes", "hello", "hi", "hey","quote",
   "good morning", "good afternoon", "good evening", "good night", "welcome", "congratulations", "congrats",
 
   // Festivals & Events
