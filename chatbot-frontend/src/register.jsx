@@ -448,7 +448,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
+  console.log("apiBaseUrl::::::::::::", apiBaseUrl);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -460,7 +460,7 @@ const Register = () => {
 
     try {
       const res = await axios.post(`${apiBaseUrl}/api/ai/register`, formData);
-
+      console.log("res::::::::::::", res);
       setMessage(res.data.message);
 
       // ✅ success pachi login page par navigate
@@ -538,7 +538,7 @@ const Register = () => {
           </Box>
 
           {/* Password */}
-          <Box sx={{ mb: 2}}>
+          <Box sx={{ mb: 2 }}>
             <InputLabel>Password</InputLabel>
             <TextField
               fullWidth
@@ -555,7 +555,6 @@ const Register = () => {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
-                     
                     >
                       {showPassword ? (
                         <VisibilityOffOutlinedIcon />
