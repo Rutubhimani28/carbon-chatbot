@@ -5362,8 +5362,8 @@ const ChatUI = () => {
               </Select>
             )}
             {activeView === "chat" && (
-              <Box sx={{}} onClick={createNewChat}>
-                <AddIcon sx={{ mr: 132, alignItems: "center", mt: 2 }} />
+              <Box onClick={createNewChat}>
+                <AddIcon sx={{  alignItems: "center", mt: 1 }} />
                 {/* <Button
                     fullWidth
                     sx={{
