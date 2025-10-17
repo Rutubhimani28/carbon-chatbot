@@ -447,7 +447,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  const apiBaseUrl = "https://carbon-chatbot.onrender.com";
   console.log("apiBaseUrl::::::::::::", apiBaseUrl);
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });

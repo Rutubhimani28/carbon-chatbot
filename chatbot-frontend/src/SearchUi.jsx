@@ -64,7 +64,7 @@ export default function SearchUI(props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  const apiBaseUrl = "https://carbon-chatbot.onrender.com";
 
   useEffect(() => {
     const saved = localStorage.getItem("lastSearch");
@@ -301,8 +301,8 @@ export default function SearchUI(props) {
               // fontFamily: "Arial, sans-serif",
               // fontWeight: "500",
               fontSize: "16px",
-               fontFamily: "Calibri, sans-serif",
-    fontWeight: 400, 
+              fontFamily: "Calibri, sans-serif",
+              fontWeight: 400,
             }}
           >
             {results.summary}
@@ -369,7 +369,7 @@ export default function SearchUI(props) {
                     fontSize: "16px",
                     color: "#1a0dab",
                     fontFamily: "Calibri, sans-serif",
-                    fontWeight: 700, 
+                    fontWeight: 700,
                     textDecoration: "none",
                   }}
                 >
@@ -385,7 +385,7 @@ export default function SearchUI(props) {
                     color: "#555",
                     fontSize: "14px",
                     fontFamily: "Calibri, sans-serif",
-                     fontWeight: 300, 
+                    fontWeight: 300,
                   }}
                 >
                   {item.snippet}
