@@ -5172,7 +5172,8 @@ const ChatUI = () => {
           // height: "100vh",
           flexDirection: "column",
           minWidth: 0, // 🔹 Important for flexbox
-          overflow: "hidden", // 🔹 Prevent horizontal scroll
+          overflow: "hidden",
+          // overflowY:"hidden", // 🔹 Prevent horizontal scroll
         }}
       >
         {/* Header */}
@@ -5703,6 +5704,12 @@ const ChatUI = () => {
                     overflow: "auto",
                     p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                     minHeight: 0, // 🔹 Important for flex scrolling
+                    /* 🔹 Scrollbar hide */
+                    "&::-webkit-scrollbar": {
+                      display: "none",
+                    },
+                    scrollbarWidth: "none", // 🔹 Firefox
+                    "-ms-overflow-style": "none", // 🔹 IE 10+
                   }}
                 >
                   {historyLoading ? (

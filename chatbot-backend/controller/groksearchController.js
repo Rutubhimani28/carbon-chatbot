@@ -55,35 +55,160 @@ export const grokSearchResults = async (req, res) => {
     const preferredSources = trustedSources[cat] || trustedSources.general;
     const requestedLinks = [3, 5, 10].includes(linkCount) ? linkCount : 5;
 
-    // === 🧠 Build Grok Prompt ===
-//     const combinedPrompt = `
-// You are a factual research assistant.
-// Perform these tasks for the topic: "${query}".
+    // 🧠 Step 1: Detect general (creative/social) prompts
+// const generalKeywords = [
+//   "quote",
+//   "quotes",
+//   "wish",
+//   "wishes",
+//   "greeting",
+//   "greetings",
+//   "caption",
+//   "message",
+//   "messages",
+//   "status",
+//   "shayari",
+//   "lines",
+//   "poem",
+//   "joke",
+//   "motivation",
+//   "motivational",
+//   "festival",
+//   "diwali",
+//   "holi",
+//   "new year",
+//   "birthday",
+//   "love",
+//   "funny",
+//   "good morning",
+// ];
+const generalKeywords = [
+  // Greetings & Wishes
+  "greeting", "greetings", "wish", "wishes", "hello", "hi", "hey",
+  "good morning", "good afternoon", "good evening", "good night", "welcome", "congratulations", "congrats",
 
-// 1️⃣ Find up to ${requestedLinks * 2} pages from these trusted sources:
-// ${preferredSources.join(", ")}
+  // Festivals & Events
+  "festival", "diwali", "holi", "new year", "christmas", "eid", "ramadan", "pongal", "thanksgiving", "birthday", "anniversary", "halloween", "valentine", "raksha bandhan", "bhai dooj",
 
-// 2️⃣ Select the ${requestedLinks} most directly relevant and factual pages.
+  // Quotes & Messages
+  "quote", "quotes", "shayari", "lines", "message", "messages", "status", "captions", "caption", "poem", "poetry", "joke", "funny", "motivation", "motivational", "inspiration", "inspirational", "life", "love", "friendship", "friend", "relationship",
 
-// 3️⃣ Return output ONLY in strict JSON format like this:
-// {
-//   "summary": "Concise factual summary under 100 words based on chosen articles.",
-//   "verifiedLinks": [
-//     {
-//       "site": "example.com",s
-//       "title": "Page title",
-//       "link": "https://example.com/article",
-//       "snippet": "Short snippet explaining why this page is relevant."
-//     }
-//   ]
-// }
+  // Emotions & Compliments
+  "smile", "happiness", "joy", "success", "achievement", "hard work", "positivity", "attitude", "mindset", "dream", "goals", "determination", "fun", "funny", "humor", "laugh", "romantic", "sweet",
 
-// ⚠️ Rules:
-// - Only include pages directly related to the query.
-// - Use only the sources provided.
-// - Ensure exactly ${requestedLinks} relevant links.
-// - Summary must be based only on those links.
-// `;
+  // Misc Common Phrases
+  "good luck", "best wishes", "gud morning", "gud night", "happy birthday", "happy anniversary", "happy new year", "happy diwali", "happy holi", "fun facts", "tips", "trivia", "short story", "status update", "life lesson", "daily motivation"
+];
+
+
+// normalize user input
+const normalizedQuery = query.toLowerCase().replace(/[^\w\s]/g, "");
+
+const isGeneralPrompt = generalKeywords.some((word) =>
+    normalizedQuery.includes(word)
+);
+
+if (isGeneralPrompt) {
+  console.log("🟡 Generalized prompt detected — performing open search (non-trusted sources)");
+
+  const generalPrompt = `
+You are a smart web discovery assistant.
+Your task: find the most popular, useful, or trending online pages directly related to "${query}".
+
+Rules:
+- You can search freely (NOT limited to trusted sources).
+- Prefer fresh, relevant results like blogs, greeting sites, quote collections, or listicles.
+- Do NOT include unsafe or adult sites.
+- Provide ${requestedLinks} to 10 links MAX.
+- Skip summary, only return links.
+
+Return ONLY valid JSON like this:
+{
+  "verifiedLinks": [
+    {
+      "site": "example.com",
+      "title": "Example Page",
+      "link": "https://example.com/article",
+      "snippet": "Why this page is relevant to ${query}",
+      "publishedDate": "2025-10-10"
+    }
+  ]
+}
+`;
+
+  // 🧮 Token count
+  const promptTokens = countTokens(query);
+  await checkGlobalTokenLimit(email, promptTokens);
+
+  // 🚀 Call Grok for general search (no domain restriction)
+  const generalRes = await axios.post(
+    GROK_API_URL,
+    {
+      model: GROK_MODEL,
+      messages: [{ role: "user", content: generalPrompt }],
+      temperature: 0.5,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${GROK_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  // 🧩 Parse response
+  let verifiedLinks = [];
+  try {
+    const parsed = JSON.parse(
+      generalRes.data.choices[0].message.content
+    );
+    verifiedLinks = Array.isArray(parsed.verifiedLinks)
+      ? parsed.verifiedLinks.slice(0, requestedLinks)
+      : [];
+  } catch (err) {
+    console.warn("⚠️ Failed to parse generalized JSON:", err.message);
+  }
+
+  // 🧮 Token usage
+  const linkTokens = verifiedLinks.reduce((acc, link) => {
+    return (
+      acc +
+      countTokens(link.site) +
+      countTokens(link.title) +
+      countTokens(link.link) +
+      countTokens(link.snippet)
+    );
+  }, 0);
+
+  const totalTokens = promptTokens + linkTokens;
+  await checkGlobalTokenLimit(email, totalTokens);
+
+  // 💾 Save History
+  if (email) {
+    const record = new grokSearchHistory({
+      id,
+      email,
+      query,
+      summary: "",
+      resultsCount: verifiedLinks.length,
+      tokenUsage: { promptTokens, linkTokens, totalTokens },
+    });
+    await record.save();
+  }
+
+  // ✅ Send response immediately (skip trusted source flow)
+  return res.json({
+    id,
+    summary: "",
+    verifiedLinks,
+    email,
+    linkCount: verifiedLinks.length,
+    tokenUsage: { promptTokens, linkTokens, totalTokens },
+    remainingTokens: 10000 - totalTokens,
+  });
+}
+
+
 const combinedPrompt = `
 You are a factual and time-aware research assistant.
 Your goal is to find the most recent and relevant information for the topic: "${query}".
