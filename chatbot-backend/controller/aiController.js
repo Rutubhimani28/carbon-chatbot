@@ -59,16 +59,30 @@ export const handleTokens = async (sessions, session, payload) => {
     return totalSum + sessionTotal;
   }, 0);
 
-  const sessionTotalBefore = session.history.reduce(
-    (sum, msg) => sum + (msg.tokensUsed || 0),
-    0
-  );
+  // const sessionTotalBefore = session.history.reduce(
+  //   (sum, msg) => sum + (msg.tokensUsed || 0),
+  //   0
+  // );
+
+  const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
+  const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
-  const remainingTokens = Math.max(
-    0,
-    10000 - (grandTotalTokensUsed + tokensUsed)
-  );
+  // const remainingTokens = Math.max(
+  //   0,
+  //   10000 - (grandTotalTokensUsed + tokensUsed)
+  // );
+
+  // const allSessions = await ChatSession.find({ email });
+  //         const grandTotalTokens = allSessions.reduce((sum, s) => {
+  //           return (
+  //             sum +
+  //             s.history.reduce((entrySum, e) => entrySum + (e.tokensUsed || 0), 0)
+  //           );
+  //         }, 0);
+
+  //         const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokens);
+  //         remainingTokensAfter = Math.max(0, remainingTokensBefore - totalTokens);
 
   // ✅ Global token check before saving
   // try {
@@ -107,7 +121,7 @@ export const handleTokens = async (sessions, session, payload) => {
     grandTotalTokensUsed: parseFloat(
       (grandTotalTokensUsed + tokensUsed).toFixed(3)
     ),
-    remainingTokens: parseFloat(remainingTokens.toFixed(3)),
+    remainingTokens: remainingTokensAfter,
   };
 };
 
@@ -816,21 +830,21 @@ export const getAIResponse = async (req, res) => {
     // }
 
     // ✅ 2️⃣ Global token re-check after total usage known
-    // try {
-    //   await checkGlobalTokenLimit(email, tokenused);
-    // } catch (err) {
-    //   return res.status(400).json({
-    //     message: "Not enough tokens",
-    //     remainingTokens: 0,
-    //   });
-    // }
-
-    console.log("counts.remainingTokens::::::::", counts.remainingTokens);
-    if (counts.remainingTokens <= 0)
+    try {
+      await checkGlobalTokenLimit(email, counts.tokensUsed);
+    } catch (err) {
       return res.status(400).json({
         message: "Not enough tokens",
-        remainingTokens: counts.remainingTokens,
+        remainingTokens: 0,
       });
+    }
+
+    // console.log("counts.remainingTokens::::::::", counts.remainingTokens);
+    // if (counts.remainingTokens <= 0)
+    //   return res.status(400).json({
+    //     message: "Not enough tokens",
+    //     remainingTokens: counts.remainingTokens,
+    //   });
 
     await session.save();
 
