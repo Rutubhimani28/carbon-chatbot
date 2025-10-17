@@ -5365,7 +5365,7 @@ const ChatUI = () => {
           {/* add new */}
           {activeView === "chat" && (
             <Box sx={{}} onClick={createNewChat}>
-              <AddIcon sx={{ mr: 138, alignItems: "center", mt: 2 }} />
+              <AddIcon sx={{ mr: 132, alignItems: "center", mt: 2 }} />
               {/* <Button
                     fullWidth
                     sx={{
