@@ -4867,33 +4867,32 @@ const ChatUI = () => {
   //   }
   // };
 
+
   const handleSend = async () => {
     if ((!input.trim() && selectedFiles.length === 0) || isSending) return;
-
+  
     isStoppedRef.current = false;
     const prompt = input.trim();
     setInput("");
     setSelectedFiles([]);
     setIsSending(true);
     setIsTypingResponse(true);
-
-    const messageId =
-      Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-
+  
+    const messageId = Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+  
     let currentSessionId = selectedChatId
       ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
       : "";
-
+  
     // Add message to UI
     setMessageGroups((prev) => {
       const messages = prev[0] || [];
       const alreadyExists = messages.some((msg) => msg.id === messageId);
       if (alreadyExists) return prev;
-
+  
       const newMessage = {
         id: messageId,
-        prompt:
-          prompt || `Files: ${selectedFiles.map((f) => f.name).join(", ")}`,
+        prompt: prompt || `Files: ${selectedFiles.map((f) => f.name).join(", ")}`,
         responses: ["Thinking..."],
         time: currentTime(),
         currentSlide: 0,
@@ -4901,49 +4900,43 @@ const ChatUI = () => {
         isComplete: false,
         tokensUsed: null,
         botName: selectedBot,
-        files: selectedFiles.map((f) => ({ name: f.name })), // Store file info for display
+        files: selectedFiles.map((f) => ({ name: f.name })),
       };
-
+  
       return [[...messages, newMessage]];
     });
-
+  
     try {
       // Create FormData for file upload
       const formData = new FormData();
-
+  
       // Add text data
       formData.append("prompt", prompt);
       formData.append("email", user.email);
       formData.append("botName", selectedBot);
       formData.append("responseLength", responseLength);
       formData.append("sessionId", currentSessionId);
-
+  
       // Add files
       selectedFiles.forEach((file) => {
         formData.append("files", file);
       });
-
+  
       // Call the API with FormData
-      const result = await fetchChatbotResponseWithFiles(
-        formData,
-        currentSessionId
-      );
-
+      const result = await fetchChatbotResponseWithFiles(formData, currentSessionId);
+  
       if (!result || isStoppedRef.current) return;
-
-      // Handle token updates and response (same as before)
+  
+      // Handle token updates and response
       if (result.remainingTokens !== undefined) {
         setChatRemainingTokens(result.remainingTokens);
-        // const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-        // localStorage.setItem(storageKey, result.remainingTokens.toString());
       }
       if (result.totalTokensUsed !== undefined) {
         setTotalTokensUsed(result.totalTokensUsed);
       }
-
-      // ✅ Add this line
+  
       const tokensUsedFromAPI = result.tokensUsed || 0;
-
+  
       if (!currentSessionId && result.sessionId) {
         setChats((prev) =>
           prev.map((chat) =>
@@ -4955,116 +4948,86 @@ const ChatUI = () => {
         currentSessionId = result.sessionId;
         localStorage.setItem("lastChatSessionId", selectedChatId);
       }
-
-      // Clear files after successful send
-      // setSelectedFiles([]);
-
-      // Typing effect for response
-      // if (!result.isError) {
-      //   const chars = result.response.split("");
-      //   let currentText = "";
-
-      //   for (let i = 0; i < chars.length; i += 5) {
-      //     if (isStoppedRef.current) break;
-      //     currentText += chars.slice(i, i + 5).join("");
-
-      //     setMessageGroups((prev) => {
-      //       const updated = [...prev];
-      //       const messages = updated[0] || [];
-      //       const index = messages.findIndex((m) => m.id === messageId);
-      //       if (index !== -1) {
-      //         messages[index] = {
-      //           ...messages[index],
-      //           responses: [currentText],
-      //           isTyping: !isStoppedRef.current,
-      //           isComplete: !isStoppedRef.current,
-      //           tokensUsed: Math.floor(
-      //             (result.tokensUsed || 0) * (i / chars.length)
-      //           ),
-      //           botName: result.botName || selectedBot,
-      //         };
-      //         updated[0] = messages;
-      //       }
-      //       return updated;
-      //     });
-
-      //     await new Promise((resolve) => setTimeout(resolve, 10));
-      //   }
-      // }
-
+  
+      // FASTER TYPING IMPLEMENTATION
       if (!result.isError) {
-        const lines = result.response.split("\n");
-        let allText = "";
-
-        const LINES_PER_BATCH = 35; // 👉 number of lines to type together
-
-        for (let l = 0; l < lines.length; l += LINES_PER_BATCH) {
+        const responseText = result.response;
+        const CHUNK_SIZE = 20; // 🔹 Increased from original for faster typing
+        let displayedText = "";
+  
+        for (let i = 0; i < responseText.length; i += CHUNK_SIZE) {
           if (isStoppedRef.current) break;
-
-          // take 2–3 lines at once
-          const batch = lines.slice(l, l + LINES_PER_BATCH).join("\n");
-
-          let lineText = "";
-          const chars = batch.split("");
-
-          for (let i = 0; i < chars.length; i += 50) {
-            // 3 chars at a time
-            // 2 chars at a time
-            if (isStoppedRef.current) break;
-            lineText += chars.slice(i, i + 50).join("");
-
-            setMessageGroups((prev) => {
-              const updated = [...prev];
-              const messages = updated[0] || [];
-              const index = messages.findIndex((m) => m.id === messageId);
-              if (index !== -1) {
-                messages[index] = {
-                  ...messages[index],
-                  responses: [allText + lineText],
-                  isTyping: !isStoppedRef.current,
-                  isComplete: false,
-                  //   tokensUsed: Math.floor(
-                  //   (result.tokensUsed || 0) * (i / chars.length)
-                  // ),
-                  tokensUsed: result.tokensUsed || 0,
-                  botName: result.botName || selectedBot,
-                };
-                updated[0] = messages;
-              }
-              return updated;
-            });
-
-            await new Promise((resolve) => setTimeout(resolve, 0)); // typing speed
-          }
-
-          allText += lineText + "\n";
-          await new Promise((resolve) => setTimeout(resolve, 0)); // pause between lines
+          
+          displayedText = responseText.substring(0, i + CHUNK_SIZE);
+          
+          setMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
+            const index = messages.findIndex((m) => m.id === messageId);
+            if (index !== -1) {
+              messages[index] = {
+                ...messages[index],
+                responses: [displayedText],
+                isTyping: !isStoppedRef.current,
+                isComplete: false,
+                tokensUsed: result.tokensUsed || 0,
+                botName: result.botName || selectedBot,
+              };
+              updated[0] = messages;
+            }
+            return updated;
+          });
+  
+          // 🔹 Reduced delay for faster appearance
+          await new Promise((resolve) => setTimeout(resolve, 5));
         }
-
+  
         // Mark as complete
-        //   setMessageGroups((prev) => {
-        //     const updated = [...prev];
-        //     const messages = updated[0] || [];
-        //     const index = messages.findIndex((m) => m.id === messageId);
-        //     if (index !== -1) {
-        //       messages[index] = {
-        //         ...messages[index],
-        //         isTyping: false,
-        //         isComplete: true,
-        //         responses: [allText.trim()],
-        //       };
-        //       updated[0] = messages;
-        //     }
-        //     return updated;
-        //   }
-        // );
+        setMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+          const index = messages.findIndex((m) => m.id === messageId);
+          if (index !== -1) {
+            messages[index] = {
+              ...messages[index],
+              isTyping: false,
+              isComplete: true,
+              responses: [responseText],
+            };
+            updated[0] = messages;
+          }
+          return updated;
+        });
+      } else {
+        // Handle error response (no typing effect for errors)
+        setMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+  
+          const groupIndex = messages.findIndex((g) => g.id === messageId);
+          if (groupIndex !== -1) {
+            const errorMessage = {
+              ...messages[groupIndex],
+              isTyping: false,
+              isComplete: true,
+              responses: [result.response],
+              tokensUsed: null,
+            };
+  
+            const newMessages = [...messages];
+            newMessages[groupIndex] = errorMessage;
+  
+            return [newMessages];
+          }
+          return updated;
+        });
       }
     } catch (error) {
       console.error("Failed to send message:", error);
       setMessageGroups((prev) => {
         const updated = [...prev];
         const messages = updated[0] || [];
-
+  
         const groupIndex = messages.findIndex((g) => g.id === messageId);
         if (groupIndex !== -1) {
           const errorMessage = {
@@ -5074,10 +5037,10 @@ const ChatUI = () => {
             responses: ["Sorry, something went wrong."],
             tokensUsed: null,
           };
-
+  
           const newMessages = [...messages];
           newMessages[groupIndex] = errorMessage;
-
+  
           return [newMessages];
         }
         return updated;
@@ -5090,6 +5053,230 @@ const ChatUI = () => {
       fetchChatSessions();
     }
   };
+// last meeral working code
+  // const handleSend = async () => {
+  //   if ((!input.trim() && selectedFiles.length === 0) || isSending) return;
+
+  //   isStoppedRef.current = false;
+  //   const prompt = input.trim();
+  //   setInput("");
+  //   setSelectedFiles([]);
+  //   setIsSending(true);
+  //   setIsTypingResponse(true);
+
+  //   const messageId =
+  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+
+  //   let currentSessionId = selectedChatId
+  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
+  //     : "";
+
+  //   // Add message to UI
+  //   setMessageGroups((prev) => {
+  //     const messages = prev[0] || [];
+  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
+  //     if (alreadyExists) return prev;
+
+  //     const newMessage = {
+  //       id: messageId,
+  //       prompt:
+  //         prompt || `Files: ${selectedFiles.map((f) => f.name).join(", ")}`,
+  //       responses: ["Thinking..."],
+  //       time: currentTime(),
+  //       currentSlide: 0,
+  //       isTyping: true,
+  //       isComplete: false,
+  //       tokensUsed: null,
+  //       botName: selectedBot,
+  //       files: selectedFiles.map((f) => ({ name: f.name })), // Store file info for display
+  //     };
+
+  //     return [[...messages, newMessage]];
+  //   });
+
+  //   try {
+  //     // Create FormData for file upload
+  //     const formData = new FormData();
+
+  //     // Add text data
+  //     formData.append("prompt", prompt);
+  //     formData.append("email", user.email);
+  //     formData.append("botName", selectedBot);
+  //     formData.append("responseLength", responseLength);
+  //     formData.append("sessionId", currentSessionId);
+
+  //     // Add files
+  //     selectedFiles.forEach((file) => {
+  //       formData.append("files", file);
+  //     });
+
+  //     // Call the API with FormData
+  //     const result = await fetchChatbotResponseWithFiles(
+  //       formData,
+  //       currentSessionId
+  //     );
+
+  //     if (!result || isStoppedRef.current) return;
+
+  //     // Handle token updates and response (same as before)
+  //     if (result.remainingTokens !== undefined) {
+  //       setChatRemainingTokens(result.remainingTokens);
+  //       // const storageKey = `tokens_${currentSessionId || result.sessionId}`;
+  //       // localStorage.setItem(storageKey, result.remainingTokens.toString());
+  //     }
+  //     if (result.totalTokensUsed !== undefined) {
+  //       setTotalTokensUsed(result.totalTokensUsed);
+  //     }
+
+  //     // ✅ Add this line
+  //     const tokensUsedFromAPI = result.tokensUsed || 0;
+
+  //     if (!currentSessionId && result.sessionId) {
+  //       setChats((prev) =>
+  //         prev.map((chat) =>
+  //           chat.id === selectedChatId
+  //             ? { ...chat, sessionId: result.sessionId }
+  //             : chat
+  //         )
+  //       );
+  //       currentSessionId = result.sessionId;
+  //       localStorage.setItem("lastChatSessionId", selectedChatId);
+  //     }
+
+  //     // Clear files after successful send
+  //     // setSelectedFiles([]);
+
+  //     // Typing effect for response
+  //     // if (!result.isError) {
+  //     //   const chars = result.response.split("");
+  //     //   let currentText = "";
+
+  //     //   for (let i = 0; i < chars.length; i += 5) {
+  //     //     if (isStoppedRef.current) break;
+  //     //     currentText += chars.slice(i, i + 5).join("");
+
+  //     //     setMessageGroups((prev) => {
+  //     //       const updated = [...prev];
+  //     //       const messages = updated[0] || [];
+  //     //       const index = messages.findIndex((m) => m.id === messageId);
+  //     //       if (index !== -1) {
+  //     //         messages[index] = {
+  //     //           ...messages[index],
+  //     //           responses: [currentText],
+  //     //           isTyping: !isStoppedRef.current,
+  //     //           isComplete: !isStoppedRef.current,
+  //     //           tokensUsed: Math.floor(
+  //     //             (result.tokensUsed || 0) * (i / chars.length)
+  //     //           ),
+  //     //           botName: result.botName || selectedBot,
+  //     //         };
+  //     //         updated[0] = messages;
+  //     //       }
+  //     //       return updated;
+  //     //     });
+
+  //     //     await new Promise((resolve) => setTimeout(resolve, 10));
+  //     //   }
+  //     // }
+
+  //     if (!result.isError) {
+  //       const lines = result.response.split("\n");
+  //       let allText = "";
+
+  //       const LINES_PER_BATCH = 35; // 👉 number of lines to type together
+
+  //       for (let l = 0; l < lines.length; l += LINES_PER_BATCH) {
+  //         if (isStoppedRef.current) break;
+
+  //         // take 2–3 lines at once
+  //         const batch = lines.slice(l, l + LINES_PER_BATCH).join("\n");
+
+  //         let lineText = "";
+  //         const chars = batch.split("");
+
+  //         for (let i = 0; i < chars.length; i += 50) {
+  //           // 3 chars at a time
+  //           // 2 chars at a time
+  //           if (isStoppedRef.current) break;
+  //           lineText += chars.slice(i, i + 50).join("");
+
+  //           setMessageGroups((prev) => {
+  //             const updated = [...prev];
+  //             const messages = updated[0] || [];
+  //             const index = messages.findIndex((m) => m.id === messageId);
+  //             if (index !== -1) {
+  //               messages[index] = {
+  //                 ...messages[index],
+  //                 responses: [allText + lineText],
+  //                 isTyping: !isStoppedRef.current,
+  //                 isComplete: false,
+  //                 //   tokensUsed: Math.floor(
+  //                 //   (result.tokensUsed || 0) * (i / chars.length)
+  //                 // ),
+  //                 tokensUsed: result.tokensUsed || 0,
+  //                 botName: result.botName || selectedBot,
+  //               };
+  //               updated[0] = messages;
+  //             }
+  //             return updated;
+  //           });
+
+  //           await new Promise((resolve) => setTimeout(resolve, 0)); // typing speed
+  //         }
+
+  //         allText += lineText + "\n";
+  //         await new Promise((resolve) => setTimeout(resolve, 0)); // pause between lines
+  //       }
+
+  //       // Mark as complete
+  //       //   setMessageGroups((prev) => {
+  //       //     const updated = [...prev];
+  //       //     const messages = updated[0] || [];
+  //       //     const index = messages.findIndex((m) => m.id === messageId);
+  //       //     if (index !== -1) {
+  //       //       messages[index] = {
+  //       //         ...messages[index],
+  //       //         isTyping: false,
+  //       //         isComplete: true,
+  //       //         responses: [allText.trim()],
+  //       //       };
+  //       //       updated[0] = messages;
+  //       //     }
+  //       //     return updated;
+  //       //   }
+  //       // );
+  //     }
+  //   } catch (error) {
+  //     console.error("Failed to send message:", error);
+  //     setMessageGroups((prev) => {
+  //       const updated = [...prev];
+  //       const messages = updated[0] || [];
+
+  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
+  //       if (groupIndex !== -1) {
+  //         const errorMessage = {
+  //           ...messages[groupIndex],
+  //           isTyping: false,
+  //           isComplete: false,
+  //           responses: ["Sorry, something went wrong."],
+  //           tokensUsed: null,
+  //         };
+
+  //         const newMessages = [...messages];
+  //         newMessages[groupIndex] = errorMessage;
+
+  //         return [newMessages];
+  //       }
+  //       return updated;
+  //     });
+  //   } finally {
+  //     setIsSending(false);
+  //     setIsTypingResponse(false);
+  //     scrollToBottom();
+  //     setResponseLength(" ");
+  //     fetchChatSessions();
+  //   }
+  // };
 
   const createNewChat = () => {
     const newSessionId = generateSessionId(); // Generate a proper session ID
@@ -5155,9 +5342,9 @@ const ChatUI = () => {
       sx={
         {
           // display: "flex",
-          // height: "100vh",
+          height: "100vh",
           // position: "relative",
-          // overflow: "hidden",
+          overflow: "hidden",
           // width: "100vw", // 🔹 Add this line
         }
       }
@@ -5165,7 +5352,7 @@ const ChatUI = () => {
       {/* Sidebar */}
 
       {/* chatbot */}
-      <Box
+      {/* <Box
         sx={{
           width: "100%",
           display: "flex",
@@ -5175,7 +5362,7 @@ const ChatUI = () => {
           overflow: "hidden",
           // overflowY:"hidden", // 🔹 Prevent horizontal scroll
         }}
-      >
+      > */}
         {/* Header */}
         <Box
           sx={{
@@ -5186,6 +5373,11 @@ const ChatUI = () => {
             px: 2,
             flexShrink: 0,
             bgcolor: "#1268fb",
+            zIndex: 100,
+            position: "sticky",
+            top: 0,
+            height: "100px",
+            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
           }}
         >
           {/* logo */}
@@ -5601,6 +5793,7 @@ const ChatUI = () => {
           className="chat-header-box"
           sx={{
             flexGrow: 1,
+            mt: 16,
             display: "flex",
             alignItems: "center",
             // flexDirection: "column",
@@ -5614,7 +5807,8 @@ const ChatUI = () => {
             // px: { xs: 2, sm: 4, md: 6, lg: 12 }, // padding responsive
             // height: "100vh",
             px: { xs: 2, sm: 3, md: 2 }, // 🔹 Reduced padding for 1024x768
-            height: "calc(100vh - 53px)", // 🔹 Better height calculation
+            // height: '80vh', // 🔹 Better height calculation
+            // height: "calc(100vh - 130px)", // 🔹 Better height calculation
             mb: 0,
             pb: 0,
           }}
@@ -5697,7 +5891,7 @@ const ChatUI = () => {
                 {/* 👉 Main Content (Conditional) */}
                 <Box
                   sx={{
-                    height: "78vh",
+                    height: "70vh",
                     // p: 2,
                     display: "flex",
                     flexDirection: "column",
@@ -6440,7 +6634,7 @@ const ChatUI = () => {
             />
           ) : null}
         </Box>
-      </Box>
+      {/* </Box> */}
 
       <Dialog
         open={openProfile}
