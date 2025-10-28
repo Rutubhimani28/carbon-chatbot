@@ -49,7 +49,7 @@ app.post("/grokSearch", grokSearchResults); // changed to POST
 app.post("/grokSearchhistory", grokUserSearchHistory); // changed to POST
 
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

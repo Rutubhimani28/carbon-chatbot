@@ -3409,7 +3409,8 @@ const ChatUI = () => {
     const email = user?.email;
     console.log("user:::=====", user);
     try {
-      const response = await fetch(`${apiBaseUrl}/grokSearch`, {
+      const response = await fetch(`${apiBaseUrl}/search`, {
+      // const response = await fetch(`${apiBaseUrl}/grokSearch`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -3484,7 +3485,8 @@ const ChatUI = () => {
       console.log("Search Response:", data);
 
       // 🔹 2. After search success → Call Search History API
-      await fetch(`${apiBaseUrl}/grokSearchhistory`, {
+      await fetch(`${apiBaseUrl}/Searchhistory`, {
+      // await fetch(`${apiBaseUrl}/grokSearchhistory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -5344,7 +5346,8 @@ const ChatUI = () => {
           // display: "flex",
           height: "100vh",
           // position: "relative",
-          overflow: "hidden",
+          overflowY: "auto",
+          overflowX: "hidden",
           // width: "100vw", // 🔹 Add this line
         }
       }
@@ -5376,7 +5379,7 @@ const ChatUI = () => {
             zIndex: 100,
             position: "sticky",
             top: 0,
-            height: "100px",
+            // height: "100px",
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
           }}
         >
@@ -5604,23 +5607,6 @@ const ChatUI = () => {
                 Chat
               </Typography>
 
-              {/* <Box
-                component="img"
-                src={chat}
-                alt="chat"
-                sx={{
-                  width: ["39px"], // fix logo width
-                  height: ["42px"], // fix height
-                  objectFit: "contain", // keep aspect ratio, no blur
-                  cursor: "pointer",
-                  // ml: 0,
-                  // ml: -["10px"],
-                  // mt: ["10px"],
-                }}
-                onClick={() => setActiveView("chat")}
-              /> */}
-
-              {/* 🔹 Underline (visible only when active) */}
               {activeView === "chat" && (
                 <Box
                   sx={{
@@ -5659,23 +5645,6 @@ const ChatUI = () => {
                 Search
               </Typography>
 
-              {/* <Box
-                component="img"
-                src={search6}
-                alt="search6"
-                sx={{
-                  width: ["39px"], // fix logo width
-                  height: ["42px"], // fix height
-                  objectFit: "contain", // keep aspect ratio, no blur
-                  cursor: "pointer",
-                  // ml: 0,
-                  // ml: -["10px"],
-                  // mt: ["10px"],
-                }}
-                onClick={() => setActiveView("search2")}
-              /> */}
-
-              {/* 🔹 Underline (visible only when active) */}
               {activeView === "search2" && (
                 <Box
                   sx={{
@@ -5793,7 +5762,7 @@ const ChatUI = () => {
           className="chat-header-box"
           sx={{
             flexGrow: 1,
-            mt: 16,
+            // mt: 16,
             display: "flex",
             alignItems: "center",
             // flexDirection: "column",
@@ -6157,7 +6126,7 @@ const ChatUI = () => {
                                   color="text.secondary"
                                   display="block"
                                 >
-                                  Words
+                                  Wrds
                                 </Typography>
                               </Box>
                             </Box>
@@ -6620,7 +6589,7 @@ const ChatUI = () => {
                       color="text.secondary"
                       sx={{ fontSize: "11px" }}
                     >
-                      This AI Assistant can help with general information.
+                     How <strong>Wrds</strong> can help you today?
                     </Typography>
                   </Box>
                 </Box>
