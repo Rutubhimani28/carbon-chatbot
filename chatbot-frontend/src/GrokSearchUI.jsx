@@ -479,24 +479,17 @@ export default function GrokSearchUI(props) {
           </Box>
         </Box>
 
-        <Box
+        {/* <Box
           sx={{
-            // display: "flex",
-            // flexDirection: "column",
-            // alignItems: "center",
-            // justifyContent: "flex-start",
-
+           
             width: "70%",
             maxWidth: "70%",
-            // borderLeft:"1px solid black",borderRight:"1px solid black"
+           
           }}
         >
-          {/* Token count display */}
-          {/* {tokenCount > 0 && ( */}
-        
-          {/* )} */}
+       */}
 
-          {/* {loading && <Box>Loading...</Box>} */}
+         
           {error && <p style={{ color: "red" }}>{error}</p>}
           {console.log("results::::", results)}
           {/* {results && !loading && ( */}
@@ -645,7 +638,7 @@ export default function GrokSearchUI(props) {
             )}
           </Box>
           {/* )} */}
-        </Box>
+        {/* </Box> */}
 
         <Box
           sx={{
