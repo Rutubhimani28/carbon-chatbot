@@ -267,7 +267,10 @@ export default function GrokSearchUI(props) {
 
   return (
     // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-    <Box sx={{display:"block", width:"100%"}}>
+    <Box sx={{ display: "block", width: "100%" }}>
+    <Box>
+
+    
       <Box
         sx={{
           position: "sticky",
@@ -341,7 +344,22 @@ export default function GrokSearchUI(props) {
           </Select>
         </FormControl>
       </Box>
-
+          <Box sx={{ mt: 0, textAlign: "left", width: "85%" }}>
+            <p
+              style={{
+                fontFamily: "Calibri, sans-serif",
+                fontSize: "16px",
+                color: "#555",
+                display: "flex",
+                fontWeight: "bold",
+                justifyContent: "flex-end",
+              }}
+            >
+              Token count: {results?.summaryStats?.tokens}
+              {/* Token count: {tokenCount} */}
+            </p>
+          </Box>
+</Box>
       <Box
         sx={{
           flexGrow: 1,
@@ -474,22 +492,9 @@ export default function GrokSearchUI(props) {
           }}
         >
           {/* Token count display */}
-          {tokenCount > 0 && (
-            <Box sx={{ mt: 0, textAlign: "left", width: "100%" }}>
-              <p
-                style={{
-                  fontFamily: "Calibri, sans-serif",
-                  fontSize: "16px",
-                  color: "#555",
-                  display: "flex",
-                  fontWeight: "bold",
-                  justifyContent: "flex-end",
-                }}
-              >
-                Token count: {tokenCount}
-              </p>
-            </Box>
-          )}
+          {/* {tokenCount > 0 && ( */}
+        
+          {/* )} */}
 
           {/* {loading && <Box>Loading...</Box>} */}
           {error && <p style={{ color: "red" }}>{error}</p>}
@@ -500,7 +505,7 @@ export default function GrokSearchUI(props) {
               mt: 0,
               width: "90%",
               textAlign: "left",
-              mx:4
+              mx: 4,
               // height: "95%",
               // overflowY: "auto",
             }}
@@ -508,7 +513,7 @@ export default function GrokSearchUI(props) {
             {loading ? (
               <Box>Loading...</Box>
             ) : (
-              <Box sx={{ textAlign: "left", }}>
+              <Box sx={{ textAlign: "left" }}>
                 <p
                   style={{
                     paddingLeft: "4px",
@@ -622,7 +627,7 @@ export default function GrokSearchUI(props) {
                         year: "numeric",
                       })
                     : ""} */}
-                      {item.publishedDate                   }
+                      {item.publishedDate}
                       {/* {item.publishedDate
                         ? new Date(item.publishedDate).toLocaleDateString(
                             "en-GB",
