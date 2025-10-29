@@ -97,6 +97,87 @@ async function smartSearch(query, category) {
     return { ...r, trust_level: isTrusted ? "verified" : "general" };
   });
 }
+async function summarizeAsk(query, results) {
+  if (!results || results.length === 0) return query;
+
+  // Extract URLs from results
+  const urls = results.map((r) => r.link).filter(Boolean);
+
+  if (urls.length === 0) return query;
+
+  const keywords = query.toLowerCase().split(/\s+/);
+  let combinedText = "";
+
+  for (const url of urls.slice(0, 3)) { // limit top 3 sources
+    try {
+      const { data: html } = await axios.get(url, {
+        timeout: 8000,
+        headers: { "User-Agent": "Mozilla/5.0 (Node.js)" },
+      });
+
+      const $ = cheerio.load(html);
+
+      // Extract paragraphs, headings, and list items for better context
+      const contentSelectors = "p, h1, h2, h3, h4, h5, h6, li, article, section";
+      const contentElements = $(contentSelectors).map((_, el) => $(el).text().trim()).get();
+
+      // Keep content containing at least one keyword or general AI-related terms
+      const relevantContent = contentElements.filter((text) =>
+        keywords.some((k) => text.toLowerCase().includes(k)) ||
+        text.toLowerCase().includes('artificial') ||
+        text.toLowerCase().includes('intelligence') ||
+        text.toLowerCase().includes('ai') ||
+        text.toLowerCase().includes('machine') ||
+        text.toLowerCase().includes('learning')
+      );
+
+      combinedText += " " + relevantContent.join(" ");
+    } catch (err) {
+      console.warn(`⚠️ Could not fetch ${url}: ${err.message}`);
+    }
+  }
+
+  if (!combinedText.trim()) return query; // fallback to query if no content
+
+  // Create a more structured summary
+  const sentences = combinedText.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  // Take 3-5 relevant sentences to form a coherent paragraph
+  const relevantSentences = sentences
+    .filter(sentence => 
+      keywords.some(k => sentence.toLowerCase().includes(k)) ||
+      sentence.length > 20
+    )
+    .slice(0, 5);
+
+  let summary = relevantSentences.join(". ") + ".";
+  
+  // Ensure summary is between 50-100 words
+  const words = summary.split(/\s+/);
+  if (words.length < 50) {
+    // If too short, add more context from the original text
+    const additionalSentences = sentences
+      .slice(5, 8)
+      .filter(s => !relevantSentences.includes(s));
+    
+    if (additionalSentences.length > 0) {
+      summary += " " + additionalSentences.join(". ") + ".";
+    }
+  }
+
+  // Final word count check and trimming
+  const finalWords = summary.split(/\s+/);
+  if (finalWords.length > 100) {
+    summary = finalWords.slice(0, 100).join(" ") + "...";
+  }
+
+  // Clean up multiple spaces and ensure proper formatting
+  summary = summary.replace(/\s+/g, " ").trim();
+  
+  console.log(`📊 Summary word count: ${summary.split(/\s+/).length}`);
+  
+  return summary;
+}
 
 // async function summarizeAsk(query, results) {
 //   if (!results || results.length === 0) return query;
@@ -111,7 +192,6 @@ async function smartSearch(query, category) {
 //   const keywords = query.toLowerCase().split(/\s+/);
 //   let combinedText = "";
 
-//   // Scrape content from top 3 URLs
 //   for (const url of urls.slice(0, 3)) {
 //     try {
 //       const { data: html } = await axios.get(url, {
@@ -120,94 +200,39 @@ async function smartSearch(query, category) {
 //       });
 
 //       const $ = cheerio.load(html);
-
-//       // Extract paragraphs only
 //       const paragraphs = $("p").map((_, el) => $(el).text().trim()).get();
-
-//       // Keep paragraphs containing at least one keyword
+      
 //       const relevantParagraphs = paragraphs.filter((p) =>
 //         keywords.some((k) => p.toLowerCase().includes(k))
 //       );
 
 //       combinedText += " " + relevantParagraphs.join(" ");
+      
+//       // ✅ Optional: Check token count and stop early if too long
+//       const currentTokens = await countTokens(combinedText, "grok-1");
+//       if (currentTokens > 1000) { // Limit input context
+//         console.log(`🔹 Reached token limit (${currentTokens}), stopping early`);
+//         break;
+//       }
 //     } catch (err) {
 //       console.warn(`⚠️ Could not fetch ${url}: ${err.message}`);
 //     }
 //   }
 
-//   // Fallback to query if no content was extracted
 //   if (!combinedText.trim()) return query;
 
-//   // ✅ ENSURE 50-WORD SUMMARY
+//   // Ensure 50-word summary
 //   const words = combinedText.split(/\s+/);
+//   let summary = words.slice(0, 50).join(" ");
   
-//   // If we have enough content, take exactly 50 words
-//   if (words.length >= 50) {
-//     return words.slice(0, 50).join(" ");
-//   } 
-//   // If we have less than 50 words, pad with relevant context
-//   else {
-//     const remainingWords = 50 - words.length;
-//     // Add some generic AI context to reach 50 words if needed
-//     const aiContext = "Artificial intelligence involves machines that can learn, reason, and perform tasks typically requiring human intelligence through algorithms and data processing.";
-//     const contextWords = aiContext.split(/\s+/).slice(0, remainingWords);
-//     return words.concat(contextWords).join(" ");
+//   // ✅ Add ellipsis only if we truncated
+//   if (words.length > 50) {
+//     summary += "...";
 //   }
+  
+//   return summary;
 // }
 
-async function summarizeAsk(query, results) {
-  if (!results || results.length === 0) return query;
-
-  // Extract URLs from organic results
-  const urls = results
-    .map((r) => r.link || r.url)
-    .filter(Boolean);
-
-  if (urls.length === 0) return query;
-
-  const keywords = query.toLowerCase().split(/\s+/);
-  let combinedText = "";
-
-  for (const url of urls.slice(0, 3)) {
-    try {
-      const { data: html } = await axios.get(url, {
-        timeout: 8000,
-        headers: { "User-Agent": "Mozilla/5.0 (Node.js)" },
-      });
-
-      const $ = cheerio.load(html);
-      const paragraphs = $("p").map((_, el) => $(el).text().trim()).get();
-      
-      const relevantParagraphs = paragraphs.filter((p) =>
-        keywords.some((k) => p.toLowerCase().includes(k))
-      );
-
-      combinedText += " " + relevantParagraphs.join(" ");
-      
-      // ✅ Optional: Check token count and stop early if too long
-      const currentTokens = await countTokens(combinedText, "grok-1");
-      if (currentTokens > 1000) { // Limit input context
-        console.log(`🔹 Reached token limit (${currentTokens}), stopping early`);
-        break;
-      }
-    } catch (err) {
-      console.warn(`⚠️ Could not fetch ${url}: ${err.message}`);
-    }
-  }
-
-  if (!combinedText.trim()) return query;
-
-  // Ensure 50-word summary
-  const words = combinedText.split(/\s+/);
-  let summary = words.slice(0, 50).join(" ");
-  
-  // ✅ Add ellipsis only if we truncated
-  if (words.length > 50) {
-    summary += "...";
-  }
-  
-  return summary;
-}
 
 export const getAISearchResults = async (req, res) => {
   console.log("11111111111", req.body);
@@ -243,21 +268,12 @@ export const getAISearchResults = async (req, res) => {
 
     console.log("Formatted Results ::::::::::", formattedResults);
 
-    // ✅ 4. Create summary using Grok
+    // ✅ 4. Create comprehensive summary (50-100 words)
     const summary = await summarizeAsk(query, formattedResults.organic);
-    
-    // ✅ 5. COUNT TOKENS AND WORDS FOR THE SUMMARY
-    const tokenCount = await countTokens(summary, "grok-1"); // Use "gpt-4o-mini" if using OpenAI
-    const wordCount = countWords(summary);
-    
-    console.log(`🔹 Summary Stats - Words: ${wordCount}, Tokens: ${tokenCount}`);
-    
-    // ✅ 6. Verify summary length (optional - for quality control)
-    if (wordCount < 40) {
-      console.warn(`⚠️ Summary might be too short: ${wordCount} words`);
-    }
+    console.log("Generated Summary:", summary);
+    console.log("Summary Word Count:", summary.split(/\s+/).length);
 
-    // ✅ 7. Save to MongoDB with token count
+    // ✅ 5. Save to MongoDB
     const record = new SearchHistory({
       email,
       query,
@@ -265,12 +281,10 @@ export const getAISearchResults = async (req, res) => {
       summary,  
       resultsCount: topResults.length,
       raw: raw || false,
-      summaryWordCount: wordCount, // ✅ Store word count
-      summaryTokenCount: tokenCount, // ✅ Store token count
     });
     await record.save();
 
-    // ✅ 8. If raw requested
+    // ✅ 6. If raw requested
     if (raw === true) {
       const rawData = await searchAPI(query, { returnRaw: true });
       return res.json({
@@ -278,24 +292,15 @@ export const getAISearchResults = async (req, res) => {
         verifiedLinks: formattedResults.organic,
         raw: rawData,
         email,
-        linkCount: topResults.length,
-        summaryStats: { // ✅ Include stats in response
-          words: wordCount,
-          tokens: tokenCount
-        }
       });
     }
 
-    // ✅ 9. Final response with summary stats
+    // ✅ 7. Final response
     return res.json({
       summary,
       verifiedLinks: formattedResults.organic,
       email,
-      linkCount: topResults.length,
-      summaryStats: { // ✅ Include stats in response
-        words: wordCount,
-        tokens: tokenCount
-      }
+      linkCount: topResults.length
     });
   } catch (err) {
     console.error("Search Error:", err);
@@ -304,6 +309,102 @@ export const getAISearchResults = async (req, res) => {
       .json({ error: "Internal server error", message: err.message });
   }
 };
+// last working code
+// export const getAISearchResults = async (req, res) => {
+//   console.log("11111111111", req.body);
+//   try {
+//     const { query, category = "general", raw, email, linkCount = 10 } = req.body;
+
+//     if (!query) return res.status(400).json({ error: "Missing 'query' field" });
+
+//     if (email) console.log(`🔹 Search request from: ${email}`);
+//     console.log(`🔹 Requested link count: ${linkCount}`);
+
+//     // ✅ 1. Use direct search API
+//     const searchResults = await searchAPI(query);
+    
+//     console.log("Search Results ::::::::::", searchResults);
+
+//     // ✅ 2. Take only the requested number of organic results
+//     const requestedCount = parseInt(linkCount) || 10;
+//     const topResults = searchResults.organic ? searchResults.organic.slice(0, requestedCount) : [];
+//     console.log("topResults:::====", topResults);
+
+//     // ✅ 3. Format the results properly for frontend
+//     const formattedResults = {
+//       searchParameters: searchResults.searchParameters || { q: query },
+//       organic: topResults.map(item => ({
+//         title: item.title,
+//         link: item.link,
+//         snippet: item.snippet,
+//         site: getSourceName(item.link),
+//         publishedDate: item.date || item.publishedDate
+//       }))
+//     };
+
+//     console.log("Formatted Results ::::::::::", formattedResults);
+
+//     // ✅ 4. Create summary using Grok
+//     const summary = await summarizeAsk(query, formattedResults.organic);
+    
+//     // ✅ 5. COUNT TOKENS AND WORDS FOR THE SUMMARY
+//     const tokenCount = await countTokens(summary, "grok-1"); // Use "gpt-4o-mini" if using OpenAI
+//     const wordCount = countWords(summary);
+    
+//     console.log(`🔹 Summary Stats - Words: ${wordCount}, Tokens: ${tokenCount}`);
+    
+//     // ✅ 6. Verify summary length (optional - for quality control)
+//     if (wordCount < 40) {
+//       console.warn(`⚠️ Summary might be too short: ${wordCount} words`);
+//     }
+
+//     // ✅ 7. Save to MongoDB with token count
+//     const record = new SearchHistory({
+//       email,
+//       query,
+//       category,
+//       summary,  
+//       resultsCount: topResults.length,
+//       raw: raw || false,
+//       summaryWordCount: wordCount, // ✅ Store word count
+//       summaryTokenCount: tokenCount, // ✅ Store token count
+//     });
+//     await record.save();
+
+//     // ✅ 8. If raw requested
+//     if (raw === true) {
+//       const rawData = await searchAPI(query, { returnRaw: true });
+//       return res.json({
+//         summary,
+//         verifiedLinks: formattedResults.organic,
+//         raw: rawData,
+//         email,
+//         linkCount: topResults.length,
+//         summaryStats: { // ✅ Include stats in response
+//           words: wordCount,
+//           tokens: tokenCount
+//         }
+//       });
+//     }
+
+//     // ✅ 9. Final response with summary stats
+//     return res.json({
+//       summary,
+//       verifiedLinks: formattedResults.organic,
+//       email,
+//       linkCount: topResults.length,
+//       summaryStats: { // ✅ Include stats in response
+//         words: wordCount,
+//         tokens: tokenCount
+//       }
+//     });
+//   } catch (err) {
+//     console.error("Search Error:", err);
+//     return res
+//       .status(500)
+//       .json({ error: "Internal server error", message: err.message });
+//   }
+// };
 // summery get
 // export const getAISearchResults = async (req, res) => {
 //   console.log("11111111111", req.body);
