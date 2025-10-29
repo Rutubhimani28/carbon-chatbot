@@ -2768,6 +2768,7 @@ const ChatUI = () => {
                               bgcolor: "#2F67F6",
                               color: "#fff",
                               borderRadius: 3,
+                              minWidth:"300px",
                               maxWidth: { xs: "95%", sm: "90%", md: "80%" },
                             }}
                           >
