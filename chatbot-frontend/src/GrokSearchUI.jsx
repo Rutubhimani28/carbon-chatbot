@@ -152,8 +152,9 @@ export default function GrokSearchUI(props) {
   //   };
 
   const handleSearch = async (searchQuery) => {
-    const finalQuery = searchQuery || query; // ✅ use passed query if available
-    if (!finalQuery) return; // do nothing if query is empty
+    const finalQuery = searchQuery || query;
+    if (!finalQuery) return;
+
     setLoading(true);
     setError(null);
     setTokenCount(0);
@@ -163,100 +164,79 @@ export default function GrokSearchUI(props) {
 
     try {
       const response = await fetch(`${apiBaseUrl}/search`, {
-        // const response = await fetch(`${apiBaseUrl}/grokSearch`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: finalQuery,
-          email, // optional
-          category: "general", // optional
+          email,
+          category: "general",
           linkCount,
           raw: false,
         }),
       });
 
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.error || "Something went wrong");
-      // }
+      const data = await response.json();
 
-      // ✅ Handle "Not enough tokens" error specifically
+      if (response.status === 403 || data.allowed === false) {
+        Swal.fire({
+          title: "Restricted Search 🚫",
+          text:
+            data.message || "This search is not allowed for your age group.",
+          icon: "warning",
+        });
+        setError(data.message);
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 400 && data.message === "Not enough tokens") {
+        setResults(null);
+        setTokenCount(0);
+
+        await Swal.fire({
+          title: "Not enough tokens!",
+          text: "You don't have enough tokens to continue.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Ok",
+          cancelButtonText: "Purchase Tokens",
+        });
+
+        setError("Not enough tokens to process your request.");
+        setLoading(false);
+        return;
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-
-        if (
-          response.status === 400 &&
-          errorData.message === "Not enough tokens"
-        ) {
-          // Clear old results
-          setResults(null); //  Clear previous results
-          setTokenCount(0); // Optional: clear token count
-
-          await Swal.fire({
-            title: "Not enough tokens!",
-            text: "You don't have enough tokens to continue.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Ok",
-            cancelButtonText: "Purchase Tokens",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              // Just close the modal
-            } else if (result.isDismissed) {
-              // Redirect to purchase page
-              // window.location.href = "/purchase";
-            }
-          });
-
-          setError("Not enough tokens to process your request.");
-          setLoading(false);
-          return;
-        }
-
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          data.message || `HTTP error! status: ${response.status}`
         );
       }
 
-      const data = await response.json();
+      if (data.remainingTokens !== undefined)
+        setSessionRemainingTokens(data.remainingTokens);
 
-      if (data.remainingTokens !== undefined) {
-        setSessionRemainingTokens(data.remainingTokens); // ✅ update parent
-      }
       setResults(data);
       const currentTokens = data.tokenUsage?.totalTokens || 0;
-
-      // ✅ Update token count for this search
       setTokenCount(currentTokens);
+      setTotalTokensUsed((prev) => prev + currentTokens);
 
-      // ✅ Add to global total tokens used
-      setTotalTokensUsed((prevTotal) => prevTotal + currentTokens);
-
-      // 🔹 Save to localStorage for persistence
       localStorage.setItem(
         "lastGrokSearch",
         JSON.stringify({ query: finalQuery, results: data })
       );
-      console.log("Search Response:", data);
 
-      // 🔹 2. After search success → Call Search History API
       await fetch(`${apiBaseUrl}/Searchhistory`, {
-        // await fetch(`${apiBaseUrl}/grokSearchhistory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
         .then((res) => res.json())
         .then((historyData) => {
-          console.log("Updated search history:", historyData);
           if (historyData.history?.length > 0)
             setGrokHistoryList(historyData.history.map((h) => h.query));
         })
-        .catch((err) => {
-          console.error("Search history fetch error:", err);
-        });
+        .catch((err) => console.error("Search history fetch error:", err));
     } catch (err) {
       console.error("Search API Error:", err);
       setError(err.message);
@@ -268,98 +248,98 @@ export default function GrokSearchUI(props) {
   return (
     // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
     <Box sx={{ display: "block", width: "100%" }}>
-    <Box>
+      <Box>
 
     
-      <Box
-        sx={{
-          position: "sticky",
-          top: 85,
-          bgcolor: "#fff",
-          pt: 5,
-          pb: 3,
-          mb: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 1.5,
-          width: "70%",
-          mx: "auto",
-        }}
-      >
-        {/* 🔹 Search TextField with icon inside */}
-        <TextField
-          size="small"
-          variant="outlined"
-          placeholder="Search..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+        <Box
           sx={{
-            flexGrow: 1,
-            backgroundColor: "#f5f5f5",
-            fontFamily: "Calibri, sans-serif",
-            borderRadius: "30px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "30px",
-              paddingRight: "1px",
-            },
-          }}
-          inputProps={{
-            style: { paddingLeft: "20px" }, // padding for text
-          }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => handleSearch()}>
-                  <SearchIcon sx={{ color: "#555" }} />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-        />
-
-        {/* 🔹 Dropdown on the left side */}
-        <FormControl
-          size="small"
-          sx={{
-            minWidth: 110,
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "30px",
-              backgroundColor: "#f5f5f5",
-            },
+            position: "sticky",
+            top: 85,
+            bgcolor: "#fff",
+            pt: 5,
+            pb: 3,
+            mb: 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1.5,
+            width: "70%",
+            mx: "auto",
           }}
         >
-          <Select
-            value={linkCount}
-            onChange={(e) => setLinkCount(e.target.value)}
+          {/* 🔹 Search TextField with icon inside */}
+          <TextField
+            size="small"
+            variant="outlined"
+            placeholder="Search..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             sx={{
+              flexGrow: 1,
+              backgroundColor: "#f5f5f5",
               fontFamily: "Calibri, sans-serif",
-              fontSize: "14px",
+              borderRadius: "30px",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "30px",
+                paddingRight: "1px",
+              },
+            }}
+            inputProps={{
+              style: { paddingLeft: "20px" }, // padding for text
+            }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => handleSearch()}>
+                    <SearchIcon sx={{ color: "#555" }} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+
+          {/* 🔹 Dropdown on the left side */}
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: 110,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "30px",
+                backgroundColor: "#f5f5f5",
+              },
             }}
           >
-            <MenuItem value={3}>3 Links</MenuItem>
-            <MenuItem value={5}>5 Links</MenuItem>
-            <MenuItem value={10}>10 Links</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-          <Box sx={{ mt: 0, textAlign: "left", width: "85%" }}>
-            <p
-              style={{
+            <Select
+              value={linkCount}
+              onChange={(e) => setLinkCount(e.target.value)}
+              sx={{
                 fontFamily: "Calibri, sans-serif",
-                fontSize: "16px",
-                color: "#555",
-                display: "flex",
-                fontWeight: "bold",
-                justifyContent: "flex-end",
+                fontSize: "14px",
               }}
             >
-              Token count: {results?.summaryStats?.tokens}
-              {/* Token count: {tokenCount} */}
-            </p>
-          </Box>
-</Box>
+              <MenuItem value={3}>3 Links</MenuItem>
+              <MenuItem value={5}>5 Links</MenuItem>
+              <MenuItem value={10}>10 Links</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ mt: 0, textAlign: "left", width: "85%" }}>
+          <p
+            style={{
+              fontFamily: "Calibri, sans-serif",
+              fontSize: "16px",
+              color: "#555",
+              display: "flex",
+              fontWeight: "bold",
+              justifyContent: "flex-end",
+            }}
+          >
+            Token count: {results?.summaryStats?.tokens}
+            {/* Token count: {tokenCount} */}
+          </p>
+        </Box>
+      </Box>
       <Box
         sx={{
           flexGrow: 1,
@@ -489,139 +469,142 @@ export default function GrokSearchUI(props) {
         >
        */}
 
-         
-          {error && <p style={{ color: "red" }}>{error}</p>}
-          {console.log("results::::", results)}
-          {/* {results && !loading && ( */}
-          <Box
-            sx={{
-              mt: 0,
-              width: "90%",
-              textAlign: "left",
-              mx: 4,
-              // height: "95%",
-              // overflowY: "auto",
-            }}
-          >
-            {loading ? (
-              <Box>Loading...</Box>
-            ) : (
-              <Box sx={{ textAlign: "left" }}>
-                <p
-                  style={{
-                    paddingLeft: "4px",
-                    fontFamily: "Calibri, sans-serif",
-                    fontWeight: "400",
-                    fontSize: "18px",
-                    color: "#1a1717ff",
+        {error && (
+          <p style={{ color: "red", textAlign: "center", marginTop: "10px" }}>
+            {/* {error} */}
+          </p>
+        )}
+        {console.log("results::::", results)}
+        {/* {results && !loading && ( */}
+        <Box
+          sx={{
+            mt: 0,
+            width: "90%",
+            textAlign: "left",
+            mx: 4,
+            // height: "95%",
+            // overflowY: "auto",
+          }}
+        >
+          {loading ? (
+            <Box>Loading...</Box>
+          ) : (
+            <Box sx={{ textAlign: "left" }}>
+              <p
+                style={{
+                  paddingLeft: "4px",
+                  fontFamily: "Calibri, sans-serif",
+                  fontWeight: "400",
+                  fontSize: "18px",
+                  color: "#1a1717ff",
+                }}
+              >
+                {results.summary}
+              </p>
+              {results?.verifiedLinks?.map((item, idx) => (
+                // {results?.verifiedLinks?.organic?.map((item, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    mb: 2,
+                    p: 1,
+                    borderRadius: 1,
+                    //   backgroundColor: "#f9f9f9",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
                   }}
                 >
-                  {results.summary}
-                </p>
-                {results?.verifiedLinks?.map((item, idx) => (
-                  // {results?.verifiedLinks?.organic?.map((item, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      mb: 2,
-                      p: 1,
-                      borderRadius: 1,
-                      //   backgroundColor: "#f9f9f9",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 0.5,
+                  {/* Source Name Badge */}
+                  {item?.site && (
+                    // {item?.organic?.[0]?.site &&
+                    <Box
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        backgroundColor: "#e9ecef",
+                        color: "#17202bff",
+                        padding: "2px 8px",
+                        borderRadius: "12px",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                        width: "fit-content",
+                        mb: 0.5,
+                        fontFamily: "Calibri, sans-serif",
+                        //  fontWeight: "bold"
+                      }}
+                    >
+                      {item.site}
+                      {/* {item?.organic?.[0]?.site} */}
+                    </Box>
+                  )}
+
+                  <a
+                    // href={item?.organic?.[0]?.link}
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: "16px",
+                      color: "#006621",
+                      cursor: "pointer",
+                      fontFamily: "Calibri, sans-serif",
                     }}
                   >
-                    {/* Source Name Badge */}
-                    {item?.site && (
-                      // {item?.organic?.[0]?.site &&
-                      <Box
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          backgroundColor: "#e9ecef",
-                          color: "#17202bff",
-                          padding: "2px 8px",
-                          borderRadius: "12px",
-                          fontSize: "16px",
-                          fontWeight: "500",
-                          width: "fit-content",
-                          mb: 0.5,
-                          fontFamily: "Calibri, sans-serif",
-                          //  fontWeight: "bold"
-                        }}
-                      >
-                        {item.site}
-                        {/* {item?.organic?.[0]?.site} */}
-                      </Box>
-                    )}
-
-                    <a
-                      // href={item?.organic?.[0]?.link}
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        fontSize: "16px",
-                        color: "#006621",
-                        cursor: "pointer",
-                        fontFamily: "Calibri, sans-serif",
-                      }}
-                    >
-                      {item.link}
-                      {/* {item?.organic?.[0]?.link} */}
-                    </a>
-                    <a
-                      href={item.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        // fontWeight: "bold",
-                        fontSize: "17px",
-                        color: "#1a0dab",
-                        fontFamily: "Calibri, sans-serif",
-                        fontWeight: 600,
-                        textDecoration: "none",
-                      }}
-                    >
-                      {/* {item?.organic?.[0]?.title} */}
-                      {item.title}
-                    </a>
-                    <p
-                      style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                        margin: "4px 0 0 0",
-                        color: "#1a1717ff",
-                        fontSize: "16px",
-                        fontFamily: "Calibri, sans-serif",
-                        fontWeight: 300,
-                      }}
-                    >
-                      {/* {item?.organic?.[0]?.snippet} */}
-                      {item.snippet}
-                    </p>
-                    {/* Published Date */}
-                    <p
-                      style={{
-                        margin: "2px 0 0 0",
-                        color: "#555",
-                        fontSize: "13px",
-                        fontFamily: "Calibri, sans-serif",
-                        fontWeight: 300,
-                      }}
-                    >
-                      {/* {item?.organic?.[0]?.publishedDate
+                    {item.link}
+                    {/* {item?.organic?.[0]?.link} */}
+                  </a>
+                  <a
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      // fontWeight: "bold",
+                      fontSize: "17px",
+                      color: "#1a0dab",
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: 600,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {/* {item?.organic?.[0]?.title} */}
+                    {item.title}
+                  </a>
+                  <p
+                    style={{
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      margin: "4px 0 0 0",
+                      color: "#1a1717ff",
+                      fontSize: "16px",
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: 300,
+                    }}
+                  >
+                    {/* {item?.organic?.[0]?.snippet} */}
+                    {item.snippet}
+                  </p>
+                  {/* Published Date */}
+                  <p
+                    style={{
+                      margin: "2px 0 0 0",
+                      color: "#555",
+                      fontSize: "13px",
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: 300,
+                    }}
+                  >
+                    {/* {item?.organic?.[0]?.publishedDate
                     ? new Date(item.publishedDate).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
                       })
                     : ""} */}
-                      {item.publishedDate}
-                      {/* {item.publishedDate
+                    {item.publishedDate}
+                    {/* {item.publishedDate
                         ? new Date(item.publishedDate).toLocaleDateString(
                             "en-GB",
                             {
@@ -631,13 +614,13 @@ export default function GrokSearchUI(props) {
                             }
                           )
                         : ""} */}
-                    </p>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
-          {/* )} */}
+                  </p>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+        {/* )} */}
         {/* </Box> */}
 
         <Box

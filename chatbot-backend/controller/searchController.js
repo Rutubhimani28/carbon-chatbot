@@ -3,6 +3,7 @@ import trustedSources from "../trusted_sources.json" with { type: "json" };
 import SearchHistory from "../model/SearchHistory.js";
 import * as cheerio from "cheerio";
 import { countTokens, countWords } from "../utils/tokenCounter.js";
+import User from "../model/User.js";
 // import SearchHistory from "../model/SearchHistory.js";
 
 const SERPER_URL = "https://google.serper.dev/search";
@@ -316,93 +317,95 @@ function createCoherentSummary(content, query, targetWordCount) {
   
   return finalWords.slice(0, targetWordCount).join(" ").trim();
 }
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+const restrictions = {
+  under13: ["violence", "drugs", "sex", "dating", "murder", "weapon", "kill" , "adult"],
+  under18: ["gambling", "adult", "nsfw", "explicit", "porn", "alcohol" ,"kill"],
+};
+
 export const getAISearchResults = async (req, res) => {
-  console.log("11111111111", req.body);
   try {
     const { query, category = "general", raw, email, linkCount = 10 } = req.body;
-
     if (!query) return res.status(400).json({ error: "Missing 'query' field" });
 
-    if (email) console.log(`🔹 Search request from: ${email}`);
-    console.log(`🔹 Requested link count: ${linkCount}`);
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // ✅ 1. Use direct search API
+    const age = calculateAge(user.dateOfBirth);
+    const lowerQuery = query.toLowerCase();
+
+    if (age < 13) {
+      const restricted = restrictions.under13.some((word) => lowerQuery.includes(word));
+      if (restricted) {
+        return res.status(403).json({
+          message: "Search blocked ❌: Content not suitable for users below 13.",
+          allowed: false,
+          age,
+          restrictedCategory: "under13",
+        });
+      }
+    } else if (age >= 13 && age < 18) {
+      const restricted = restrictions.under18.some((word) => lowerQuery.includes(word));
+      if (restricted) {
+        return res.status(403).json({
+          message: "Search restricted ⚠️: Content not suitable for users below 18.",
+          allowed: false,
+          age,
+          restrictedCategory: "under18",
+        });
+      }
+    }
+
     const searchResults = await searchAPI(query);
-    
-    console.log("Search Results ::::::::::", searchResults);
-
-    // ✅ 2. Take only the requested number of organic results
     const requestedCount = parseInt(linkCount) || 10;
-    const topResults = searchResults.organic ? searchResults.organic.slice(0, requestedCount) : [];
-    console.log("topResults:::====", topResults);
+    const topResults = searchResults.organic
+      ? searchResults.organic.slice(0, requestedCount)
+      : [];
 
-    // ✅ 3. Format the results properly for frontend
     const formattedResults = {
       searchParameters: searchResults.searchParameters || { q: query },
-      organic: topResults.map(item => ({
+      organic: topResults.map((item) => ({
         title: item.title,
         link: item.link,
         snippet: item.snippet,
         site: getSourceName(item.link),
-        publishedDate: item.date || item.publishedDate
-      }))
+        publishedDate: item.date || item.publishedDate,
+      })),
     };
 
-    console.log("Formatted Results ::::::::::", formattedResults);
-
-    // ✅ 4. Create summary using Grok
     const summary = await summarizeAsk(query, formattedResults.organic);
-    
-    // ✅ 5. COUNT TOKENS AND WORDS FOR THE SUMMARY
-    const tokenCount = await countTokens(summary, "grok-1"); // Use "gpt-4o-mini" if using OpenAI
+    const tokenCount = await countTokens(summary, "grok-1");
     const wordCount = countWords(summary);
-    
-    console.log(`🔹 Summary Stats - Words: ${wordCount}, Tokens: ${tokenCount}`);
-    
-    // ✅ 6. Verify summary length (optional - for quality control)
-    if (wordCount < 40) {
-      console.warn(`⚠️ Summary might be too short: ${wordCount} words`);
-    }
 
-    // ✅ 7. Save to MongoDB with token count
     const record = new SearchHistory({
       email,
       query,
       category,
-      summary,  
+      summary,
       resultsCount: topResults.length,
       raw: raw || false,
-      summaryWordCount: wordCount, // ✅ Store word count
-      summaryTokenCount: tokenCount, // ✅ Store token count
+      summaryWordCount: wordCount,
+      summaryTokenCount: tokenCount,
     });
     await record.save();
 
-    // ✅ 8. If raw requested
-    if (raw === true) {
-      const rawData = await searchAPI(query, { returnRaw: true });
-      return res.json({
-        summary,
-        verifiedLinks: formattedResults.organic,
-        raw: rawData,
-        email,
-        linkCount: topResults.length,
-        summaryStats: { // ✅ Include stats in response
-          words: wordCount,
-          tokens: tokenCount
-        }
-      });
-    }
-
-    // ✅ 9. Final response with summary stats
     return res.json({
+      allowed: true,
       summary,
       verifiedLinks: formattedResults.organic,
       email,
       linkCount: topResults.length,
-      summaryStats: { // ✅ Include stats in response
-        words: wordCount,
-        tokens: tokenCount
-      }
+      summaryStats: { words: wordCount, tokens: tokenCount },
     });
   } catch (err) {
     console.error("Search Error:", err);
@@ -411,6 +414,103 @@ export const getAISearchResults = async (req, res) => {
       .json({ error: "Internal server error", message: err.message });
   }
 };
+// export const getAISearchResults = async (req, res) => {
+//   console.log("11111111111", req.body);
+//   try {
+//     const { query, category = "general", raw, email, linkCount = 10 } = req.body;
+
+//     if (!query) return res.status(400).json({ error: "Missing 'query' field" });
+
+//     if (email) console.log(`🔹 Search request from: ${email}`);
+//     console.log(`🔹 Requested link count: ${linkCount}`);
+
+//     // ✅ 1. Use direct search API
+//     const searchResults = await searchAPI(query);
+    
+//     console.log("Search Results ::::::::::", searchResults);
+
+//     // ✅ 2. Take only the requested number of organic results
+//     const requestedCount = parseInt(linkCount) || 10;
+//     const topResults = searchResults.organic ? searchResults.organic.slice(0, requestedCount) : [];
+//     console.log("topResults:::====", topResults);
+
+//     // ✅ 3. Format the results properly for frontend
+//     const formattedResults = {
+//       searchParameters: searchResults.searchParameters || { q: query },
+//       organic: topResults.map(item => ({
+//         title: item.title,
+//         link: item.link,
+//         snippet: item.snippet,
+//         site: getSourceName(item.link),
+//         publishedDate: item.date || item.publishedDate
+//       }))
+//     };
+
+//     console.log("Formatted Results ::::::::::", formattedResults);
+
+//     // ✅ 4. Create summary using Grok
+//     const summary = await summarizeAsk(query, formattedResults.organic);
+    
+//     // ✅ 5. COUNT TOKENS AND WORDS FOR THE SUMMARY
+//     const tokenCount = await countTokens(summary, "grok-1"); // Use "gpt-4o-mini" if using OpenAI
+//     const wordCount = countWords(summary);
+    
+//     console.log(`🔹 Summary Stats - Words: ${wordCount}, Tokens: ${tokenCount}`);
+    
+//     // ✅ 6. Verify summary length (optional - for quality control)
+//     if (wordCount < 40) {
+//       console.warn(`⚠️ Summary might be too short: ${wordCount} words`);
+//     }
+
+//     // ✅ 7. Save to MongoDB with token count
+//     const record = new SearchHistory({
+//       email,
+//       query,
+//       category,
+//       summary,  
+//       resultsCount: topResults.length,
+//       raw: raw || false,
+//       summaryWordCount: wordCount, // ✅ Store word count
+//       summaryTokenCount: tokenCount, // ✅ Store token count
+//     });
+//     await record.save();
+
+//     // ✅ 8. If raw requested
+//     if (raw === true) {
+//       const rawData = await searchAPI(query, { returnRaw: true });
+//       return res.json({
+//         summary,
+//         verifiedLinks: formattedResults.organic,
+//         raw: rawData,
+//         email,
+//         linkCount: topResults.length,
+//         summaryStats: { // ✅ Include stats in response
+//           words: wordCount,
+//           tokens: tokenCount
+//         }
+//       });
+//     }
+
+//     // ✅ 9. Final response with summary stats
+//     return res.json({
+//       summary,
+//       verifiedLinks: formattedResults.organic,
+//       email,
+//       linkCount: topResults.length,
+//       summaryStats: { // ✅ Include stats in response
+//         words: wordCount,
+//         tokens: tokenCount
+//       }
+//     });
+//   } catch (err) {
+//     console.error("Search Error:", err);
+//     return res
+//       .status(500)
+//       .json({ error: "Internal server error", message: err.message });
+//   }
+// };
+
+
 // summery get
 // export const getAISearchResults = async (req, res) => {
 //   console.log("11111111111", req.body);
