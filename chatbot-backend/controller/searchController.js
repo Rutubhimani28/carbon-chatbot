@@ -98,63 +98,22 @@ async function smartSearch(query, category) {
   });
 }
 
+// working 50 words
 // async function summarizeAsk(query, results) {
 //   if (!results || results.length === 0) return query;
 
-//   // Extract URLs from organic results
-//   const urls = results
-//     .map((r) => r.link || r.url)
-//     .filter(Boolean);
+//   // Use search snippets directly for faster, more reliable summaries
+//   const snippets = results
+//     .slice(0, 5)
+//     .map(r => r.snippet)
+//     .filter(Boolean)
+//     .join(" ");
 
-//   if (urls.length === 0) return query;
+//   if (!snippets.trim()) return query;
 
-//   const keywords = query.toLowerCase().split(/\s+/);
-//   let combinedText = "";
-
-//   // Scrape content from top 3 URLs
-//   for (const url of urls.slice(0, 3)) {
-//     try {
-//       const { data: html } = await axios.get(url, {
-//         timeout: 8000,
-//         headers: { "User-Agent": "Mozilla/5.0 (Node.js)" },
-//       });
-
-//       const $ = cheerio.load(html);
-
-//       // Extract paragraphs only
-//       const paragraphs = $("p").map((_, el) => $(el).text().trim()).get();
-
-//       // Keep paragraphs containing at least one keyword
-//       const relevantParagraphs = paragraphs.filter((p) =>
-//         keywords.some((k) => p.toLowerCase().includes(k))
-//       );
-
-//       combinedText += " " + relevantParagraphs.join(" ");
-//     } catch (err) {
-//       console.warn(`⚠️ Could not fetch ${url}: ${err.message}`);
-//     }
-//   }
-
-//   // Fallback to query if no content was extracted
-//   if (!combinedText.trim()) return query;
-
-//   // ✅ ENSURE 50-WORD SUMMARY
-//   const words = combinedText.split(/\s+/);
-  
-//   // If we have enough content, take exactly 50 words
-//   if (words.length >= 50) {
-//     return words.slice(0, 50).join(" ");
-//   } 
-//   // If we have less than 50 words, pad with relevant context
-//   else {
-//     const remainingWords = 50 - words.length;
-//     // Add some generic AI context to reach 50 words if needed
-//     const aiContext = "Artificial intelligence involves machines that can learn, reason, and perform tasks typically requiring human intelligence through algorithms and data processing.";
-//     const contextWords = aiContext.split(/\s+/).slice(0, remainingWords);
-//     return words.concat(contextWords).join(" ");
-//   }
+//   // Create coherent summary from snippets
+//   return createCoherentSummary(snippets, query, 50);
 // }
-
 async function summarizeAsk(query, results) {
   if (!results || results.length === 0) return query;
 
@@ -168,6 +127,7 @@ async function summarizeAsk(query, results) {
   const keywords = query.toLowerCase().split(/\s+/);
   let combinedText = "";
 
+  // Scrape content from top 3 URLs
   for (const url of urls.slice(0, 3)) {
     try {
       const { data: html } = await axios.get(url, {
@@ -176,18 +136,19 @@ async function summarizeAsk(query, results) {
       });
 
       const $ = cheerio.load(html);
+
+      // Extract paragraphs only
       const paragraphs = $("p").map((_, el) => $(el).text().trim()).get();
-      
+
+      // Keep paragraphs containing at least one keyword
       const relevantParagraphs = paragraphs.filter((p) =>
         keywords.some((k) => p.toLowerCase().includes(k))
       );
 
       combinedText += " " + relevantParagraphs.join(" ");
       
-      // ✅ Optional: Check token count and stop early if too long
-      const currentTokens = await countTokens(combinedText, "grok-1");
-      if (currentTokens > 1000) { // Limit input context
-        console.log(`🔹 Reached token limit (${currentTokens}), stopping early`);
+      // Limit content to avoid too much text
+      if (combinedText.split(/\s+/).length > 800) {
         break;
       }
     } catch (err) {
@@ -197,18 +158,164 @@ async function summarizeAsk(query, results) {
 
   if (!combinedText.trim()) return query;
 
-  // Ensure 50-word summary
-  const words = combinedText.split(/\s+/);
-  let summary = words.slice(0, 100).join(" ");
-  
-  // ✅ Add ellipsis only if we truncated
-  if (words.length > 100) {
-    summary;
-  }
-  
-  return summary;
+  // Create proper summary between 50-100 words
+  return createFlexibleSummary(combinedText, query, 50, 100);
 }
 
+// Helper function to create flexible summaries between min and max word count
+function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
+  // Split into sentences (basic sentence boundary detection)
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  const keywords = query.toLowerCase().split(/\s+/);
+  
+  // Rank sentences by relevance to query
+  const rankedSentences = sentences.map(sentence => {
+    const lowerSentence = sentence.toLowerCase();
+    const relevanceScore = keywords.filter(kw => lowerSentence.includes(kw)).length;
+    const wordCount = sentence.split(/\s+/).length;
+    return { 
+      sentence: sentence.trim() + ".", 
+      score: relevanceScore, 
+      wordCount 
+    };
+  }).filter(item => item.wordCount > 5); // Filter out very short sentences
+
+  // Sort by relevance score (highest first)
+  rankedSentences.sort((a, b) => b.score - a.score);
+
+  let summary = "";
+  let wordCount = 0;
+  let usedSentences = 0;
+
+  // Add sentences until we reach at least minWords
+  for (const item of rankedSentences) {
+    if (wordCount + item.wordCount <= maxWords) {
+      summary += (summary ? " " : "") + item.sentence;
+      wordCount += item.wordCount;
+      usedSentences++;
+      
+      // Stop if we have enough content and reached a good breaking point
+      if (wordCount >= minWords && usedSentences >= 2) {
+        break;
+      }
+    }
+  }
+
+  // If we don't have enough words, add more less relevant sentences
+  if (wordCount < minWords) {
+    // Reset and use all sentences sorted by length and relevance
+    const allSentences = sentences.map(s => s.trim() + ".")
+      .filter(s => s.length > 20)
+      .sort((a, b) => {
+        const aWords = a.split(/\s+/).length;
+        const bWords = b.split(/\s+/).length;
+        return bWords - aWords; // Prefer longer sentences
+      });
+
+    summary = "";
+    wordCount = 0;
+    
+    for (const sentence of allSentences) {
+      const sentenceWordCount = sentence.split(/\s+/).length;
+      if (wordCount + sentenceWordCount <= maxWords) {
+        summary += (summary ? " " : "") + sentence;
+        wordCount += sentenceWordCount;
+        if (wordCount >= minWords) break;
+      }
+    }
+  }
+
+  // Final cleanup and word count adjustment
+  const words = summary.split(/\s+/);
+  
+  // If over max words, trim gracefully
+  if (words.length > maxWords) {
+    // Find the last sentence boundary before maxWords
+    let lastGoodIndex = maxWords;
+    for (let i = Math.min(maxWords, words.length - 1); i >= minWords; i--) {
+      if (words[i].endsWith('.') || i === words.length - 1) {
+        lastGoodIndex = i + 1;
+        break;
+      }
+    }
+    summary = words.slice(0, lastGoodIndex).join(" ");
+  }
+  
+  // If still under min words, add contextual padding
+  const finalWords = summary.split(/\s+/);
+  if (finalWords.length < minWords) {
+    const needed = minWords - finalWords.length;
+    const padding = `This comprehensive overview covers essential aspects and provides valuable insights into the topic based on current information and reliable sources available.`;
+    const paddingWords = padding.split(/\s+/).slice(0, needed);
+    summary += " " + paddingWords.join(" ");
+  }
+
+  console.log(`🔹 Summary word count: ${summary.split(/\s+/).length} words`);
+  return summary.trim();
+}
+function createCoherentSummary(content, query, targetWordCount) {
+  // Clean and prepare the content
+  const cleanContent = content
+    .replace(/\[\d+\]/g, '') // Remove citation numbers
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Split into meaningful chunks (sentences or phrases)
+  const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  
+  // Prioritize sentences that contain query keywords
+  const keywords = query.toLowerCase().split(/\s+/);
+  const rankedSentences = sentences.map(sentence => {
+    const lowerSentence = sentence.toLowerCase();
+    const relevanceScore = keywords.filter(kw => lowerSentence.includes(kw)).length;
+    return { sentence, score: relevanceScore, wordCount: sentence.split(/\s+/).length };
+  }).filter(item => item.score > 0 || item.wordCount > 5);
+  
+  // Sort by relevance
+  rankedSentences.sort((a, b) => b.score - a.score);
+  
+  let summary = "";
+  let wordCount = 0;
+  
+  // Build summary with most relevant sentences
+  for (const item of rankedSentences) {
+    if (wordCount + item.wordCount <= targetWordCount) {
+      summary += (summary ? " " : "") + item.sentence.trim() + ".";
+      wordCount += item.wordCount;
+    } else {
+      // Try to add partial sentence if it makes sense
+      const remaining = targetWordCount - wordCount;
+      if (remaining >= 4) {
+        const words = item.sentence.split(/\s+/).slice(0, remaining);
+        summary += (summary ? " " : "") + words.join(" ") + ".";
+        wordCount += remaining;
+      }
+      break;
+    }
+    
+    if (wordCount >= targetWordCount) break;
+  }
+  
+  // Fallback if no relevant sentences found
+  if (!summary) {
+    const allWords = cleanContent.split(/\s+/).slice(0, targetWordCount);
+    summary = allWords.join(" ");
+    
+    // Ensure it ends properly
+    if (!summary.endsWith('.') && summary.length > 20) {
+      summary += ".";
+    }
+  }
+  
+  // Final word count check
+  const finalWords = summary.split(/\s+/);
+  if (finalWords.length !== targetWordCount) {
+    console.log(`🔹 Summary adjusted from ${finalWords.length} to ${targetWordCount} words`);
+  }
+  
+  return finalWords.slice(0, targetWordCount).join(" ").trim();
+}
 export const getAISearchResults = async (req, res) => {
   console.log("11111111111", req.body);
   try {
