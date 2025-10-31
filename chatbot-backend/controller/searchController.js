@@ -329,7 +329,9 @@ function calculateAge(dob) {
 }
 
 const restrictions = {
-  under13: ["violence", "drugs", "sex", "dating", "murder", "weapon", "kill" , "adult"],
+  under13: ["violence", "drugs", "sex", "dating", "murder", "weapon", "kill", "adult",
+    "nsfw", "explicit", "porn", "alcohol", "gambling", "suicide", "crime",
+    "terrorism", "blood", "rape", "abuse", "attack", "death"],
   under18: ["gambling", "adult", "nsfw", "explicit", "porn", "alcohol" ,"kill"],
 };
 
