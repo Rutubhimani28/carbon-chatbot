@@ -1761,7 +1761,7 @@ const ChatUI = () => {
       formData.append("prompt", prompt);
       formData.append("email", user.email);
       formData.append("botName", selectedBot);
-      formData.append("responseLength", responseLength);
+      formData.append("responseLength", responseLength || "Short");
       formData.append("sessionId", currentSessionId);
 
       selectedFiles.forEach((file) => {
@@ -2768,7 +2768,7 @@ const ChatUI = () => {
                               bgcolor: "#2F67F6",
                               color: "#fff",
                               borderRadius: 3,
-                              minWidth:"300px",
+                              minWidth: "300px",
                               maxWidth: { xs: "95%", sm: "90%", md: "80%" },
                             }}
                           >
@@ -2961,11 +2961,9 @@ const ChatUI = () => {
                                 }}
                               >
                                 {/* {group.botName} */}
-                                {group.botName ===
-                                "chatgpt-5-mini"
+                                {group.botName === "chatgpt-5-mini"
                                   ? "ChatGPT 5-Mini"
-                                  : group.botName ===
-                                    "grok"
+                                  : group.botName === "grok"
                                   ? "Grok 3-Mini"
                                   : ""}
                               </Typography>
