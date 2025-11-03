@@ -52,7 +52,7 @@ export default function GrokSearchUI(props) {
     setGrokHistoryList,
     totalTokensUsed,
     setTotalTokensUsed,
-     totalSearches,
+    totalSearches,
     setTotalSearches,
   } = useGrok();
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -89,8 +89,16 @@ export default function GrokSearchUI(props) {
         // ✅ FIX: Update dropdown list
         if (data.history?.length > 0) {
           setGrokHistoryList(data.history.map((h) => h.query));
+
+          // ✅ NEW: Get the latest search's token count
+          const latestSearch = data.history[0]; // sorted by latest if backend sorts descending
+          const latestTokenCount = latestSearch?.summaryTokenCount || 0;
+
+          // ✅ Set this token count globally
+          setTokenCount(latestTokenCount);
         } else {
           setGrokHistoryList([]); // handle empty case
+          setTokenCount(0);
         }
       } catch (err) {
         console.error("Search history fetch error:", err);
@@ -180,16 +188,15 @@ export default function GrokSearchUI(props) {
       const data = await response.json();
 
       if (data.limitReached) {
-  Swal.fire({
-    title: "Search Limit Reached 🚫",
-    text: data.message,
-    icon: "warning",
-    confirmButtonText: "OK",
-  });
-  setLoading(false);
-  return;
-}
-
+        Swal.fire({
+          title: "Search Limit Reached 🚫",
+          text: data.message,
+          icon: "warning",
+          confirmButtonText: "OK",
+        });
+        setLoading(false);
+        return;
+      }
 
       if (response.status === 403 || data.allowed === false) {
         Swal.fire({
@@ -246,8 +253,8 @@ export default function GrokSearchUI(props) {
       );
 
       if (data.totalSearches !== undefined) {
-  setTotalSearches(data.totalSearches);
-}
+        setTotalSearches(data.totalSearches);
+      }
 
       // const currentTokens = data.tokenUsage?.totalTokens || 0;
       // setTokenCount(currentTokens);
@@ -369,8 +376,8 @@ export default function GrokSearchUI(props) {
               justifyContent: "flex-end",
             }}
           >
-            Token count: {results?.summaryStats?.tokens}
-            {/* Token count: {tokenCount} */}
+            {/* Token count: {results?.summaryStats?.tokens} */}
+            Token count: {tokenCount}
           </p>
         </Box>
       </Box>

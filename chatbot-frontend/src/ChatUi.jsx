@@ -344,6 +344,10 @@ const ChatUI = () => {
         Math.max(0, (prev || 0) - usedTokens)
       );
 
+      if (data.totalSearches !== undefined) {
+        setTotalSearches(data.totalSearches);
+      }
+      
       // const currentTokens = data.tokenUsage?.totalTokens || 0;
 
       // // ✅ Update token count for this search
