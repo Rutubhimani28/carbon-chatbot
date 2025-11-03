@@ -343,6 +343,17 @@ export const getAISearchResults = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+  // ✅ Limit check — max 50 searches per user
+    const searchCount = await SearchHistory.countDocuments({ email });
+    if (searchCount >= 50) {
+      return res.status(403).json({
+        allowed: false,
+        message:
+          "Search limit reached. You have already performed 50 searches. Please upgrade or wait for reset.",
+        limitReached: true,
+      });
+    }
+
     const age = calculateAge(user.dateOfBirth);
     const lowerQuery = query.toLowerCase();
 
@@ -350,7 +361,8 @@ export const getAISearchResults = async (req, res) => {
       const restricted = restrictions.under13.some((word) => lowerQuery.includes(word));
       if (restricted) {
         return res.status(403).json({
-          message: "Search blocked ❌: Content not suitable for users below 13.",
+          // message: "Search blocked ❌: Content not suitable for users below 13.",
+          message: "Oops! The requested info isn’t available for users under 13.",
           allowed: false,
           age,
           restrictedCategory: "under13",
@@ -360,7 +372,8 @@ export const getAISearchResults = async (req, res) => {
       const restricted = restrictions.under18.some((word) => lowerQuery.includes(word));
       if (restricted) {
         return res.status(403).json({
-          message: "Search restricted ⚠️: Content not suitable for users below 18.",
+          // message: "Search restricted ⚠️: Content not suitable for users below 18.",
+          message: "Oops! The requested info isn’t available for users under 18.",
           allowed: false,
           age,
           restrictedCategory: "under18",
@@ -408,6 +421,7 @@ export const getAISearchResults = async (req, res) => {
       email,
       linkCount: topResults.length,
       summaryStats: { words: wordCount, tokens: tokenCount },
+      totalSearches: searchCount + 1, // send updated count
     });
   } catch (err) {
     console.error("Search Error:", err);

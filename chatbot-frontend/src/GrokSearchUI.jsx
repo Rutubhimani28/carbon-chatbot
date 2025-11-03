@@ -52,6 +52,8 @@ export default function GrokSearchUI(props) {
     setGrokHistoryList,
     totalTokensUsed,
     setTotalTokensUsed,
+     totalSearches,
+    setTotalSearches,
   } = useGrok();
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -177,6 +179,18 @@ export default function GrokSearchUI(props) {
 
       const data = await response.json();
 
+      if (data.limitReached) {
+  Swal.fire({
+    title: "Search Limit Reached 🚫",
+    text: data.message,
+    icon: "warning",
+    confirmButtonText: "OK",
+  });
+  setLoading(false);
+  return;
+}
+
+
       if (response.status === 403 || data.allowed === false) {
         Swal.fire({
           title: "Restricted Search 🚫",
@@ -217,9 +231,31 @@ export default function GrokSearchUI(props) {
         setSessionRemainingTokens(data.remainingTokens);
 
       setResults(data);
-      const currentTokens = data.tokenUsage?.totalTokens || 0;
-      setTokenCount(currentTokens);
-      setTotalTokensUsed((prev) => prev + currentTokens);
+
+      // ✅ Get token counts
+      const usedTokens =
+        data.summaryStats?.tokens || data.tokenUsage?.totalTokens || 0;
+      setTokenCount(usedTokens);
+
+      // ✅ Update total tokens used
+      setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
+
+      // ✅ Deduct used tokens from remaining
+      setSessionRemainingTokens((prev) =>
+        Math.max(0, (prev || 0) - usedTokens)
+      );
+
+      if (data.totalSearches !== undefined) {
+  setTotalSearches(data.totalSearches);
+}
+
+      // const currentTokens = data.tokenUsage?.totalTokens || 0;
+      // setTokenCount(currentTokens);
+      // setTotalTokensUsed((prev) => prev + currentTokens);
+
+      // ✅ Deduct used tokens from remaining
+      // const usedTokens = data.summaryStats?.tokens || currentTokens || 0;
+      // setSessionRemainingTokens((prev) => Math.max(0, prev - usedTokens));
 
       localStorage.setItem(
         "lastGrokSearch",
@@ -249,8 +285,6 @@ export default function GrokSearchUI(props) {
     // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
     <Box sx={{ display: "block", width: "100%" }}>
       <Box>
-
-    
         <Box
           sx={{
             position: "sticky",

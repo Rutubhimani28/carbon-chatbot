@@ -550,6 +550,47 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
   }
 }
 
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+  return age;
+}
+
+const restrictions = {
+  under13: [
+    "violence",
+    "drugs",
+    "sex",
+    "dating",
+    "murder",
+    "weapon",
+    "kill",
+    "adult",
+    "nsfw",
+    "explicit",
+    "porn",
+    "alcohol",
+    "gambling",
+    "suicide",
+    "crime",
+    "terrorism",
+    "blood",
+    "rape",
+    "abuse",
+    "attack",
+    "death",
+  ],
+  under18: ["gambling", "adult", "nsfw", "explicit", "porn", "alcohol", "kill"],
+};
+
 export const getAIResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
@@ -591,7 +632,44 @@ export const getAIResponse = async (req, res) => {
       return res.status(400).json({ message: "Prompt or files are required" });
     if (!botName)
       return res.status(400).json({ message: "botName is required" });
+
     if (!email) return res.status(400).json({ message: "email is required" });
+
+    // ✅ AGE-BASED CONTENT RESTRICTION LOGIC
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const age = calculateAge(user.dateOfBirth);
+    const lowerPrompt = (prompt || "").toLowerCase();
+
+    if (age < 13) {
+      const restricted = restrictions.under13.some((word) =>
+        lowerPrompt.includes(word)
+      );
+      if (restricted) {
+        return res.status(403).json({
+          message:
+            "Oops! The requested content isn’t available for users under 13.",
+          allowed: false,
+          age,
+          restrictedCategory: "under13",
+        });
+      }
+    } else if (age >= 13 && age < 18) {
+      const restricted = restrictions.under18.some((word) =>
+        lowerPrompt.includes(word)
+      );
+      if (restricted) {
+        return res.status(403).json({
+          message:
+            "Oops! The requested content isn’t available for users under 18.",
+          allowed: false,
+          age,
+          restrictedCategory: "under18",
+        });
+      }
+    }
 
     const currentSessionId = sessionId || uuidv4();
     const originalPrompt = prompt;
@@ -850,6 +928,7 @@ export const getAIResponse = async (req, res) => {
 
     res.json({
       sessionId: currentSessionId,
+      allowed: true,
       response: finalReplyHTML,
       botName,
       ...counts,

@@ -9,7 +9,9 @@ export const GrokProvider = ({ children }) => {
   const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
   const [results, setResults] = useState([]);
   const [grokhistoryList, setGrokHistoryList] = useState([]);
-    const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [totalSearches, setTotalSearches] = useState(0);
+
 
   return (
     <GrokContext.Provider
@@ -28,6 +30,8 @@ export const GrokProvider = ({ children }) => {
         setGrokHistoryList,
         totalTokensUsed,
         setTotalTokensUsed,
+         totalSearches,
+    setTotalSearches,
       }}
     >
       {children}

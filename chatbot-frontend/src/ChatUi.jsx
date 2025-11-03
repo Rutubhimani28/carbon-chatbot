@@ -109,6 +109,8 @@ const ChatUI = () => {
     setGrokHistoryList,
     totalTokensUsed,
     setTotalTokensUsed,
+     totalSearches,
+     setTotalSearches,
   } = useGrok();
 
   // In your state initialization
@@ -259,6 +261,31 @@ const ChatUI = () => {
         }),
       });
 
+      const data = await response.json();
+
+      if (data.limitReached) {
+        Swal.fire({
+          title: "Search Limit Reached 🚫",
+          text: data.message,
+          icon: "warning",
+          confirmButtonText: "OK",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (response.status === 403 || data.allowed === false) {
+        Swal.fire({
+          title: "Restricted Search 🚫",
+          text:
+            data.message || "This search is not allowed for your age group.",
+          icon: "warning",
+        });
+        setError(data.message);
+        setLoading(false);
+        return;
+      }
+
       if (!response.ok) {
         const errorData = await response.json();
 
@@ -296,7 +323,7 @@ const ChatUI = () => {
         );
       }
 
-      const data = await response.json();
+      // const data = await response.json();
 
       if (data.remainingTokens !== undefined) {
         setSessionRemainingTokens(data.remainingTokens); // ✅ update parent
@@ -304,13 +331,26 @@ const ChatUI = () => {
       setResults(data);
       // setTokenCount(data.tokenUsage?.totalTokens || 0); // <-- update token count
 
-      const currentTokens = data.tokenUsage?.totalTokens || 0;
+      // ✅ Get token counts
+      const usedTokens =
+        data.summaryStats?.tokens || data.tokenUsage?.totalTokens || 0;
+      setTokenCount(usedTokens);
 
-      // ✅ Update token count for this search
-      setTokenCount(currentTokens);
+      // ✅ Update total tokens used
+      setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
 
-      // ✅ Add to global total tokens used
-      setTotalTokensUsed((prevTotal) => prevTotal + currentTokens);
+      // ✅ Deduct used tokens from remaining
+      setSessionRemainingTokens((prev) =>
+        Math.max(0, (prev || 0) - usedTokens)
+      );
+
+      // const currentTokens = data.tokenUsage?.totalTokens || 0;
+
+      // // ✅ Update token count for this search
+      // setTokenCount(currentTokens);
+
+      // // ✅ Add to global total tokens used
+      // setTotalTokensUsed((prevTotal) => prevTotal + currentTokens);
 
       // 🔹 Save to localStorage for persistence
       localStorage.setItem(
@@ -361,6 +401,24 @@ const ChatUI = () => {
         signal: controller.signal,
       });
 
+      const data = await response.json();
+
+      // 🛑 AGE-BASED RESTRICTION HANDLER
+      if (response.status === 403 || data.allowed === false) {
+        await Swal.fire({
+          title: "Restricted Search 🚫",
+          text:
+            data.message || "This request is not allowed for your age group.",
+          icon: "warning",
+        });
+        return {
+          response: data.message,
+          sessionId: currentSessionId,
+          botName: selectedBot,
+          isError: true,
+        };
+      }
+
       // Handle "Not enough tokens" error
       if (!response.ok) {
         const errorData = await response.json();
@@ -402,7 +460,7 @@ const ChatUI = () => {
       }
 
       abortControllerRef.current = null;
-      const data = await response.json();
+      // const data = await response.json();
 
       console.log("API Response with files:", data);
 
@@ -2633,7 +2691,7 @@ const ChatUI = () => {
                       color: "text.secondary",
                     }}
                   >
-                    <leafatar
+                    {/* <leafatar
                       sx={{
                         width: 64,
                         height: 64,
@@ -2642,15 +2700,17 @@ const ChatUI = () => {
                         bgcolor: "#3dafe2",
                         color: "#fff",
                       }}
-                    >
-                      {/* <Logo /> */}
-                    </leafatar>
+                    > */}
+                    {/* <Logo /> */}
+                    {/* </leafatar> */}
+
                     <Typography variant="h6" sx={{ mb: 1 }}>
-                      Welcome to the Wrds
+                      Welcome to the <strong>Wrds</strong>
                     </Typography>
-                    <Typography variant="body2">
+
+                    {/* <Typography variant="body2">
                       Start a conversation by typing a message below.
-                    </Typography>
+                    </Typography> */}
                   </Box>
                 ) : (
                   // Chat Messages
@@ -3431,7 +3491,7 @@ const ChatUI = () => {
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: "11px" }}
+                    sx={{ fontSize: "14px" }}
                   >
                     How <strong>Wrds</strong> can help you today?
                   </Typography>
@@ -3578,6 +3638,24 @@ const ChatUI = () => {
               {sessionRemainingTokens}
             </Typography>
           </Box>
+
+          <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+  <Typography
+    variant="caption"
+    color="text.secondary"
+    sx={{
+      display: "block",
+      fontWeight: "medium",
+      fontSize: "17px",
+    }}
+  >
+    Remaining Searches:
+  </Typography>
+  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+    {Math.max(50 - (totalSearches || 0), 0)}
+  </Typography>
+</Box>
+
         </DialogContent>
       </Dialog>
     </Box>
