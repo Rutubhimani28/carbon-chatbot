@@ -331,8 +331,34 @@ function calculateAge(dob) {
 const restrictions = {
   under13: ["violence", "drugs", "sex", "dating", "murder", "weapon", "kill", "adult",
     "nsfw", "explicit", "porn", "alcohol", "gambling", "suicide", "crime",
-    "terrorism", "blood", "rape", "abuse", "attack", "death"],
-  under18: ["gambling", "adult", "nsfw", "explicit", "porn", "alcohol" ,"kill"],
+    "terrorism", "blood", "rape", "abuse", "attack", "death",
+  "weed", "marijuana", "pot", "coke", "cocaine", "meth", "heroin", "fentanyl", "opioid", "pill", "xanax", "oxy", "perc", "lean", "codeine", "molly", "ecstasy", "MDMA", "LSD", "acid", "shrooms", "mushroom", "ketamine", "ket", "special-k", "vape", "juul", "nicotine", "dab", "dabbing", "cartel", "dealer", "trap", "high", "stoned", "tripped", "OD", "overdose", "inject", "needle", "snort", "sniff", "smoke", "blunt", "joint", "bong", "rig", "paraphernalia",
+    
+    "sexual", "intercourse", "fuck", "fucking", "fucked", "pussy", "dick", "cock", "tits", "boobs", "ass", "hole", "cum", "jizz", "orgasm", "climax", "masturbate", "jerk", "wank", "porno", "xxx", "hentai", "nude", "naked", "strip", "hooker", "prostitute", "escort", "sugar daddy", "onlyfans", "camgirl", "thot", "slut", "whore", "raping", "raped", "molest", "grope", "touch", "fondle", "sext", "sexting", "nudes", "dickpic", "titpic", "erotic", "kink", "BDSM", "bondage", "dom", "sub", "fetish", "anal", "oral", "blowjob", "handjob", "rimming", "creampie", "gangbang", "threesome", "orgy", "incest", "pedo", "lolita", "underage", "teen", "jailbait",
+    
+    "date", "boyfriend", "girlfriend", "hookup", "hook-up", "tinder", "grindr", "bumble", "snapchat sext", "DM slide", "thirst trap", "catfish", "groom", "grooming", "predator", "meetup", "stranger", "older", "sugar", "daddy", "mommy", "trade", "nudes for", "trade pics", "body count", "virgin", "lose virginity", "sleep with", "smash", "Netflix and chill",
+    
+    "killing", "killed", "death", "die", "dying", "stab", "shoot", "shooting", "shot", "gun", "knife", "bomb", "explode", "explosion", "assault", "fight", "beat", "choke", "strangle", "hang", "self-harm", "cut", "wrist", "razor", "poison", "drown", "burn", "torture", "massacre", "genocide", "terror", "terrorist", "ISIS", "Al-Qaeda", "hitman", "assassin", "sniper", "decapitate", "behead", "mutilate", "disembowel", "slaughter", "carnage", "execution", "execute",
+    
+    "steal", "rob", "robbery", "theft", "shoplift", "burglar", "hack", "hacking", "DDoS", "phishing", "carding", "fraud", "scam", "blackmail", "extort", "kidnap", "ransom", "trafficking", "gang", "mafia", "hit", "contract kill", "arson", "vandalism", "graffiti", "trespass", "fugitive", "warrant", "jail", "prison", "felony", "cop", "police brutality", "riot", "loot",
+    
+    "depression", "depressed", "anxiety", "anxious", "panic attack", "therapy", "meds", "suicidal", "KMS", "end it", "rope", "noose", "bridge", "gun to head", "swallow pills", "worthless", "hate myself", "kill myself",
+    
+    "fag", "dyke", "tranny", "retard", "nigger", "chink", "spic", "kike", "raghead", "towelhead", "beaner", "cripple", "autistic", "incel", "fat", "ugly", "loser",
+    
+    "DAN", "jailbreak", "ignore rules", "pretend", "roleplay as", "unfiltered", "no limits", "bypass", "override", "system prompt", "hypothetical", "story", "fiction", "creative writing", "simulate", "generate", "uncensored", "raw", "dark mode"
+  , "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
+    
+    "beer", "liquor", "vodka", "whiskey", "drunk", "wasted", "blackout", "binge", "shot", "chug", "keg", "party", "alc", "booze", "underage drinking", "fake ID", "bar", "club", "DUI", "breathalyzer"
+  
+  ],
+  under18: [
+    "gambling", "adult", "nsfw", "explicit", "porn", "alcohol" ,"kill",
+
+    "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
+    
+    "beer", "liquor", "vodka", "whiskey", "drunk", "wasted", "blackout", "binge", "shot", "chug", "keg", "party", "alc", "booze", "underage drinking", "fake ID", "bar", "club", "DUI", "breathalyzer"
+  ],
 };
 
 export const getAISearchResults = async (req, res) => {
