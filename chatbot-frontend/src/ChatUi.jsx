@@ -56,6 +56,9 @@ import chat from "././assets/chat.webp";
 import Words1 from "././assets/words1.webp"; // path adjust karo
 // import Words2 from "././assets/words2.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
+import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -94,6 +97,9 @@ const ChatUI = () => {
   // const [error, setError] = useState("");
   // const [tokenCount, setTokenCount] = useState(0);
   const [linkCount, setLinkCount] = useState(3);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef(null);
+
   const {
     loading,
     setLoading,
@@ -109,8 +115,8 @@ const ChatUI = () => {
     setGrokHistoryList,
     totalTokensUsed,
     setTotalTokensUsed,
-     totalSearches,
-     setTotalSearches,
+    totalSearches,
+    setTotalSearches,
   } = useGrok();
 
   // In your state initialization
@@ -234,6 +240,175 @@ const ChatUI = () => {
     }
   }, []);
 
+  // const startListening = () => {
+  //   const SpeechRecognition =
+  //     window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  //   if (!SpeechRecognition) {
+  //     alert("Your browser does not support speech recognition!");
+  //     return;
+  //   }
+
+  //   const recognition = new SpeechRecognition();
+  //   recognition.lang = "en-US"; // or "gu-IN" for Gujarati
+  //   recognition.continuous = false;
+  //   recognition.interimResults = true;
+
+  //   recognition.onstart = () => setIsListening(true);
+
+  //   recognition.onresult = (event) => {
+  //     let transcript = "";
+  //     for (let i = event.resultIndex; i < event.results.length; i++) {
+  //       transcript += event.results[i][0].transcript;
+  //     }
+  //     setInput(transcript); // live typing into your input box
+  //   };
+
+  //   recognition.onerror = (event) => {
+  //     console.error("Speech recognition error:", event.error);
+  //     setIsListening(false);
+  //   };
+
+  //   recognition.onend = () => {
+  //     setIsListening(false);
+  //     recognitionRef.current = null;
+  //   };
+
+  //   recognition.start();
+  //   recognitionRef.current = recognition;
+  // };
+
+  // const stopListening = () => {
+  //   recognitionRef.current?.stop();
+  //   setIsListening(false);
+  // };
+
+// const startListening = () => {
+//   const SpeechRecognition =
+//     window.SpeechRecognition || window.webkitSpeechRecognition;
+
+//   if (!SpeechRecognition) {
+//     alert("Your browser does not support speech recognition!");
+//     return;
+//   }
+
+//   // prevent multiple instances
+//   if (recognitionRef.current) return;
+
+//   const recognition = new SpeechRecognition();
+//   recognition.lang = "en-US"; // or "gu-IN"
+//   recognition.continuous = true; // 👈 keep listening until stop
+//   recognition.interimResults = true;
+
+//   recognition.onstart = () => {
+//     console.log("🎤 Voice input started...");
+//     setIsListening(true);
+//   };
+
+//   recognition.onresult = (event) => {
+//     let transcript = "";
+//     for (let i = event.resultIndex; i < event.results.length; i++) {
+//       transcript += event.results[i][0].transcript;
+//     }
+
+//     // 👇 accumulate or live-update typed text
+//     setInput((prev) => transcript);
+//   };
+
+//   recognition.onerror = (event) => {
+//     console.error("Speech recognition error:", event.error);
+//     setIsListening(false);
+//     recognitionRef.current = null;
+//   };
+
+//   recognition.onend = () => {
+//     console.log("🛑 Voice input stopped");
+//     setIsListening(false);
+//     recognitionRef.current = null;
+//   };
+
+//   recognition.start();
+//   recognitionRef.current = recognition;
+// };
+
+// const stopListening = () => {
+//   console.log("⛔ Stop clicked");
+//   if (recognitionRef.current) {
+//     recognitionRef.current.stop();
+//     recognitionRef.current = null;
+//   }
+//   setIsListening(false);
+// };
+
+const startListening = () => {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Your browser does not support speech recognition!");
+    return;
+  }
+
+  if (recognitionRef.current) return; // prevent multiple mic instances
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US"; // or "gu-IN"
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  let finalTranscript = ""; // 🔹 store only final confirmed speech
+
+  recognition.onstart = () => {
+    console.log("🎤 Listening started...");
+    setIsListening(true);
+  };
+
+  recognition.onresult = (event) => {
+    let interimTranscript = "";
+
+    // loop through results
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcript = event.results[i][0].transcript.trim();
+
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript + " ";
+      } else {
+        interimTranscript += transcript;
+      }
+    }
+
+    // 🔹 Combine final confirmed + current speaking (no duplication)
+    const combinedText = (finalTranscript + interimTranscript).trim();
+
+    // 🔹 Update input box only with latest clean text (no repeats)
+    setInput(combinedText);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("🎙️ Speech recognition error:", event.error);
+    setIsListening(false);
+    recognitionRef.current = null;
+  };
+
+  recognition.onend = () => {
+    console.log("🛑 Listening stopped");
+    setIsListening(false);
+    recognitionRef.current = null;
+  };
+
+  recognition.start();
+  recognitionRef.current = recognition;
+};
+
+const stopListening = () => {
+  if (recognitionRef.current) {
+    recognitionRef.current.stop();
+    recognitionRef.current = null;
+  }
+  setIsListening(false);
+};
+
+
   const handleSearch = async (searchQuery) => {
     const finalQuery = searchQuery || query; // ✅ use passed query if available
     console.log("finalQuery:::====", finalQuery);
@@ -347,7 +522,7 @@ const ChatUI = () => {
       if (data.totalSearches !== undefined) {
         setTotalSearches(data.totalSearches);
       }
-      
+
       // const currentTokens = data.tokenUsage?.totalTokens || 0;
 
       // // ✅ Update token count for this search
@@ -3411,6 +3586,21 @@ const ChatUI = () => {
                           ))}
                         </Box>
                       ),
+
+                      endAdornment: (
+                        <IconButton
+                          onClick={isListening ? stopListening : startListening}
+                          sx={{
+                            color: isListening ? "red" : "#10a37f",
+                            mr: 1,
+                          }}
+                          title={
+                            isListening ? "Stop recording" : "Start voice input"
+                          }
+                        >
+                          {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
+                        </IconButton>
+                      ),
                     }}
                   />
                   {console.log("selectedFiles length:", selectedFiles.length)}
@@ -3644,22 +3834,21 @@ const ChatUI = () => {
           </Box>
 
           <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
-  <Typography
-    variant="caption"
-    color="text.secondary"
-    sx={{
-      display: "block",
-      fontWeight: "medium",
-      fontSize: "17px",
-    }}
-  >
-    Remaining Searches:
-  </Typography>
-  <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-    {Math.max(50 - (totalSearches || 0), 0)}
-  </Typography>
-</Box>
-
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "block",
+                fontWeight: "medium",
+                fontSize: "17px",
+              }}
+            >
+              Remaining Searches:
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+              {Math.max(50 - (totalSearches || 0), 0)}
+            </Typography>
+          </Box>
         </DialogContent>
       </Dialog>
     </Box>
