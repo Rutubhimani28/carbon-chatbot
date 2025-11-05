@@ -4,6 +4,7 @@ import SearchHistory from "../model/SearchHistory.js";
 import * as cheerio from "cheerio";
 import { countTokens, countWords } from "../utils/tokenCounter.js";
 import User from "../model/User.js";
+import ChatSession from "../model/ChatSession.js";
 // import SearchHistory from "../model/SearchHistory.js";
 
 const SERPER_URL = "https://google.serper.dev/search";
@@ -744,6 +745,87 @@ export const getUserSearchHistory = async (req, res) => {
     });
   } catch (err) {
     console.error("History Fetch Error:", err);
+    return res.status(500).json({
+      error: "Internal server error",
+      message: err.message,
+    });
+  }
+};
+
+// Combined token stats for profile (chat + search)
+export const getUserTokenStats = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Missing 'email' field in request body" });
+    }
+
+    // Chat tokens: sum of tokensUsed across all session messages
+    const chatSessions = await ChatSession.find({ email });
+
+    // const chatTokensUsed = chatSessions.reduce((sum, session) => {
+    //   return (
+    //     sum + session.history.reduce((inner, msg) => inner + (msg.tokensUsed || 0), 0)
+    //   );
+    // }, 0);
+
+     // ✅ Instead of summing tokensUsed from history,
+    // use grandTotalTokens saved inside each ChatSession
+    let chatTokensUsed = 0;
+
+   
+    if (chatSessions.length > 0) {
+      // 🔹 Take the latest session (last one created)
+      const latestSession = chatSessions[chatSessions.length - 1];
+
+      // ✅ Try reading grandTotalTokens field
+      if (
+        latestSession &&
+        latestSession.grandTotalTokens !== undefined &&
+        latestSession.grandTotalTokens !== null
+      ) {
+        chatTokensUsed = Number(latestSession.grandTotalTokens) || 0;
+        console.log("✅ Found grandTotalTokens in latest session:", chatTokensUsed);
+      } else {
+        // 🧩 Fallback: compute manually if field missing
+        chatTokensUsed = chatSessions.reduce((sum, session) => {
+          return (
+            sum +
+            session.history.reduce(
+              (inner, msg) => inner + (msg.tokensUsed || 0),
+              0
+            )
+          );
+        }, 0);
+        console.log("⚠️ grandTotalTokens missing — fallback calc used:", chatTokensUsed);
+      }
+    } else {
+      console.log("⚠️ No chat sessions found for user:", email);
+    }
+
+    // Search tokens: sum of summaryTokenCount across user search history
+    const searches = await SearchHistory.find({ email });
+    const searchTokensUsed = searches.reduce(
+      (sum, s) => sum + (s.summaryTokenCount || 0),
+      0
+    );
+
+    const totalTokensUsed = chatTokensUsed + searchTokensUsed;
+    // Define a global token limit for combined chat + search usage
+    const TOKEN_LIMIT = 10000;
+    const remainingTokens = Math.max(0, TOKEN_LIMIT - totalTokensUsed);
+
+    return res.json({
+      email,
+      chatTokensUsed,
+      searchTokensUsed,
+      totalTokensUsed,
+      remainingTokens,
+      totalSearches: searches.length,
+      chatSessions: chatSessions.length,
+    });
+  } catch (err) {
+    console.error("Token Stats Error:", err);
     return res.status(500).json({
       error: "Internal server error",
       message: err.message,

@@ -1929,6 +1929,13 @@ export const getAllSessions = async (req, res) => {
     const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
     const remainingTokensFixed = parseFloat(remainingTokens.toFixed(3));
 
+    
+// ✅ Save the grand total into ChatSession for each session (optional: only latest)
+await ChatSession.updateMany(
+  { email },
+  { $set: { grandTotalTokens: grandTotalTokensFixed } }
+);
+
     res.json({
       sessions: sessionsWithStats,
       grandTotalTokens: grandTotalTokensFixed,

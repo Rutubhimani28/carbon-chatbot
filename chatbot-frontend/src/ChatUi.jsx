@@ -1104,6 +1104,30 @@ const ChatUI = () => {
 
     // Fetch chat sessions after confirming user exists
     fetchChatSessions();
+
+    // Fetch combined token stats (chat + search) for profile
+    (async () => {
+      try {
+        const res = await fetch(`${apiBaseUrl}/userTokenStats`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        });
+        if (!res.ok) return;
+        const stats = await res.json();
+        if (stats?.totalTokensUsed !== undefined) {
+          setTotalTokensUsed(stats.totalTokensUsed);
+        }
+        if (stats?.totalSearches !== undefined) {
+          setTotalSearches(stats.totalSearches);
+        }
+        if (stats?.remainingTokens !== undefined) {
+          setSessionRemainingTokens(stats.remainingTokens);
+        }
+      } catch (e) {
+        console.warn("Failed to load user token stats:", e.message);
+      }
+    })();
   }, []);
 
   // useEffect(() => {

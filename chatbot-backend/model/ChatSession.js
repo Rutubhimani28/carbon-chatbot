@@ -61,6 +61,7 @@ const chatSessionSchema = new mongoose.Schema(
     sessionId: { type: String, required: true },
     email: { type: String, required: true }, // link with user
     history: [messageSchema],
+    grandTotalTokens: { type: Number, default: 0 }, // ✅ Add this line
     create_time: { type: Date, default: Date.now },
   },
   { timestamps: true }

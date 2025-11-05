@@ -6,7 +6,7 @@ import connectDB from "./db/connectDB.js";
 import searchRoutes from "./routes/searchRoutes.js"; // New search routes
 import bodyParser from "body-parser";
 import { getAISearchResults } from "./controller/searchController.js"; // Import the search controller
-import { getUserSearchHistory } from "./controller/searchController.js";
+import { getUserSearchHistory, getUserTokenStats } from "./controller/searchController.js";
 import { grokSearchResults } from "./controller/groksearchController.js";
 import { grokUserSearchHistory } from "./controller/groksearchController.js";
 
@@ -44,6 +44,7 @@ app.use("/api/ai", aiRoutes);
 
 app.post("/search", getAISearchResults);
 app.post("/Searchhistory", getUserSearchHistory); // changed to POST
+app.post("/userTokenStats", getUserTokenStats); // combined chat+search token stats for profile
 
 app.post("/grokSearch", grokSearchResults); // changed to POST
 app.post("/grokSearchhistory", grokUserSearchHistory); // changed to POST
