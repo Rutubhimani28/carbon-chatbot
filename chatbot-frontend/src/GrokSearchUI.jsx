@@ -45,6 +45,7 @@ export default function GrokSearchUI(props) {
     setError,
     tokenCount,
     setTokenCount,
+    sessionRemainingTokens,
     setSessionRemainingTokens,
     results,
     setResults,
@@ -243,17 +244,38 @@ export default function GrokSearchUI(props) {
       const usedTokens =
         data.summaryStats?.tokens || data.tokenUsage?.totalTokens || 0;
       setTokenCount(usedTokens);
+      console.log("🔹 usedTokens:::::", usedTokens);
+      // ✅ Update total tokens used
+      // setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
+
+      // // ✅ Deduct used tokens from remaining
+      // setSessionRemainingTokens((prev) =>
+      //   Math.max(0, (prev || 0) - usedTokens)
+      // );
 
       // ✅ Update total tokens used
-      setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
+      setTotalTokensUsed((prev) => {
+        const newTotal = (prev || 0) + usedTokens;
+        console.log("🔹 setTotalTokensUsed:::::", newTotal);
+
+        // 💾 Save to localStorage for cross-tab persistence
+        localStorage.setItem("globalTotalTokensUsed", newTotal);
+        return newTotal;
+      });
 
       // ✅ Deduct used tokens from remaining
-      setSessionRemainingTokens((prev) =>
-        Math.max(0, (prev || 0) - usedTokens)
-      );
+      setSessionRemainingTokens((prev) => {
+        const newRemaining = Math.max(0, (prev || 0) - usedTokens);
+        console.log("🔹 setSessionRemainingTokens:::::::::::::", newRemaining);
+
+        // 💾 Save to localStorage
+        localStorage.setItem("globalRemainingTokens", newRemaining);
+        return newRemaining;
+      });
 
       if (data.totalSearches !== undefined) {
         setTotalSearches(data.totalSearches);
+        console.log("🔹 setTotalSearches:::::::", data.totalSearches);
       }
 
       // const currentTokens = data.tokenUsage?.totalTokens || 0;

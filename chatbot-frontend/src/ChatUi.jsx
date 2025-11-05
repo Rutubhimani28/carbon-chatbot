@@ -59,7 +59,6 @@ import Words2 from "././assets/words2.png"; // path adjust karo
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 
-
 const ChatUI = () => {
   const [input, setInput] = useState("");
   const [chats, setChats] = useState([]);
@@ -99,6 +98,8 @@ const ChatUI = () => {
   const [linkCount, setLinkCount] = useState(3);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
+  const partialResponseRef = useRef("");
+  const currentPromptRef = useRef("");
 
   const {
     loading,
@@ -283,131 +284,130 @@ const ChatUI = () => {
   //   setIsListening(false);
   // };
 
-// const startListening = () => {
-//   const SpeechRecognition =
-//     window.SpeechRecognition || window.webkitSpeechRecognition;
+  // const startListening = () => {
+  //   const SpeechRecognition =
+  //     window.SpeechRecognition || window.webkitSpeechRecognition;
 
-//   if (!SpeechRecognition) {
-//     alert("Your browser does not support speech recognition!");
-//     return;
-//   }
+  //   if (!SpeechRecognition) {
+  //     alert("Your browser does not support speech recognition!");
+  //     return;
+  //   }
 
-//   // prevent multiple instances
-//   if (recognitionRef.current) return;
+  //   // prevent multiple instances
+  //   if (recognitionRef.current) return;
 
-//   const recognition = new SpeechRecognition();
-//   recognition.lang = "en-US"; // or "gu-IN"
-//   recognition.continuous = true; // 👈 keep listening until stop
-//   recognition.interimResults = true;
+  //   const recognition = new SpeechRecognition();
+  //   recognition.lang = "en-US"; // or "gu-IN"
+  //   recognition.continuous = true; // 👈 keep listening until stop
+  //   recognition.interimResults = true;
 
-//   recognition.onstart = () => {
-//     console.log("🎤 Voice input started...");
-//     setIsListening(true);
-//   };
+  //   recognition.onstart = () => {
+  //     console.log("🎤 Voice input started...");
+  //     setIsListening(true);
+  //   };
 
-//   recognition.onresult = (event) => {
-//     let transcript = "";
-//     for (let i = event.resultIndex; i < event.results.length; i++) {
-//       transcript += event.results[i][0].transcript;
-//     }
+  //   recognition.onresult = (event) => {
+  //     let transcript = "";
+  //     for (let i = event.resultIndex; i < event.results.length; i++) {
+  //       transcript += event.results[i][0].transcript;
+  //     }
 
-//     // 👇 accumulate or live-update typed text
-//     setInput((prev) => transcript);
-//   };
+  //     // 👇 accumulate or live-update typed text
+  //     setInput((prev) => transcript);
+  //   };
 
-//   recognition.onerror = (event) => {
-//     console.error("Speech recognition error:", event.error);
-//     setIsListening(false);
-//     recognitionRef.current = null;
-//   };
+  //   recognition.onerror = (event) => {
+  //     console.error("Speech recognition error:", event.error);
+  //     setIsListening(false);
+  //     recognitionRef.current = null;
+  //   };
 
-//   recognition.onend = () => {
-//     console.log("🛑 Voice input stopped");
-//     setIsListening(false);
-//     recognitionRef.current = null;
-//   };
+  //   recognition.onend = () => {
+  //     console.log("🛑 Voice input stopped");
+  //     setIsListening(false);
+  //     recognitionRef.current = null;
+  //   };
 
-//   recognition.start();
-//   recognitionRef.current = recognition;
-// };
+  //   recognition.start();
+  //   recognitionRef.current = recognition;
+  // };
 
-// const stopListening = () => {
-//   console.log("⛔ Stop clicked");
-//   if (recognitionRef.current) {
-//     recognitionRef.current.stop();
-//     recognitionRef.current = null;
-//   }
-//   setIsListening(false);
-// };
+  // const stopListening = () => {
+  //   console.log("⛔ Stop clicked");
+  //   if (recognitionRef.current) {
+  //     recognitionRef.current.stop();
+  //     recognitionRef.current = null;
+  //   }
+  //   setIsListening(false);
+  // };
 
-const startListening = () => {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  const startListening = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    alert("Your browser does not support speech recognition!");
-    return;
-  }
-
-  if (recognitionRef.current) return; // prevent multiple mic instances
-
-  const recognition = new SpeechRecognition();
-  recognition.lang = "en-US"; // or "gu-IN"
-  recognition.continuous = true;
-  recognition.interimResults = true;
-
-  let finalTranscript = ""; // 🔹 store only final confirmed speech
-
-  recognition.onstart = () => {
-    console.log("🎤 Listening started...");
-    setIsListening(true);
-  };
-
-  recognition.onresult = (event) => {
-    let interimTranscript = "";
-
-    // loop through results
-    for (let i = event.resultIndex; i < event.results.length; ++i) {
-      const transcript = event.results[i][0].transcript.trim();
-
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript + " ";
-      } else {
-        interimTranscript += transcript;
-      }
+    if (!SpeechRecognition) {
+      alert("Your browser does not support speech recognition!");
+      return;
     }
 
-    // 🔹 Combine final confirmed + current speaking (no duplication)
-    const combinedText = (finalTranscript + interimTranscript).trim();
+    if (recognitionRef.current) return; // prevent multiple mic instances
 
-    // 🔹 Update input box only with latest clean text (no repeats)
-    setInput(combinedText);
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US"; // or "gu-IN"
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    let finalTranscript = ""; // 🔹 store only final confirmed speech
+
+    recognition.onstart = () => {
+      console.log("🎤 Listening started...");
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+
+      // loop through results
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        const transcript = event.results[i][0].transcript.trim();
+
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + " ";
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      // 🔹 Combine final confirmed + current speaking (no duplication)
+      const combinedText = (finalTranscript + interimTranscript).trim();
+
+      // 🔹 Update input box only with latest clean text (no repeats)
+      setInput(combinedText);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("🎙️ Speech recognition error:", event.error);
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.onend = () => {
+      console.log("🛑 Listening stopped");
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
   };
 
-  recognition.onerror = (event) => {
-    console.error("🎙️ Speech recognition error:", event.error);
+  const stopListening = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
     setIsListening(false);
-    recognitionRef.current = null;
   };
-
-  recognition.onend = () => {
-    console.log("🛑 Listening stopped");
-    setIsListening(false);
-    recognitionRef.current = null;
-  };
-
-  recognition.start();
-  recognitionRef.current = recognition;
-};
-
-const stopListening = () => {
-  if (recognitionRef.current) {
-    recognitionRef.current.stop();
-    recognitionRef.current = null;
-  }
-  setIsListening(false);
-};
-
 
   const handleSearch = async (searchQuery) => {
     const finalQuery = searchQuery || query; // ✅ use passed query if available
@@ -573,6 +573,10 @@ const stopListening = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
+    // 🟢 Add here
+    currentPromptRef.current = input;
+    partialResponseRef.current = "";
+
     try {
       const response = await fetch(`${apiBaseUrl}/api/ai/ask`, {
         method: "POST",
@@ -581,6 +585,14 @@ const stopListening = () => {
       });
 
       const data = await response.json();
+
+      // 🟢 while processing response, store it in partial ref
+      if (data?.response) {
+        partialResponseRef.current = data.response; // save the full (or partial) response
+      }
+
+      // 🟢 (optional) you can also do this line if you render “typing” in UI:
+      setIsTypingResponse(false);
 
       // 🛑 AGE-BASED RESTRICTION HANDLER
       if (response.status === 403 || data.allowed === false) {
@@ -675,6 +687,113 @@ const stopListening = () => {
         botName: selectedBot,
       };
     }
+  };
+
+  // Add this function
+  // const handleStopResponse = async () => {
+  //   if (abortControllerRef.current) {
+  //     console.log("⛔ User clicked Stop");
+  //     abortControllerRef.current.abort(); // cancel fetch
+  //     abortControllerRef.current = null;
+  //     // isStoppedRef.current = true;
+  //   }
+  //   isStoppedRef.current = true;
+
+  //   setIsTypingResponse(false);
+
+  //   const user = JSON.parse(localStorage.getItem("user"));
+  //   const email = user?.email;
+
+  //   // 🧩 Get partial response text from the currently displayed message
+  //   const partialResponse = getCurrentPartialResponse(); // <-- define below
+
+  //   // Save partial response to backend
+
+  //   // if (partialResponseRef.current && selectedChatId) {
+  //   if (partialResponse && selectedChatId) {
+  //     try {
+  //       await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({
+  //           email,
+  //           sessionId: selectedChatId,
+  //           prompt: currentPromptRef.current,
+  //           partialResponse,
+  //           // partialResponse: partialResponseRef.current,
+  //           botName: selectedBot,
+  //         }),
+  //       });
+  //       console.log("✅ Partial response saved");
+  //     } catch (err) {
+  //       console.error("Failed to save partial response:", err);
+  //     }
+  //   }
+  // };
+
+  const handleStopResponse = async () => {
+    if (abortControllerRef.current) {
+      console.log("⛔ User clicked Stop");
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    isStoppedRef.current = true;
+    setIsTypingResponse(false);
+
+    const partialResponse = getCurrentPartialResponse();
+    if (!partialResponse || !selectedChatId) return;
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
+
+      const res = await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          sessionId: selectedChatId,
+          prompt: currentPromptRef.current,
+          partialResponse,
+          botName: selectedBot,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("✅ Partial response saved:", data);
+
+      if (data.success) {
+        // ⬇️ Update token count box instantly
+        setMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+          const lastMsgIndex = messages.length - 1;
+
+          if (lastMsgIndex >= 0) {
+            messages[lastMsgIndex] = {
+              ...messages[lastMsgIndex],
+              isTyping: false,
+              isComplete: false,
+              tokensUsed: data.tokensUsed, // ✅ Show partial token count
+            };
+            updated[0] = messages;
+          }
+          return updated;
+        });
+        // re-fetch chat session so DB stays synced
+        await fetchChatSessions();
+      }
+    } catch (err) {
+      console.error("❌ Failed to save partial response:", err);
+    }
+  };
+
+  // Helper function
+  const getCurrentPartialResponse = () => {
+    const lastMsgGroup = messageGroups?.[0] || [];
+    const lastMsg = lastMsgGroup[lastMsgGroup.length - 1];
+    return lastMsg?.responses?.[0] || "";
   };
 
   // const fetchChatSessions = async () => {
@@ -2014,25 +2133,115 @@ const stopListening = () => {
 
       const responseText = result.response || "";
 
-      // ✅ Always update latest state
-      setMessageGroups((prev) => {
-        const updated = [...prev];
-        const messages = updated[0] || [];
-        const index = messages.findIndex((m) => m.id === messageId);
+      // ✅ Typing animation effect starts here
+      if (!result.isError) {
+        const lines = responseText.split("\n");
+        let allText = "";
 
-        if (index !== -1) {
-          messages[index] = {
-            ...messages[index],
-            responses: [responseText],
-            isTyping: false,
-            isComplete: true,
-            tokensUsed: result.tokensUsed || 0,
-            botName: result.botName || selectedBot,
-          };
-          updated[0] = messages;
+        const LINES_PER_BATCH = 35; // 👉 number of lines to type together
+
+        for (let l = 0; l < lines.length; l += LINES_PER_BATCH) {
+          // if (isStoppedRef.current) break;
+          if (isStoppedRef.current) {
+            // ⛔ Stop pressed → save partial response
+            try {
+              await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  email,
+                  sessionId: selectedChatId || currentSessionId,
+                  prompt,
+                  partialResponse: allText + lineText,
+                  botName: selectedBot,
+                }),
+              });
+            } catch (err) {
+              console.error("Failed to save partial response:", err);
+            }
+            break;
+          }
+
+          const batch = lines.slice(l, l + LINES_PER_BATCH).join("\n");
+
+          let lineText = "";
+          const chars = batch.split("");
+
+          for (let i = 0; i < chars.length; i += 50) {
+            if (isStoppedRef.current) break;
+
+            lineText += chars.slice(i, i + 50).join("");
+
+            setMessageGroups((prev) => {
+              const updated = [...prev];
+              const messages = updated[0] || [];
+              const index = messages.findIndex((m) => m.id === messageId);
+              if (index !== -1) {
+                messages[index] = {
+                  ...messages[index],
+                  responses: [allText + lineText],
+                  isTyping: !isStoppedRef.current,
+                  isComplete: false,
+                  tokensUsed: result.tokensUsed || 0,
+                  botName: result.botName || selectedBot,
+                };
+                updated[0] = messages;
+              }
+              return updated;
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 20)); // typing speed
+          }
+
+          if (isStoppedRef.current) break;
+
+          allText += lineText + "\n";
+          await new Promise((resolve) => setTimeout(resolve, 0)); // small pause between batches
         }
-        return updated;
-      });
+
+        // ✅ Mark complete after typing done
+        // ✅ After typing completes (not stopped)
+        if (!isStoppedRef.current) {
+          setMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
+            const index = messages.findIndex((m) => m.id === messageId);
+            if (index !== -1) {
+              messages[index] = {
+                ...messages[index],
+                isTyping: false,
+                isComplete: true,
+                responses: [allText.trim()],
+                tokensUsed: result.tokensUsed || 0,
+                botName: result.botName || selectedBot,
+              };
+              updated[0] = messages;
+            }
+            return updated;
+          });
+        }
+      }
+      // ✅ Typing animation ends
+
+      // ✅ Always update latest state working code
+      // setMessageGroups((prev) => {
+      //   const updated = [...prev];
+      //   const messages = updated[0] || [];
+      //   const index = messages.findIndex((m) => m.id === messageId);
+
+      //   if (index !== -1) {
+      //     messages[index] = {
+      //       ...messages[index],
+      //       responses: [responseText],
+      //       isTyping: false,
+      //       isComplete: true,
+      //       tokensUsed: result.tokensUsed || 0,
+      //       botName: result.botName || selectedBot,
+      //     };
+      //     updated[0] = messages;
+      //   }
+      //   return updated;
+      // });
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
@@ -2040,9 +2249,14 @@ const stopListening = () => {
       setIsTypingResponse(false);
       scrollToBottom();
       setResponseLength(" ");
-      fetchChatSessions();
+      // fetchChatSessions();
+      // ✅ Only refresh sessions if user did NOT stop typing (full response)
+      if (!isStoppedRef.current) {
+        fetchChatSessions();
+      }
     }
   };
+
   // last meeral working code
   // const handleSend = async () => {
   //   if ((!input.trim() && selectedFiles.length === 0) || isSending) return;
@@ -3588,19 +3802,61 @@ const stopListening = () => {
                       ),
 
                       endAdornment: (
-                        <IconButton
-                          onClick={isListening ? stopListening : startListening}
-                          sx={{
-                            color: isListening ? "red" : "#10a37f",
-                            mr: 1,
-                          }}
-                          title={
-                            isListening ? "Stop recording" : "Start voice input"
-                          }
-                        >
-                          {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
-                        </IconButton>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {/* 🎤 Voice Input Button */}
+                          <IconButton
+                            onClick={
+                              isListening ? stopListening : startListening
+                            }
+                            sx={{
+                              color: isListening ? "red" : "#10a37f",
+                              mr: 0.5,
+                            }}
+                            title={
+                              isListening
+                                ? "Stop recording"
+                                : "Start voice input"
+                            }
+                          >
+                            {isListening ? (
+                              <StopCircleIcon />
+                            ) : (
+                              <KeyboardVoiceIcon />
+                            )}
+                          </IconButton>
+
+                          {/* 🛑 Stop Generating Button (for chatbot response) */}
+                          {(isTypingResponse || isSending) && (
+                            <Tooltip title="Stop generating">
+                              <IconButton
+                                onClick={() => {
+                                  isStoppedRef.current = true;
+                                  handleStopResponse();
+                                }}
+                                color="error"
+                                sx={{ mr: 0.5 }}
+                              >
+                                <StopCircleIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
                       ),
+
+                      // endAdornment: (
+                      //   <IconButton
+                      //     onClick={isListening ? stopListening : startListening}
+                      //     sx={{
+                      //       color: isListening ? "red" : "#10a37f",
+                      //       mr: 1,
+                      //     }}
+                      //     title={
+                      //       isListening ? "Stop recording" : "Start voice input"
+                      //     }
+                      //   >
+                      //     {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
+                      //   </IconButton>
+                      // ),
                     }}
                   />
                   {console.log("selectedFiles length:", selectedFiles.length)}

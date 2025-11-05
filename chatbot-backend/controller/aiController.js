@@ -901,10 +901,46 @@ const restrictions = {
     "raw",
     "dark mode",
 
-     "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
-    
-    "beer", "liquor", "vodka", "whiskey", "drunk", "wasted", "blackout", "binge", "shot", "chug", "keg", "party", "alc", "booze", "underage drinking", "fake ID", "bar", "club", "DUI", "breathalyzer"
-  
+    "bet",
+    "betting",
+    "gamble",
+    "poker",
+    "casino",
+    "slot",
+    "blackjack",
+    "roulette",
+    "sportsbook",
+    "draftkings",
+    "fanduel",
+    "stake",
+    "wager",
+    "odds",
+    "parlay",
+    "crypto gambling",
+    "NFT flip",
+    "loot box",
+    "skin betting",
+
+    "beer",
+    "liquor",
+    "vodka",
+    "whiskey",
+    "drunk",
+    "wasted",
+    "blackout",
+    "binge",
+    "shot",
+    "chug",
+    "keg",
+    "party",
+    "alc",
+    "booze",
+    "underage drinking",
+    "fake ID",
+    "bar",
+    "club",
+    "DUI",
+    "breathalyzer",
   ],
   under18: [
     "gambling",
@@ -924,7 +960,7 @@ const restrictions = {
     "blackjack",
     "roulette",
     "sportsbook",
-    "draftkings",    
+    "draftkings",
     "fanduel",
     "stake",
     "wager",
@@ -1315,6 +1351,284 @@ export const getAIResponse = async (req, res) => {
   }
 };
 
+// / ✅ Get partial response
+// export const savePartialResponse = async (req, res) => {
+//   try {
+//     const { email, sessionId, prompt, partialResponse, botName } = req.body;
+//     if (!email || !sessionId || !partialResponse)
+//       return res.status(400).json({ message: "Missing required fields" });
+
+//     const sessions = await ChatSession.find({ email });
+//     let session = await ChatSession.findOne({ sessionId, email });
+//     if (!session) {
+//       session = new ChatSession({ email, sessionId, history: [], create_time: new Date() });
+//     }
+
+//     const counts = await handleTokens(sessions, session, {
+//       prompt,
+//       response: partialResponse,
+//       botName,
+//       files: [],
+//     });
+
+//     await session.save();
+
+//     res.json({
+//       message: "Partial response saved",
+//       remainingTokens: counts.remainingTokens,
+//       tokensUsed: counts.tokensUsed,
+//     });
+//   } catch (err) {
+//     console.error("savePartialResponse error:", err);
+//     res.status(500).json({ message: "Internal Server Error", error: err.message });
+//   }
+// };
+
+// 💾 Save Partial Chatbot Response (when user clicks Stop)
+
+// woking code
+// export const savePartialResponse = async (req, res) => {
+//   try {
+//     const { email, sessionId, prompt, partialResponse, botName } = req.body;
+
+//     if (!partialResponse || !partialResponse.trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No partial response to save.",
+//       });
+//     }
+
+//     // 🧮 Calculate partial tokens and words using same functions as getAIResponse
+//     // const tokensUsed = countTokens(partialResponse);
+//     // const wordCount = countWords(partialResponse);
+
+//     // ✅ Find the user's chat session
+//     const session = await ChatSession.findOne({ sessionId, email });
+//     if (!session) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Chat session not found.",
+//       });
+//     }
+
+//     // ✅ Calculate tokens and words properly using handleTokens (same as getAIResponse)
+//     const counts = await handleTokens([], session, {
+//       prompt,
+//       response: partialResponse,
+//       botName,
+//       files: [], // no files for partial response
+//     });
+
+//     const tokensUsed = (await counts?.tokensUsed) || 0;
+//     const wordCount = countWords(partialResponse);
+
+//     console.log(
+//       `🧩 Saving partial response (${tokensUsed} tokens, ${wordCount} words) for ${email}`
+//     );
+
+//     const timestamp = new Date();
+
+//     // ✅ Save partial message in DB
+//     await ChatSession.updateOne(
+//       { sessionId, email },
+//       {
+//         $push: {
+//           messages: {
+//             prompt,
+//             response: partialResponse,
+//             botName,
+//             isComplete: false,
+//             createdAt: timestamp,
+//             tokensUsed,
+//             wordCount,
+//           },
+//         },
+//       }
+//     );
+
+//     // ✅ Send partial response + token count back to frontend
+//     res.status(200).json({
+//       success: true,
+//       message: "Partial response saved successfully.",
+//       response: partialResponse,
+//       tokensUsed,
+//       wordCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error saving partial response:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to save partial response.",
+//     });
+//   }
+// };
+
+export const savePartialResponse = async (req, res) => {
+  try {
+    const { email, sessionId, prompt, partialResponse, botName } = req.body;
+
+    if (!partialResponse || !partialResponse.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "No partial response to save.",
+      });
+    }
+
+    const sessions = await ChatSession.find({ email });
+    let session = await ChatSession.findOne({ sessionId, email });
+    if (!session) {
+      session = new ChatSession({
+        email,
+        sessionId,
+        history: [],
+        create_time: new Date(),
+      });
+    }
+
+    // 🧠 Find the **latest** message (by index) that matches the same prompt
+    // This ensures only the most recent identical prompt gets updated
+    let targetIndex = -1;
+    for (let i = session.history.length - 1; i >= 0; i--) {
+      if (session.history[i].prompt === prompt) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    // 🧮 Use same token calculation logic as full response
+    const counts = await handleTokens(sessions, session, {
+      prompt,
+      response: partialResponse,
+      botName,
+      files: [],
+    });
+
+    // Mark as partial
+    const messageEntry = {
+      prompt,
+      response: partialResponse,
+      botName,
+      isComplete: false,
+      tokensUsed: counts.tokensUsed,
+      wordCount: countWords(partialResponse),
+      createdAt: new Date(),
+    };
+
+    // Save to DB
+    // session.history.push(messageEntry);
+
+    if (targetIndex !== -1) {
+      // 🩵 Update only the most recent same-prompt message
+      session.history[targetIndex] = {
+        ...session.history[targetIndex],
+        ...messageEntry,
+      };
+    } else {
+      // 🆕 If not found, add as new
+      session.history.push({
+        ...messageEntry,
+        createdAt: new Date(),
+      });
+    }
+
+    await session.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Partial response saved successfully.",
+      response: partialResponse,
+      tokensUsed: counts.tokensUsed,
+      wordCount: countWords(partialResponse),
+    });
+  } catch (error) {
+    console.error("❌ Error saving partial response:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to save partial response.",
+    });
+  }
+};
+
+// export const savePartialResponse = async (req, res) => {
+//   try {
+//     const { email, sessionId, prompt, partialResponse, botName } = req.body;
+
+//     if (!partialResponse || !partialResponse.trim()) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "No partial response to save.",
+//       });
+//     }
+
+//     const session = await ChatSession.findOne({ sessionId, email });
+//     if (!session) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Chat session not found.",
+//       });
+//     }
+
+//     // ✅ Calculate token + word count same as getAIResponse
+//     const counts = await handleTokens([], session, {
+//       prompt,
+//       response: partialResponse,
+//       botName,
+//       files: [],
+//     });
+
+//     const tokensUsed = counts?.tokensUsed || 0;
+//     const wordCount = countWords(partialResponse);
+//     const timestamp = new Date();
+
+//     console.log(
+//       `🧩 Saving partial response (${tokensUsed} tokens, ${wordCount} words) for ${email}`
+//     );
+
+//     // ✅ Find only the last message user sent
+//     const existingIndex = session.history.length - 1;
+//     const lastMessage = session.history[existingIndex];
+
+//     if (lastMessage && lastMessage.prompt === prompt) {
+//       // 🔁 Replace only the last matching message
+//       session.history[existingIndex] = {
+//         ...lastMessage,
+//         response: partialResponse,
+//         isComplete: false,
+//         updatedAt: timestamp,
+//         tokensUsed,
+//         wordCount,
+//       };
+//     } else {
+//       // ➕ Push if new message
+//       session.history.push({
+//         prompt,
+//         response: partialResponse,
+//         botName,
+//         isComplete: false,
+//         createdAt: timestamp,
+//         tokensUsed,
+//         wordCount,
+//       });
+//     }
+
+//     await session.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Partial response saved successfully.",
+//       response: partialResponse,
+//       tokensUsed,
+//       wordCount,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error saving partial response:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to save partial response.",
+//     });
+//   }
+// };
+
 // / ✅ Get Chat History (per session)
 export const getChatHistory = async (req, res) => {
   try {
@@ -1343,14 +1657,35 @@ export const getChatHistory = async (req, res) => {
 
     const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
 
+    // ✅ Remove duplicate partial responses (same prompt + same tokensUsed)
+    const seenKeys = new Set();
+    const dedupedHistory = session.history.filter((entry) => {
+      const key = `${entry.prompt}_${entry.tokensUsed}`;
+      if (seenKeys.has(key)) return false; // skip duplicate
+      seenKeys.add(key);
+      return true;
+    });
+
+    // Format history for frontend (no other change)
+    const formattedHistory = dedupedHistory.map((entry) => {
+      const displayResponse =
+        entry.isComplete === false && entry.response
+          ? entry.response // Show partial response
+          : entry.response; // Otherwise full
+          
+    
     // Format history for frontend
-    const formattedHistory = session.history.map((entry) => {
+    // const formattedHistory = session.history.map((entry) => {
+    //   const displayResponse =
+    //     entry.isComplete === false && entry.response
+    //       ? entry.response // Show partial response
+    //       : entry.response; // Otherwise full
+
       return {
         prompt: entry.prompt,
-        response: entry.response,
-        // partialResponse: entry.partialResponse || "",
+        // response: entry.response,
+        response: displayResponse,
         tokensUsed: entry.tokensUsed || 0,
-        // partialTokensUsed: entry.partialTokensUsed || 0,
         botName: entry.botName || "chatgpt-5-mini",
         create_time: entry.create_time,
         files: entry.files || [],
@@ -1478,8 +1813,9 @@ export const getChatHistory = async (req, res) => {
 //   }
 // };
 
-// ✅ Get all sessions of a user with aggregated tokens/words
 // ✅ Get All Sessions (with grand total)
+
+// full working code onlydublicate partial response save remains
 export const getAllSessions = async (req, res) => {
   try {
     const { email } = req.body;
@@ -1499,7 +1835,49 @@ export const getAllSessions = async (req, res) => {
         // totalPartialTokens = 0,
         sessionTotalTokensUsed = 0;
 
-      session.history.forEach((entry) => {
+      // ✅ Show ONLY partial responses (isComplete === false)
+      // If no partials exist, show full responses instead
+      const partialMessages = session.history.filter(
+        (msg) => msg.isComplete === false
+      );
+
+      const historyToShow =
+        partialMessages.length > 0 ? partialMessages : session.history;
+
+      // ✅ Add this section right here 👇
+      // const formattedHistory = historyToShow.map((entry) => {
+      //   const displayResponse =
+      //     entry.isComplete === false && entry.response
+      //       ? entry.response // Show partial response
+      //       : entry.response; // Otherwise full
+
+      // ✅ 🧩 Remove duplicate partials (same prompt + same tokensUsed)
+      const seenCombos = new Set();
+      const dedupedHistory = historyToShow.filter((msg) => {
+        const key = `${msg.prompt}_${msg.tokensUsed}`;
+        if (seenCombos.has(key)) return false; // skip duplicate
+        seenCombos.add(key);
+        return true;
+      });
+
+      // ✅ Continue your same logic below
+      const formattedHistory = dedupedHistory.map((entry) => {
+        const displayResponse =
+          entry.isComplete === false && entry.response
+            ? entry.response // Show partial response
+            : entry.response; // Otherwise full
+
+        return {
+          prompt: entry.prompt,
+          response: displayResponse,
+          tokensUsed: entry.tokensUsed || 0,
+          botName: entry.botName || "chatgpt-5-mini",
+          createdAt: entry.createdAt,
+        };
+      });
+
+      // ✅ Now loop through formattedHistory for token counts
+      formattedHistory.forEach((entry) => {
         totalPromptTokens += entry.promptTokens || 0;
         totalResponseTokens += entry.responseTokens || 0;
         totalFileTokens += entry.fileTokenCount || 0;
@@ -1508,20 +1886,24 @@ export const getAllSessions = async (req, res) => {
           entry.responseWords || entry.responseWordCount || 0;
         totalFileWords += entry.fileWordCount || 0;
         sessionTotalTokensUsed += entry.tokensUsed || 0;
-        // totalPartialTokens += entry.partialTokensUsed || 0;
       });
 
       grandTotalTokens += sessionTotalTokensUsed;
 
       // 👇 heading: first user prompt (if available)
-      const heading = session.history?.[0]?.prompt || "No Heading";
+      // const heading = session.history?.[0]?.prompt || "No Heading";
+
+      // ✅ Heading logic — prefer latest partial response prompt
+      const lastEntry =
+        formattedHistory[formattedHistory.length - 1] || session.history[0];
+      const heading = lastEntry?.prompt || "No Heading";
 
       return {
         sessionId: session.sessionId,
         heading,
         email: session.email,
         create_time: session.create_time,
-        history: session.history,
+        history: formattedHistory,
         stats: {
           totalPromptTokens,
           totalResponseTokens,
