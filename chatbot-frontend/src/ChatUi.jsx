@@ -2613,7 +2613,7 @@ const ChatUI = () => {
           fullWidth
           size="small"
           gap={1}
-          sx={{ ml: 4, display: "flex", flexDirection: "row", gap: 2, mt: 1 }}
+          sx={{ ml: 4, display: "flex", flexDirection: "row", gap: 2, mt: 0 }}
         >
           {/* Chat session dropdown */}
           {activeView === "chat" && (
@@ -3622,7 +3622,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   mb: 0,
-                  pb: 0,
+                  pb: "16px",
                   display: "flex",
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   width: "100%",
@@ -3640,7 +3640,8 @@ const ChatUI = () => {
                     justifyContent: "space-between",
                     borderTop: "1px solid #e0e0e0",
                     bgcolor: "#fafafa",
-                    pb: 0.5,
+                    // pb: 0.5,
+                    pb: "20px",
                     position: "relative",
                     flexWrap: { xs: "wrap", sm: "nowrap" },
                     // position: "relative",
@@ -3684,12 +3685,12 @@ const ChatUI = () => {
                       color: "#2F67F6",
                       position: "absolute",
                       left: "15px",
-                      bottom: "14px", // 👈 bottom ma fix karva
+                      bottom: "34px", // 👈 bottom ma fix karva
                       zIndex: 2,
                       // backgroundColor: "white",
                       borderRadius: "50%",
                       width: "32px",
-                      height: "32px",
+                      height: "40px",
                     }}
                   >
                     <input
@@ -3744,7 +3745,7 @@ const ChatUI = () => {
                         borderRadius: "25px",
                         backgroundColor: "#fff",
                         height: "auto",
-                        minHeight: "40px",
+                        minHeight: "67px",
                         padding:
                           selectedFiles.length > 0
                             ? "30px 14px 8.5px 37px !important"
