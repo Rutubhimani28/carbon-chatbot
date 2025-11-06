@@ -3,6 +3,7 @@ import trustedSources from "../trusted_sources.json" with { type: "json" };
 import SearchHistory from "../model/SearchHistory.js";
 import * as cheerio from "cheerio";
 import { countTokens, countWords } from "../utils/tokenCounter.js";
+import { checkGlobalTokenLimit, getGlobalTokenStats } from "../utils/tokenLimit.js";
 import User from "../model/User.js";
 import ChatSession from "../model/ChatSession.js";
 // import SearchHistory from "../model/SearchHistory.js";
@@ -429,6 +430,17 @@ export const getAISearchResults = async (req, res) => {
     const tokenCount = await countTokens(summary, "grok-1");
     const wordCount = countWords(summary);
 
+    // ✅ Global shared token limit check (AI + Search combined)
+    try {
+      // returns remaining after applying this usage
+      await checkGlobalTokenLimit(email, tokenCount);
+    } catch (err) {
+      return res.status(400).json({
+        message: "Not enough tokens",
+        remainingTokens: 0,
+      });
+    }
+
     const record = new SearchHistory({
       email,
       query,
@@ -441,6 +453,10 @@ export const getAISearchResults = async (req, res) => {
     });
     await record.save();
 
+    // ✅ Get remaining tokens from global stats (single source of truth)
+    const globalStats = await getGlobalTokenStats(email);
+    const remainingTokens = globalStats.remainingTokens;
+
     return res.json({
       allowed: true,
       summary,
@@ -449,6 +465,7 @@ export const getAISearchResults = async (req, res) => {
       linkCount: topResults.length,
       summaryStats: { words: wordCount, tokens: tokenCount },
       totalSearches: searchCount + 1, // send updated count
+      remainingTokens,
     });
   } catch (err) {
     console.error("Search Error:", err);
@@ -752,7 +769,7 @@ export const getUserSearchHistory = async (req, res) => {
   }
 };
 
-// Combined token stats for profile (chat + search)
+// Combined token stats for profile (chat + search) - Single source of truth
 export const getUserTokenStats = async (req, res) => {
   try {
     const { email } = req.body;
@@ -760,69 +777,12 @@ export const getUserTokenStats = async (req, res) => {
       return res.status(400).json({ error: "Missing 'email' field in request body" });
     }
 
-    // Chat tokens: sum of tokensUsed across all session messages
-    const chatSessions = await ChatSession.find({ email });
-
-    // const chatTokensUsed = chatSessions.reduce((sum, session) => {
-    //   return (
-    //     sum + session.history.reduce((inner, msg) => inner + (msg.tokensUsed || 0), 0)
-    //   );
-    // }, 0);
-
-     // ✅ Instead of summing tokensUsed from history,
-    // use grandTotalTokens saved inside each ChatSession
-    let chatTokensUsed = 0;
-
-   
-    if (chatSessions.length > 0) {
-      // 🔹 Take the latest session (last one created)
-      const latestSession = chatSessions[chatSessions.length - 1];
-
-      // ✅ Try reading grandTotalTokens field
-      if (
-        latestSession &&
-        latestSession.grandTotalTokens !== undefined &&
-        latestSession.grandTotalTokens !== null
-      ) {
-        chatTokensUsed = Number(latestSession.grandTotalTokens) || 0;
-        console.log("✅ Found grandTotalTokens in latest session:", chatTokensUsed);
-      } else {
-        // 🧩 Fallback: compute manually if field missing
-        chatTokensUsed = chatSessions.reduce((sum, session) => {
-          return (
-            sum +
-            session.history.reduce(
-              (inner, msg) => inner + (msg.tokensUsed || 0),
-              0
-            )
-          );
-        }, 0);
-        console.log("⚠️ grandTotalTokens missing — fallback calc used:", chatTokensUsed);
-      }
-    } else {
-      console.log("⚠️ No chat sessions found for user:", email);
-    }
-
-    // Search tokens: sum of summaryTokenCount across user search history
-    const searches = await SearchHistory.find({ email });
-    const searchTokensUsed = searches.reduce(
-      (sum, s) => sum + (s.summaryTokenCount || 0),
-      0
-    );
-
-    const totalTokensUsed = chatTokensUsed + searchTokensUsed;
-    // Define a global token limit for combined chat + search usage
-    const TOKEN_LIMIT = 10000;
-    const remainingTokens = Math.max(0, TOKEN_LIMIT - totalTokensUsed);
+    // ✅ Use unified token stats function (single source of truth)
+    const stats = await getGlobalTokenStats(email);
 
     return res.json({
       email,
-      chatTokensUsed,
-      searchTokensUsed,
-      totalTokensUsed,
-      remainingTokens,
-      totalSearches: searches.length,
-      chatSessions: chatSessions.length,
+      ...stats,
     });
   } catch (err) {
     console.error("Token Stats Error:", err);

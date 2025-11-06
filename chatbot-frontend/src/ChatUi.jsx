@@ -655,6 +655,32 @@ const ChatUI = () => {
 
       console.log("API Response with files:", data);
 
+      // ✅ Immediately refresh user token stats after chat completion
+      // try {
+      //   const user = JSON.parse(localStorage.getItem("user"));
+      //   const email = user?.email;
+      //   if (email) {
+      //     const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       body: JSON.stringify({ email }),
+      //     });
+
+      //     if (statsRes.ok) {
+      //       const stats = await statsRes.json();
+      //       if (typeof stats.totalTokensUsed === "number") {
+      //         setTotalTokensUsed(stats.totalTokensUsed);
+      //       }
+      //       if (typeof stats.remainingTokens === "number") {
+      //         setSessionRemainingTokens(stats.remainingTokens);
+      //         localStorage.setItem("globalRemainingTokens", stats.remainingTokens);
+      //       }
+      //     }
+      //   }
+      // } catch (e) {
+      //   console.warn("⚠️ Failed to refresh userTokenStats after chat:", e.message);
+      // }
+
       return {
         response: data.response?.replace(/\n\n/g, "<br/>") || "",
         sessionId: data.sessionId,
@@ -781,6 +807,34 @@ const ChatUI = () => {
           }
           return updated;
         });
+
+        // ✅ userTokenStats (AFTER save_partial)
+        try {
+          const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            if (typeof stats.totalTokensUsed === "number")
+              setTotalTokensUsed(stats.totalTokensUsed);
+            if (typeof stats.remainingTokens === "number") {
+              setSessionRemainingTokens(stats.remainingTokens);
+              localStorage.setItem(
+                "globalRemainingTokens",
+                stats.remainingTokens
+              );
+            }
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ Failed to refresh stats after partial save:",
+            err.message
+          );
+        }
+
         // re-fetch chat session so DB stays synced
         await fetchChatSessions();
       }
@@ -2273,10 +2327,44 @@ const ChatUI = () => {
       setIsTypingResponse(false);
       scrollToBottom();
       setResponseLength(" ");
-      // fetchChatSessions();
+
       // ✅ Only refresh sessions if user did NOT stop typing (full response)
+      // if (!isStoppedRef.current) {
+      //   fetchChatSessions();
+      // }
+
+      // ✅ Only call userTokenStats + get_user_session if NOT stopped
       if (!isStoppedRef.current) {
-        fetchChatSessions();
+        try {
+          const user = JSON.parse(localStorage.getItem("user"));
+          const email = user?.email;
+          if (email) {
+            // 👉 userTokenStats
+            const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email }),
+            });
+
+            if (statsRes.ok) {
+              const stats = await statsRes.json();
+              if (typeof stats.totalTokensUsed === "number")
+                setTotalTokensUsed(stats.totalTokensUsed);
+              if (typeof stats.remainingTokens === "number") {
+                setSessionRemainingTokens(stats.remainingTokens);
+                localStorage.setItem(
+                  "globalRemainingTokens",
+                  stats.remainingTokens
+                );
+              }
+            }
+
+            // 👉 get_user_session
+            await fetchChatSessions();
+          }
+        } catch (err) {
+          console.warn("⚠️ Failed to refresh stats after chat:", err.message);
+        }
       }
     }
   };

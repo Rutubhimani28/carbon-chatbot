@@ -253,25 +253,26 @@ export default function GrokSearchUI(props) {
       //   Math.max(0, (prev || 0) - usedTokens)
       // );
 
-      // ✅ Update total tokens used
-      setTotalTokensUsed((prev) => {
-        const newTotal = (prev || 0) + usedTokens;
-        console.log("🔹 setTotalTokensUsed:::::", newTotal);
-
-        // 💾 Save to localStorage for cross-tab persistence
-        localStorage.setItem("globalTotalTokensUsed", newTotal);
-        return newTotal;
-      });
-
-      // ✅ Deduct used tokens from remaining
-      setSessionRemainingTokens((prev) => {
-        const newRemaining = Math.max(0, (prev || 0) - usedTokens);
-        console.log("🔹 setSessionRemainingTokens:::::::::::::", newRemaining);
-
-        // 💾 Save to localStorage
-        localStorage.setItem("globalRemainingTokens", newRemaining);
-        return newRemaining;
-      });
+      // ✅ Sync global totals from backend (single source of truth)
+      try {
+        const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          if (typeof stats.totalTokensUsed === "number") {
+            setTotalTokensUsed(stats.totalTokensUsed);
+          }
+          if (typeof stats.remainingTokens === "number") {
+            setSessionRemainingTokens(stats.remainingTokens);
+            localStorage.setItem("globalRemainingTokens", stats.remainingTokens);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to refresh userTokenStats after search:", e.message);
+      }
 
       if (data.totalSearches !== undefined) {
         setTotalSearches(data.totalSearches);

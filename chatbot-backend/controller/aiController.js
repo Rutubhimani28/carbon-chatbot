@@ -13,7 +13,7 @@ import fs from "fs";
 import OpenAI from "openai";
 import axios from "axios";
 import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
-import { checkGlobalTokenLimit } from "../utils/tokenLimit.js";
+import { checkGlobalTokenLimit, getGlobalTokenStats } from "../utils/tokenLimit.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -50,7 +50,7 @@ export const handleTokens = async (sessions, session, payload) => {
   const totalWords = promptWords + responseWords + fileWordCount;
   const tokensUsed = promptTokens + responseTokens + fileTokenCount;
 
-  // ✅ Grand total tokens across all sessions
+  // ✅ Grand total tokens across all sessions (chat only for now here)
   const grandTotalTokensUsed = sessions.reduce((totalSum, chatSession) => {
     const sessionTotal = chatSession.history.reduce(
       (sessionSum, msg) => sessionSum + (msg.tokensUsed || 0),
@@ -64,6 +64,7 @@ export const handleTokens = async (sessions, session, payload) => {
   //   0
   // );
 
+  // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
   const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
@@ -1329,12 +1330,16 @@ export const getAIResponse = async (req, res) => {
 
     await session.save();
 
+    // ✅ Get remaining tokens from global stats (single source of truth)
+    const globalStats = await getGlobalTokenStats(email);
+
     res.json({
       sessionId: currentSessionId,
       allowed: true,
       response: finalReplyHTML,
       botName,
       ...counts,
+      remainingTokens: globalStats.remainingTokens,
       files: fileContents.map((f) => ({
         filename: f.filename,
         extension: f.extension,
@@ -1503,6 +1508,17 @@ export const savePartialResponse = async (req, res) => {
       files: [],
     });
 
+    // ✅ Global shared token check (chat + search combined)
+    try {
+      await checkGlobalTokenLimit(email, counts.tokensUsed);
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: "Not enough tokens",
+        remainingTokens: 0,
+      });
+    }
+
     // Mark as partial
     const messageEntry = {
       prompt,
@@ -1533,12 +1549,16 @@ export const savePartialResponse = async (req, res) => {
 
     await session.save();
 
+    // ✅ Get remaining tokens from global stats (single source of truth)
+    const globalStats = await getGlobalTokenStats(email);
+
     res.status(200).json({
       success: true,
       message: "Partial response saved successfully.",
       response: partialResponse,
       tokensUsed: counts.tokensUsed,
       wordCount: countWords(partialResponse),
+      remainingTokens: globalStats.remainingTokens,
     });
   } catch (error) {
     console.error("❌ Error saving partial response:", error);
@@ -1921,9 +1941,9 @@ export const getAllSessions = async (req, res) => {
     // const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
     // const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
 
-    // ✅ Compute same as global logic in handleTokens
-    const tokenLimit = 10000;
-    const remainingTokens = Math.max(0, tokenLimit - grandTotalTokens);
+    // ✅ Use unified token stats (single source of truth - includes chat + search)
+    const globalStats = await getGlobalTokenStats(email);
+    const remainingTokens = globalStats.remainingTokens;
 
     // ✅ Final rounding (to match handleTokens precision)
     const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
