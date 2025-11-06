@@ -13,7 +13,10 @@ import fs from "fs";
 import OpenAI from "openai";
 import axios from "axios";
 import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
-import { checkGlobalTokenLimit, getGlobalTokenStats } from "../utils/tokenLimit.js";
+import {
+  checkGlobalTokenLimit,
+  getGlobalTokenStats,
+} from "../utils/tokenLimit.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -1511,6 +1514,8 @@ export const savePartialResponse = async (req, res) => {
     // ✅ Global shared token check (chat + search combined)
     try {
       await checkGlobalTokenLimit(email, counts.tokensUsed);
+
+     
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -1525,6 +1530,7 @@ export const savePartialResponse = async (req, res) => {
       response: partialResponse,
       botName,
       isComplete: false,
+       isPartial: true,
       tokensUsed: counts.tokensUsed,
       wordCount: countWords(partialResponse),
       createdAt: new Date(),
@@ -1692,14 +1698,13 @@ export const getChatHistory = async (req, res) => {
         entry.isComplete === false && entry.response
           ? entry.response // Show partial response
           : entry.response; // Otherwise full
-          
-    
-    // Format history for frontend
-    // const formattedHistory = session.history.map((entry) => {
-    //   const displayResponse =
-    //     entry.isComplete === false && entry.response
-    //       ? entry.response // Show partial response
-    //       : entry.response; // Otherwise full
+
+      // Format history for frontend
+      // const formattedHistory = session.history.map((entry) => {
+      //   const displayResponse =
+      //     entry.isComplete === false && entry.response
+      //       ? entry.response // Show partial response
+      //       : entry.response; // Otherwise full
 
       return {
         prompt: entry.prompt,
@@ -1949,12 +1954,11 @@ export const getAllSessions = async (req, res) => {
     const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
     const remainingTokensFixed = parseFloat(remainingTokens.toFixed(3));
 
-    
-// ✅ Save the grand total into ChatSession for each session (optional: only latest)
-await ChatSession.updateMany(
-  { email },
-  { $set: { grandTotalTokens: grandTotalTokensFixed } }
-);
+    // ✅ Save the grand total into ChatSession for each session (optional: only latest)
+    await ChatSession.updateMany(
+      { email },
+      { $set: { grandTotalTokens: grandTotalTokensFixed } }
+    );
 
     res.json({
       sessions: sessionsWithStats,

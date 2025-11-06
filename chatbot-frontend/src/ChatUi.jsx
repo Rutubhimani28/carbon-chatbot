@@ -586,13 +586,74 @@ const ChatUI = () => {
 
       const data = await response.json();
 
-      // 🟢 while processing response, store it in partial ref
-      if (data?.response) {
-        partialResponseRef.current = data.response; // save the full (or partial) response
-      }
+      // Handle "Not enough tokens" error
+      // if (!response.ok) {
+      //   const errorData = await response.json();
 
-      // 🟢 (optional) you can also do this line if you render “typing” in UI:
-      setIsTypingResponse(false);
+      //   if (
+      //     response.status === 400 &&
+      //     errorData.message === "Not enough tokens"
+      //   ) {
+      //     await Swal.fire({
+      //       title: "Not enough tokens!",
+      //       text: "You don't have enough tokens to continue.",
+      //       icon: "warning",
+      //       showCancelButton: true,
+      //       showDenyButton: true,
+      //       confirmButtonText: "Ok",
+      //       denyButtonText: "Switch to Free Model",
+      //       cancelButtonText: "Purchase Tokens",
+      //     }).then((result) => {
+      //       if (result.isConfirmed) {
+      //         // just close
+      //       } else if (result.isDenied) {
+      //         setSelectedBot("chatgpt-5-mini");
+      //       } else if (result.isDismissed) {
+      //         // window.location.href = "/purchase";
+      //       }
+      //     });
+
+      //     return {
+      //       response: "Not enough tokens to process your request.",
+      //       sessionId: currentSessionId,
+      //       botName: selectedBot,
+      //       isError: true,
+      //     };
+      //   }
+
+      //   throw new Error(
+      //     errorData.message || `HTTP error! status: ${response.status}`
+      //   );
+      // }
+
+      // 🛑 Check for “Not enough tokens” here (works 100%)
+      if (data?.message === "Not enough tokens") {
+        await Swal.fire({
+          title: "Not enough tokens!",
+          text: "You don't have enough tokens to continue.",
+          icon: "warning",
+          showCancelButton: true,
+          showDenyButton: true,
+          confirmButtonText: "Ok",
+          denyButtonText: "Switch to Free Model",
+          cancelButtonText: "Purchase Tokens",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // just close
+          } else if (result.isDenied) {
+            setSelectedBot("chatgpt-5-mini");
+          } else if (result.isDismissed) {
+            // window.location.href = "/purchase";
+          }
+        });
+
+        return {
+          response: "Not enough tokens to process your request.",
+          sessionId: currentSessionId,
+          botName: selectedBot,
+          isError: true,
+        };
+      }
 
       // 🛑 AGE-BASED RESTRICTION HANDLER
       if (response.status === 403 || data.allowed === false) {
@@ -610,45 +671,13 @@ const ChatUI = () => {
         };
       }
 
-      // Handle "Not enough tokens" error
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        if (
-          response.status === 400 &&
-          errorData.message === "Not enough tokens"
-        ) {
-          await Swal.fire({
-            title: "Not enough tokens!",
-            text: "You don't have enough tokens to continue.",
-            icon: "warning",
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonText: "Ok",
-            denyButtonText: "Switch to Free Model",
-            cancelButtonText: "Purchase Tokens",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              // just close
-            } else if (result.isDenied) {
-              setSelectedBot("chatgpt-5-mini");
-            } else if (result.isDismissed) {
-              // window.location.href = "/purchase";
-            }
-          });
-
-          return {
-            response: "Not enough tokens to process your request.",
-            sessionId: currentSessionId,
-            botName: selectedBot,
-            isError: true,
-          };
-        }
-
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
-        );
+      // 🟢 while processing response, store it in partial ref
+      if (data?.response) {
+        partialResponseRef.current = data.response; // save the full (or partial) response
       }
+
+      // 🟢 (optional) you can also do this line if you render “typing” in UI:
+      setIsTypingResponse(false);
 
       abortControllerRef.current = null;
       // const data = await response.json();
@@ -698,7 +727,36 @@ const ChatUI = () => {
 
       console.error("fetchChatbotResponseWithFiles error:", err);
 
+      // if (err.message && err.message.includes("Not enough tokens")) {
+      //   return {
+      //     response: "Not enough tokens to process your request.",
+      //     sessionId: currentSessionId,
+      //     botName: selectedBot,
+      //     isError: true,
+      //   };
+      // }
+
+      // 🟡 Catch any other "Not enough tokens" message (fallback)
       if (err.message && err.message.includes("Not enough tokens")) {
+        await Swal.fire({
+          title: "Not enough tokens!",
+          text: "You don't have enough tokens to continue.",
+          icon: "warning",
+          showCancelButton: true,
+          showDenyButton: true,
+          confirmButtonText: "Ok",
+          denyButtonText: "Switch to Free Model",
+          cancelButtonText: "Purchase Tokens",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // Just close
+          } else if (result.isDenied) {
+            setSelectedBot("chatgpt-5-mini");
+          } else if (result.isDismissed) {
+            // window.location.href = "/purchase";
+          }
+        });
+
         return {
           response: "Not enough tokens to process your request.",
           sessionId: currentSessionId,
@@ -711,6 +769,7 @@ const ChatUI = () => {
         response: "Sorry, something went wrong.",
         sessionId: currentSessionId,
         botName: selectedBot,
+        isError: true,
       };
     }
   };

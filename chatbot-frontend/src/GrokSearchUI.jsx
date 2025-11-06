@@ -222,6 +222,15 @@ export default function GrokSearchUI(props) {
           showCancelButton: true,
           confirmButtonText: "Ok",
           cancelButtonText: "Purchase Tokens",
+          allowOutsideClick: true, // ✅ allow closing by clicking outside
+          allowEscapeKey: true, // ✅ allow Esc key
+          allowEnterKey: true, // ✅ allow Enter key
+        }).then((results) => {
+          if (results.isConfirmed) {
+            Swal.close();
+          } else if (results.isDismissed) {
+            // window.location.href = "/purchase";
+          }
         });
 
         setError("Not enough tokens to process your request.");
@@ -267,11 +276,17 @@ export default function GrokSearchUI(props) {
           }
           if (typeof stats.remainingTokens === "number") {
             setSessionRemainingTokens(stats.remainingTokens);
-            localStorage.setItem("globalRemainingTokens", stats.remainingTokens);
+            localStorage.setItem(
+              "globalRemainingTokens",
+              stats.remainingTokens
+            );
           }
         }
       } catch (e) {
-        console.warn("Failed to refresh userTokenStats after search:", e.message);
+        console.warn(
+          "Failed to refresh userTokenStats after search:",
+          e.message
+        );
       }
 
       if (data.totalSearches !== undefined) {
@@ -554,17 +569,19 @@ export default function GrokSearchUI(props) {
             <Box>Loading...</Box>
           ) : (
             <Box sx={{ textAlign: "left" }}>
-              <p
-                style={{
-                  paddingLeft: "4px",
-                  fontFamily: "Calibri, sans-serif",
-                  fontWeight: "400",
-                  fontSize: "18px",
-                  color: "#1a1717ff",
-                }}
-              >
-                {results.summary}
-              </p>
+              {results && (
+                <p
+                  style={{
+                    paddingLeft: "4px",
+                    fontFamily: "Calibri, sans-serif",
+                    fontWeight: "400",
+                    fontSize: "18px",
+                    color: "#1a1717ff",
+                  }}
+                >
+                  {results.summary}
+                </p>
+              )}
               {results?.verifiedLinks?.map((item, idx) => (
                 // {results?.verifiedLinks?.organic?.map((item, idx) => (
                 <Box
