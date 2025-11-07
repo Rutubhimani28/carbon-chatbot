@@ -399,7 +399,7 @@ export default function GrokSearchUI(props) {
             >
               <MenuItem value={3}>3 Links</MenuItem>
               <MenuItem value={5}>5 Links</MenuItem>
-              <MenuItem value={10}>10 Links</MenuItem>
+              {/* <MenuItem value={10}>10 Links</MenuItem> */}
             </Select>
           </FormControl>
         </Box>

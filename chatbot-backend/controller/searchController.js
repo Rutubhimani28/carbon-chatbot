@@ -365,7 +365,7 @@ const restrictions = {
 
 export const getAISearchResults = async (req, res) => {
   try {
-    const { query, category = "general", raw, email, linkCount = 10 } = req.body;
+    const { query, category = "general", raw, email, linkCount = 5 } = req.body;
     if (!query) return res.status(400).json({ error: "Missing 'query' field" });
 
     const user = await User.findOne({ email });
@@ -410,7 +410,7 @@ export const getAISearchResults = async (req, res) => {
     }
 
     const searchResults = await searchAPI(query);
-    const requestedCount = parseInt(linkCount) || 10;
+    const requestedCount = parseInt(linkCount) || 5;
     const topResults = searchResults.organic
       ? searchResults.organic.slice(0, requestedCount)
       : [];

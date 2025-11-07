@@ -2998,7 +2998,7 @@ const ChatUI = () => {
                 transition: "color 0.3s ease",
               }}
             >
-              Search
+              Browsing
             </Typography>
 
             {activeView === "search2" && (

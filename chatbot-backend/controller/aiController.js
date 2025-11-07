@@ -1535,7 +1535,7 @@ export const savePartialResponse = async (req, res) => {
       wordCount: countWords(partialResponse),
       createdAt: new Date(),
     };
-
+console.log("messageEntry:::::::", messageEntry.tokensUsed);
     // Save to DB
     // session.history.push(messageEntry);
 
@@ -1554,6 +1554,9 @@ export const savePartialResponse = async (req, res) => {
     }
 
     await session.save();
+
+    // const latestMessage = session.history[session.history.length - 1];
+    // console.log("Tokens used:", latestMessage.tokensUsed);
 
     // ✅ Get remaining tokens from global stats (single source of truth)
     const globalStats = await getGlobalTokenStats(email);
