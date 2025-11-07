@@ -461,40 +461,36 @@ const ChatUI = () => {
         return;
       }
 
+      if (response.status === 400 && data.message === "Not enough tokens") {
+        setResults(null);
+        setTokenCount(0);
+
+        await Swal.fire({
+          title: "Not enough tokens!",
+          text: "You don't have enough tokens to continue.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Ok",
+          cancelButtonText: "Purchase Tokens",
+          allowOutsideClick: true, // ✅ allow closing by clicking outside
+          allowEscapeKey: true, // ✅ allow Esc key
+          allowEnterKey: true, // ✅ allow Enter key
+        }).then((results) => {
+          if (results.isConfirmed) {
+            Swal.close();
+          } else if (results.isDismissed) {
+            // window.location.href = "/purchase";
+          }
+        });
+
+        setError("Not enough tokens to process your request.");
+        setLoading(false);
+        return;
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-
-        if (
-          response.status === 400 &&
-          errorData.message === "Not enough tokens"
-        ) {
-          // Clear old results
-          setResults(null); //  Clear previous results
-          setTokenCount(0); // Optional: clear token count
-
-          await Swal.fire({
-            title: "Not enough tokens!",
-            text: "You don't have enough tokens to continue.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Ok",
-            cancelButtonText: "Purchase Tokens",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              // Just close the modal
-            } else if (result.isDismissed) {
-              // Redirect to purchase page
-              // window.location.href = "/purchase";
-            }
-          });
-
-          setError("Not enough tokens to process your request.");
-          setLoading(false);
-          return;
-        }
-
         throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`
+          data.message || `HTTP error! status: ${response.status}`
         );
       }
 
@@ -511,13 +507,39 @@ const ChatUI = () => {
         data.summaryStats?.tokens || data.tokenUsage?.totalTokens || 0;
       setTokenCount(usedTokens);
 
-      // ✅ Update total tokens used
-      setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
+      // // ✅ Update total tokens used
+      // setTotalTokensUsed((prev) => (prev || 0) + usedTokens);
 
-      // ✅ Deduct used tokens from remaining
-      setSessionRemainingTokens((prev) =>
-        Math.max(0, (prev || 0) - usedTokens)
-      );
+      // // ✅ Deduct used tokens from remaining
+      // setSessionRemainingTokens((prev) =>
+      //   Math.max(0, (prev || 0) - usedTokens)
+      // );
+
+      try {
+        const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (statsRes.ok) {
+          const stats = await statsRes.json();
+          if (typeof stats.totalTokensUsed === "number") {
+            setTotalTokensUsed(stats.totalTokensUsed);
+          }
+          if (typeof stats.remainingTokens === "number") {
+            setSessionRemainingTokens(stats.remainingTokens);
+            localStorage.setItem(
+              "globalRemainingTokens",
+              stats.remainingTokens
+            );
+          }
+        }
+      } catch (e) {
+        console.warn(
+          "Failed to refresh userTokenStats after search:",
+          e.message
+        );
+      }
 
       if (data.totalSearches !== undefined) {
         setTotalSearches(data.totalSearches);
@@ -1020,15 +1042,15 @@ const ChatUI = () => {
       let userTotalTokensUsed = 0;
 
       // Extract remaining tokens and total tokens used from the response
-      if (data.remainingTokens !== undefined) {
-        userRemainingTokens = data.remainingTokens;
-        setSessionRemainingTokens(userRemainingTokens);
-      }
+      // if (data.remainingTokens !== undefined) {
+      //   userRemainingTokens = data.remainingTokens;
+      //   setSessionRemainingTokens(userRemainingTokens);
+      // }
 
-      if (data.grandTotalTokens !== undefined) {
-        userTotalTokensUsed = data.grandTotalTokens;
-        setTotalTokensUsed(userTotalTokensUsed);
-      }
+      // if (data.grandTotalTokens !== undefined) {
+      //   userTotalTokensUsed = data.grandTotalTokens;
+      //   setTotalTokensUsed(userTotalTokensUsed);
+      // }
 
       // Handle different response structures
       if (data && Array.isArray(data.sessions)) {
@@ -1216,7 +1238,7 @@ const ChatUI = () => {
     }
 
     // Fetch chat sessions after confirming user exists
-    fetchChatSessions();
+    // fetchChatSessions();
 
     // Fetch combined token stats (chat + search) for profile
     (async () => {
@@ -1241,6 +1263,9 @@ const ChatUI = () => {
         console.warn("Failed to load user token stats:", e.message);
       }
     })();
+
+    // Fetch chat sessions after confirming user exists
+    fetchChatSessions();
   }, []);
 
   // useEffect(() => {
