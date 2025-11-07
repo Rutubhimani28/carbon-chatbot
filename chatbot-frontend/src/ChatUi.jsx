@@ -84,6 +84,8 @@ const ChatUI = () => {
   const [remainingTokens, setRemainingTokens] = useState(0);
   // const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [responseLength, setResponseLength] = useState("Short");
+  const lastSelectedResponseLength = useRef(responseLength);
+
   // 🔹 नवी state add करो
   // const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
   const [chatRemainingTokens, setChatRemainingTokens] = useState(0);
@@ -188,6 +190,11 @@ const ChatUI = () => {
       }
     }
   }, []);
+
+  useEffect(() => {
+    // Whenever user changes dropdown, keep latest value saved
+    lastSelectedResponseLength.current = responseLength;
+  }, [responseLength]);
 
   useEffect(() => {
     return () => {
@@ -353,7 +360,8 @@ const ChatUI = () => {
     if (recognitionRef.current) return; // prevent multiple mic instances
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-US"; // or "gu-IN"
+    // recognition.lang = "en-US"; // or "gu-IN"
+    recognition.lang = "auto"; // ✅ auto-detect spoken language
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -383,6 +391,17 @@ const ChatUI = () => {
 
       // 🔹 Update input box only with latest clean text (no repeats)
       setInput(combinedText);
+
+      // ✅ Translate to English
+      // if (combinedText) {
+      //   try {
+      //     const translated = translateToEnglish(combinedText);
+      //     setInput(translated);
+      //   } catch (error) {
+      //     console.error("🌐 Translation error:", error);
+      //     setInput(combinedText); // fallback: show raw speech
+      //   }
+      // }
     };
 
     recognition.onerror = (event) => {
@@ -408,6 +427,30 @@ const ChatUI = () => {
     }
     setIsListening(false);
   };
+
+  // ✅ Translation function (LibreTranslate or Google API)
+  // async function translateToEnglish(text) {
+  //   try {
+  //     // 🔹 Option 1: Free LibreTranslate API (no key required, slower)
+  //     // const res = await fetch("https://libretranslate.de/translate", {
+  //     const res = await fetch(`${apiBaseUrl}/api/ai/translate`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         text,
+  //         // q: text,
+  //         // source: "auto",
+  //         // target: "en",
+  //         // format: "text",
+  //       }),
+  //     });
+  //     const data = await res.json();
+  //     return data.translatedText;
+  //   } catch (error) {
+  //     console.error("🔴 Translation error:", error);
+  //     return text; // fallback: return original text if translation fails
+  //   }
+  // }
 
   const handleSearch = async (searchQuery) => {
     const finalQuery = searchQuery || query; // ✅ use passed query if available
@@ -2279,7 +2322,12 @@ const ChatUI = () => {
       formData.append("prompt", prompt);
       formData.append("email", user.email);
       formData.append("botName", selectedBot);
-      formData.append("responseLength", responseLength || "Short");
+      // formData.append("responseLength", responseLength || "Short");
+      // ✅ Always use last selected option unless user changes it
+      formData.append(
+        "responseLength",
+        lastSelectedResponseLength.current || "Short"
+      );
       formData.append("sessionId", currentSessionId);
 
       selectedFiles.forEach((file) => {
@@ -2410,7 +2458,7 @@ const ChatUI = () => {
       setIsSending(false);
       setIsTypingResponse(false);
       scrollToBottom();
-      setResponseLength(" ");
+      // setResponseLength(" ");
 
       // ✅ Only refresh sessions if user did NOT stop typing (full response)
       // if (!isStoppedRef.current) {
@@ -2761,7 +2809,7 @@ const ChatUI = () => {
           zIndex: 100,
           position: "sticky",
           top: 0,
-          // height: "100px",
+          height: "102px",
           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
         }}
       >
@@ -2785,7 +2833,13 @@ const ChatUI = () => {
           fullWidth
           size="small"
           gap={1}
-          sx={{ ml: 4, display: "flex", flexDirection: "row", gap: 2, mt: 0 }}
+          sx={{
+            ml: "58px",
+            display: "flex",
+            flexDirection: "row",
+            gap: 2.5,
+            mt: 0,
+          }}
         >
           {/* Chat session dropdown */}
           {activeView === "chat" && (
@@ -2825,7 +2879,7 @@ const ChatUI = () => {
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    mt: "7px",
+                    mt: "0px",
                     width: "157px",
                     maxWidth: "190px",
                     "& .MuiOutlinedInput-input": { fontSize: "17px" },
@@ -2876,7 +2930,7 @@ const ChatUI = () => {
               sx={{
                 bgcolor: "#fff",
                 borderRadius: "5px",
-                mt: "7px",
+                mt: "0px",
                 height: "30px",
                 width: "157px",
                 maxWidth: "190px",
@@ -2907,7 +2961,7 @@ const ChatUI = () => {
                 maxWidth: "200px",
                 width: "180px",
                 height: "34px",
-                mt: 1,
+                mt: 0,
                 "& .MuiSelect-select": {
                   pl: 1.5, // small padding for text
                 },
@@ -2939,7 +2993,7 @@ const ChatUI = () => {
           )}
           {activeView === "chat" && (
             <Box onClick={createNewChat}>
-              <AddIcon sx={{ alignItems: "center", mt: 1 }} />
+              <AddIcon sx={{ alignItems: "center", mt: 0.3 }} />
               {/* <Button
                     fullWidth
                     sx={{
@@ -2962,9 +3016,9 @@ const ChatUI = () => {
           sx={{
             display: "flex",
             justifyContent: "center",
-            mr: 5,
-            gap: 2,
-            mt: 1,
+            mr: "36px",
+            gap: 3.5,
+            mt: 0,
           }}
         >
           <Box
@@ -2972,6 +3026,7 @@ const ChatUI = () => {
               gap: 1,
               cursor: "pointer",
               position: "relative", // needed for underline positioning
+              pb: "0px",
             }}
             onClick={() => setActiveView("chat")}
           >
@@ -2979,7 +3034,7 @@ const ChatUI = () => {
               variant="h6"
               sx={{
                 mb: 1,
-                fontSize: "16px",
+                fontSize: "17px",
                 fontWeight: activeView === "chat" ? 600 : 400,
                 color: activeView === "chat" ? "#fff" : "inherit",
                 transition: "color 0.3s ease",
@@ -3009,7 +3064,7 @@ const ChatUI = () => {
               gap: 1,
               cursor: "pointer",
               position: "relative",
-              pb: "4px",
+              pb: "0px",
             }}
             onClick={() => setActiveView("search2")}
           >
@@ -3017,7 +3072,7 @@ const ChatUI = () => {
               variant="h6"
               sx={{
                 mb: 1,
-                fontSize: "16px",
+                fontSize: "17px",
                 fontWeight: activeView === "search2" ? 600 : 400,
                 color: activeView === "search2" ? "#fff" : "inherit",
                 transition: "color 0.3s ease",
@@ -3051,7 +3106,7 @@ const ChatUI = () => {
             // alignItems: "center",
             alignItems: "flex-end",
             gap: 1,
-            mr: 3,
+            mr: "38px",
             cursor: "pointer",
             mt: 0,
           }}
@@ -3059,7 +3114,7 @@ const ChatUI = () => {
         >
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: "bold", color: "#fff" }}
+            sx={{ fontWeight: "bold", fontSize: "17px", color: "#fff" }}
           >
             {(username || email)?.charAt(0).toUpperCase() +
               (username || email)?.slice(1)}
@@ -4069,7 +4124,10 @@ const ChatUI = () => {
                       select
                       size="small"
                       value={responseLength}
-                      onChange={(e) => setResponseLength(e.target.value)}
+                      onChange={(e) => {
+                        setResponseLength(e.target.value);
+                        lastSelectedResponseLength.current = e.target.value; // ✅ store last selected
+                      }}
                       sx={{
                         width: { xs: "140px", sm: "179px" },
                         "& .MuiOutlinedInput-root": {

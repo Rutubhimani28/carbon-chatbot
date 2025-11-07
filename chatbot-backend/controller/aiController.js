@@ -17,6 +17,7 @@ import {
   checkGlobalTokenLimit,
   getGlobalTokenStats,
 } from "../utils/tokenLimit.js";
+import translate from "@vitalets/google-translate-api";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -1514,8 +1515,6 @@ export const savePartialResponse = async (req, res) => {
     // ✅ Global shared token check (chat + search combined)
     try {
       await checkGlobalTokenLimit(email, counts.tokensUsed);
-
-     
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -1530,12 +1529,12 @@ export const savePartialResponse = async (req, res) => {
       response: partialResponse,
       botName,
       isComplete: false,
-       isPartial: true,
+      isPartial: true,
       tokensUsed: counts.tokensUsed,
       wordCount: countWords(partialResponse),
       createdAt: new Date(),
     };
-console.log("messageEntry:::::::", messageEntry.tokensUsed);
+    console.log("messageEntry:::::::", messageEntry.tokensUsed);
     // Save to DB
     // session.history.push(messageEntry);
 
@@ -1657,6 +1656,37 @@ console.log("messageEntry:::::::", messageEntry.tokensUsed);
 //     });
 //   }
 // };
+
+export const translatetolanguage = async (req, res) => {
+  try {
+    const { text } = req.body;
+     if (!text) return res.status(400).json({ error: "No text provided" });
+
+      const result = await translate(text, { to: "en" }); // auto detects user language
+    res.json({ translatedText: result.text });
+
+    // const response = await fetch("https://libretranslate.de/translate", {
+    // const response = await fetch(
+    //   "https://translate.argosopentech.com/translate",
+    //   {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({
+    //       q: text,
+    //       source: "auto",
+    //       target: "en",
+    //       format: "text",
+    //     }),
+    //   }
+    // );
+
+    // const data = await response.json();
+    // res.json({ translatedText: data.translatedText });
+  } catch (err) {
+    console.error("Translation error:", err);
+    res.status(500).json({ error: "Translation failed" });
+  }
+};
 
 // / ✅ Get Chat History (per session)
 export const getChatHistory = async (req, res) => {
