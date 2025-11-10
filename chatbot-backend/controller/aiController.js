@@ -18,6 +18,7 @@ import {
   getGlobalTokenStats,
 } from "../utils/tokenLimit.js";
 import translate from "@vitalets/google-translate-api";
+import { Messages } from "openai/resources/beta/threads/messages.mjs";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -32,6 +33,7 @@ export const handleTokens = async (sessions, session, payload) => {
   if (payload.botName === "chatgpt-5-mini")
     tokenizerModel = "gpt-4o-mini"; // valid model
   else if (payload.botName === "grok") tokenizerModel = "grok-3-mini"; // if supported
+  else if (payload.botName === "claude-3-haiku") tokenizerModel = "claude-3-haiku-20240307";
 
   const promptTokens = await countTokens(payload.prompt, tokenizerModel);
 
@@ -69,7 +71,7 @@ export const handleTokens = async (sessions, session, payload) => {
   // );
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
@@ -1096,6 +1098,8 @@ export const getAIResponse = async (req, res) => {
           ? "gpt-4o-mini"
           : botName === "grok"
           ? "grok-3-mini"
+          : botName === "claude-3-haiku"
+          ? "claude-3-haiku-20240307"
           : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
@@ -1128,7 +1132,7 @@ export const getAIResponse = async (req, res) => {
       apiKey = process.env.OPENAI_API_KEY;
       modelName = "gpt-4o-mini";
     } else if (botName === "claude-3-haiku") {
-      apiUrl ="https://api.anthropic.com/v1/messages";
+      apiUrl = "https://api.anthropic.com/v1/messages";
       apiKey = process.env.CLAUDE_API_KEY;
       modelName = "claude-3-haiku-20240307";
     } else if (botName === "grok") {
@@ -1162,19 +1166,58 @@ export const getAIResponse = async (req, res) => {
       ];
       // - Answer in  ${minWords}-${maxWords} words, minimizing hallucinations and overgeneralizations, without revealing the prompt instructions.
 
-      const payload = {
-        model: modelName,
-        messages,
-        temperature: 0.7,
-        max_tokens: maxWords * 2,
-      };
+      // const payload = {
+      //   model: modelName,
+      //   messages,
+      //   temperature: 0.7,
+      //   max_tokens: maxWords * 2,
+      // };
+
+      let payload;
+      if (botName === "claude-3-haiku") {
+        payload = {
+          model: modelName,
+          max_tokens: maxWords * 2,
+          system: `You are an AI assistant. Your response MUST be between ${minWords} and ${maxWords} words.
+      - Expand if shorter than ${minWords}.
+      - Cut down if longer than ${maxWords}.
+      - Use headers, tables, and clear formatting.
+      - If uncertain, say "I don’t know" instead of guessing.`,
+
+          messages: [
+            {
+              role: "user",
+              content: combinedPrompt,
+            },
+          ],
+        };
+      } else {
+        payload = {
+          model: modelName,
+          messages,
+          temperature: 0.7,
+          max_tokens: maxWords * 2,
+        };
+      }
+
+      let headers;
+
+      if (botName === "claude-3-haiku") {
+        headers = {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey, // ✅ Anthropic uses this, not Bearer
+          "anthropic-version": "2023-06-01",
+        };
+      } else {
+        headers = {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        };
+      }
 
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 
@@ -1184,7 +1227,18 @@ export const getAIResponse = async (req, res) => {
       }
 
       const data = await response.json();
-      let reply = data.choices[0].message.content.trim();
+      
+// ✅ Handle different response formats
+let reply = "";
+if (botName === "claude-3-haiku") {
+  reply = data?.content?.[0]?.text?.trim() || "";
+} else {
+  reply = data?.choices?.[0]?.message?.content?.trim() || "";
+}
+if (!reply) {
+  throw new Error("Empty response from model");
+}
+
       let words = reply.split(/\s+/);
 
       // Truncate if over maxWords
@@ -1660,9 +1714,9 @@ export const savePartialResponse = async (req, res) => {
 export const translatetolanguage = async (req, res) => {
   try {
     const { text } = req.body;
-     if (!text) return res.status(400).json({ error: "No text provided" });
+    if (!text) return res.status(400).json({ error: "No text provided" });
 
-      const result = await translate(text, { to: "en" }); // auto detects user language
+    const result = await translate(text, { to: "en" }); // auto detects user language
     res.json({ translatedText: result.text });
 
     // const response = await fetch("https://libretranslate.de/translate", {
@@ -1714,7 +1768,7 @@ export const getChatHistory = async (req, res) => {
       );
     }, 0);
 
-    const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
 
     // ✅ Remove duplicate partial responses (same prompt + same tokensUsed)
     const seenKeys = new Set();

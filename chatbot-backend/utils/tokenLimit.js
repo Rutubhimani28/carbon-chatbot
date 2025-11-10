@@ -2,7 +2,7 @@ import ChatSession from "../model/ChatSession.js";
 import SearchHistory from "../model/SearchHistory.js";
 
 // ✅ Single source of truth: Calculate global token stats (same logic as getUserTokenStats)
-export const getGlobalTokenStats = async (email, limit = 50000) => {
+export const getGlobalTokenStats = async (email, limit = 10000) => {
   // Chat tokens: sum of tokensUsed across all session messages
   const chatSessions = await ChatSession.find({ email });
   const chatTokensUsed = chatSessions.reduce((sum, session) => {
@@ -41,7 +41,7 @@ export const getGlobalTokenStats = async (email, limit = 50000) => {
 export const checkGlobalTokenLimit = async (
   email,
   newTokens = 0,
-  limit = 50000
+  limit = 10000
 ) => {
   const stats = await getGlobalTokenStats(email, limit);
   const remaining = Math.max(0, stats.remainingTokens - newTokens);

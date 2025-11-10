@@ -2815,7 +2815,7 @@ const ChatUI = () => {
       >
         {/* logo */}
         <img src={Words2} height={85} width={146} />
-     
+
         <FormControl
           fullWidth
           size="small"
@@ -2923,8 +2923,8 @@ const ChatUI = () => {
               }}
             >
               <MenuItem value="chatgpt-5-mini">ChatGPT 5-Mini</MenuItem>
-              <MenuItem value="deepseek">DeepSeek</MenuItem>
               <MenuItem value="grok">Grok 3-Mini</MenuItem>
+              <MenuItem value="claude-3-haiku">Claude-3</MenuItem>
             </Select>
           )}
 
@@ -2980,7 +2980,6 @@ const ChatUI = () => {
           {activeView === "chat" && (
             <Box onClick={createNewChat}>
               <AddIcon sx={{ alignItems: "center", mt: 0.3 }} />
-            
             </Box>
           )}
         </FormControl>
@@ -3174,7 +3173,7 @@ const ChatUI = () => {
           display: "flex",
           alignItems: "center",
           transition: "all 0.3s ease",
-          px: { xs: 2, sm: 3, md: 2 }, 
+          px: { xs: 2, sm: 3, md: 2 },
           mb: 0,
           pb: 0,
         }}
@@ -3190,7 +3189,7 @@ const ChatUI = () => {
                 transition: "all 0.3s ease",
                 width: "100%",
                 maxWidth: { xs: "100%", sm: "100%", md: "100%" },
-                px: { xs: 1, sm: 2, md: 11 }, 
+                px: { xs: 1, sm: 2, md: 11 },
                 mb: 0,
                 mt: "11px",
                 pb: 0,
@@ -3575,6 +3574,8 @@ const ChatUI = () => {
                                   ? "ChatGPT 5-Mini"
                                   : group.botName === "grok"
                                   ? "Grok 3-Mini"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude-3"
                                   : ""}
                               </Typography>
 
