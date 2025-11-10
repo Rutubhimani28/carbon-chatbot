@@ -331,7 +331,7 @@ export default function GrokSearchUI(props) {
   return (
     // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
     <Box sx={{ display: "block", width: "100%" }}>
-      <Box>
+      <Box sx={{width: "100%", mb: 1 }}>
         <Box
           sx={{
             position: "sticky",
@@ -345,7 +345,7 @@ export default function GrokSearchUI(props) {
             alignItems: "center",
             justifyContent: "center",
             gap: 1.5,
-            width: "70%",
+            width: "75%",
             mx: "auto",
           }}
         >
@@ -357,6 +357,7 @@ export default function GrokSearchUI(props) {
             value={query}
             multiline // ✅ enables multi-line input
             minRows={2}
+            maxRows={5}
             onChange={(e) => setQuery(e.target.value)}
             sx={{
               flexGrow: 1,
@@ -367,17 +368,30 @@ export default function GrokSearchUI(props) {
                 borderRadius: "20px",
                 height: "auto",
                 minHeight: "67px",
-              alignItems: "center",
+                  display: "flex",
+                alignItems: "center",
+                 justifyContent: "center",
                 paddingRight: "1px",
               },
-              
-            }}
-            inputProps={{
-              style: {
+              "& .MuiOutlinedInput-input": {
+                
                 paddingLeft: "20px",
                 lineHeight: "1.5", // ✅ nice text spacing
                 whiteSpace: "pre-wrap", // ✅ wraps text naturally
                 wordBreak: "break-word",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+              "& .MuiInputBase-input::placeholder": {
+                top: "50%",
+                paddingTop: 1.5,
+              },
+            }}
+            inputProps={{
+              style: {
+                display: "flex",
+                alignItems: "center", // ✅ keeps text vertically centered
+                justifyContent: "center",
               }, // padding for text
             }}
             InputProps={{
