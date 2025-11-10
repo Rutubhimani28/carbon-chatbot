@@ -2815,20 +2815,7 @@ const ChatUI = () => {
       >
         {/* logo */}
         <img src={Words2} height={85} width={146} />
-        {/* <Box
-            component="img"
-            src={Words2}
-            alt="Words2"
-            sx={{
-              width: ["140px"], // fix logo width
-              height: ["135px"], // fix height
-              objectFit: "contain", // keep aspect ratio, no blur
-              cursor: "pointer",
-              ml: 1.5,
-                           
-            }}
-          /> */}
-        {/* history */}
+     
         <FormControl
           fullWidth
           size="small"
@@ -2841,7 +2828,6 @@ const ChatUI = () => {
             mt: 0,
           }}
         >
-          {/* Chat session dropdown */}
           {activeView === "chat" && (
             <Autocomplete
               value={
@@ -2994,17 +2980,7 @@ const ChatUI = () => {
           {activeView === "chat" && (
             <Box onClick={createNewChat}>
               <AddIcon sx={{ alignItems: "center", mt: 0.3 }} />
-              {/* <Button
-                    fullWidth
-                    sx={{
-                      justifyContent: "flex-start",
-                      color: "black",
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "#f5f5f5", color: "black" },
-                    }}
-                  >
-                    New Chat
-                  </Button> */}
+            
             </Box>
           )}
         </FormControl>
@@ -3195,78 +3171,14 @@ const ChatUI = () => {
         className="chat-header-box"
         sx={{
           flexGrow: 1,
-          // mt: 16,
           display: "flex",
           alignItems: "center",
-          // flexDirection: "column",
           transition: "all 0.3s ease",
-          // width: "100%",
-          // maxWidth: "940px",
-          // maxWidth: { xs: "100%", md: "1100px" },
-          // maxWidth: { xs: "100%", md: "100%" },
-          // mx: "auto",
-          // px: { xs: 6, sm: 8, md: 10, lg: 12 },
-          // px: { xs: 2, sm: 4, md: 6, lg: 12 }, // padding responsive
-          // height: "100vh",
-          px: { xs: 2, sm: 3, md: 2 }, // 🔹 Reduced padding for 1024x768
-          // height: '80vh', // 🔹 Better height calculation
-          // height: "calc(100vh - 130px)", // 🔹 Better height calculation
+          px: { xs: 2, sm: 3, md: 2 }, 
           mb: 0,
           pb: 0,
         }}
       >
-        {/* {activeView === "chat" && (
-            <Box
-              sx={{
-                // left: { xs: "10px", sm: "40px", md: "80px" }, // aligns with chatbot spacing
-                // bottom: { xs: "10px", sm: "20px" },
-                alignSelf: "flex-start",
-                display: "flex",
-                flexDirection: "column",
-                // ml: { xs: 1, sm: 4, md: 8 },
-                mb: { xs: 1, sm: 2 },
-                mt: 1,
-              }}
-            >
-              <Select
-                labelId="bot-select-label"
-                value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
-                sx={{
-                  bgcolor: "#fff",
-                  borderRadius: "5px",
-                  width: { xs: "150px", sm: "170px", md: "180px" },
-                  height: "42px",
-                  boxShadow: 2,
-                  fontSize: { xs: "13px", sm: "14px" },
-                }}
-              >
-                <MenuItem value="chatgpt-5-mini">ChatGPT5 Mini</MenuItem>
-                <MenuItem value="deepseek">DeepSeek</MenuItem>
-                <MenuItem value="grok">Grok 3 Mini</MenuItem>
-              </Select>
-
-              {activeView === "chat" && (
-                <Box
-                  sx={{ display: "flex", alignItems: "center", pt: 0, pl: 1 }}
-                  onClick={createNewChat}
-                >
-                  <AddIcon />
-                  <Button
-                    fullWidth
-                    sx={{
-                      justifyContent: "flex-start",
-                      color: "black",
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "#f5f5f5", color: "black" },
-                    }}
-                  >
-                    New Chat
-                  </Button>
-                </Box>
-              )}
-            </Box>
-          )} */}
         {activeView === "chat" ? (
           <>
             <Box
@@ -3275,16 +3187,10 @@ const ChatUI = () => {
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "space-between",
-                // width: { xs: "100%", sm: "90%", md: "70%" }, // keep center width responsive
-                // maxWidth: "850px",
-                // transition: "all 0.3s ease",
                 transition: "all 0.3s ease",
                 width: "100%",
-                // maxWidth: { xs: "100%", md: "940px" },
-                // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                 maxWidth: { xs: "100%", sm: "100%", md: "100%" },
-                px: { xs: 1, sm: 2, md: 11 }, // 🔹 Reduced padding for 1024x768
-                // height: "calc(100vh - 53px)", // 🔹 Better height calculation
+                px: { xs: 1, sm: 2, md: 11 }, 
                 mb: 0,
                 mt: "11px",
                 pb: 0,

@@ -26,6 +26,7 @@ import gofig from "././assets/gofig1.png";
 import sirat from "././assets/sirat.gif";
 // import insead from "././assets/insead.png";
 import insead from "././assets/insead1.png";
+import search from "././assets/search_icon.png";
 
 // import insead from "././assets/insead.png";
 
@@ -65,6 +66,7 @@ export default function GrokSearchUI(props) {
       setQuery(query);
       setResults(results);
       // ✅ Add this line to show token count from last search
+      // setTokenCount(results.tokenUsage?.totalTokens || 0);
       setTokenCount(results.tokenUsage?.totalTokens || 0);
     }
   }, []);
@@ -339,6 +341,7 @@ export default function GrokSearchUI(props) {
             pb: 3,
             mb: 2,
             display: "flex",
+
             alignItems: "center",
             justifyContent: "center",
             gap: 1.5,
@@ -352,25 +355,43 @@ export default function GrokSearchUI(props) {
             variant="outlined"
             placeholder="Search..."
             value={query}
+            multiline // ✅ enables multi-line input
+            minRows={2}
             onChange={(e) => setQuery(e.target.value)}
             sx={{
               flexGrow: 1,
               backgroundColor: "#f5f5f5",
               fontFamily: "Calibri, sans-serif",
-              borderRadius: "30px",
+              borderRadius: "20px",
               "& .MuiOutlinedInput-root": {
-                borderRadius: "30px",
+                borderRadius: "20px",
+                height: "auto",
+                minHeight: "67px",
+              alignItems: "center",
                 paddingRight: "1px",
               },
+              
             }}
             inputProps={{
-              style: { paddingLeft: "20px" }, // padding for text
+              style: {
+                paddingLeft: "20px",
+                lineHeight: "1.5", // ✅ nice text spacing
+                whiteSpace: "pre-wrap", // ✅ wraps text naturally
+                wordBreak: "break-word",
+              }, // padding for text
             }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={() => handleSearch()}>
-                    <SearchIcon sx={{ color: "#555" }} />
+                    {/* <SearchIcon sx={{ color: "#555" }} /> */}
+                    <img
+                      src={search}
+                      alt=""
+                      srcset=""
+                      height={"40px"}
+                      width={"40px"}
+                    />
                   </IconButton>
                 </InputAdornment>
               ),
