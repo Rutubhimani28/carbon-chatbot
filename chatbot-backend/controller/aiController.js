@@ -69,7 +69,7 @@ export const handleTokens = async (sessions, session, payload) => {
   // );
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
@@ -1127,10 +1127,10 @@ export const getAIResponse = async (req, res) => {
       apiUrl = "https://api.openai.com/v1/chat/completions";
       apiKey = process.env.OPENAI_API_KEY;
       modelName = "gpt-4o-mini";
-    } else if (botName === "deepseek") {
-      apiUrl = "https://api.deepseek.com/v1/chat/completions";
-      apiKey = process.env.DEEPSEEK_API_KEY;
-      modelName = "deepseek-chat";
+    } else if (botName === "claude-3-haiku") {
+      apiUrl ="https://api.anthropic.com/v1/messages";
+      apiKey = process.env.CLAUDE_API_KEY;
+      modelName = "claude-3-haiku-20240307";
     } else if (botName === "grok") {
       apiUrl = "https://api.x.ai/v1/chat/completions";
       apiKey = process.env.GROK_API_KEY;
@@ -1714,7 +1714,7 @@ export const getChatHistory = async (req, res) => {
       );
     }, 0);
 
-    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
 
     // ✅ Remove duplicate partial responses (same prompt + same tokensUsed)
     const seenKeys = new Set();
