@@ -730,7 +730,7 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Smart AI" : selectedBot,
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -748,7 +748,7 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Smart AI" : selectedBot,
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -801,7 +801,7 @@ const ChatUI = () => {
         // botName: data.botName || selectedBot,
         botName:
           isSmartAI || activeView === "smartAi"
-            ? "Smart AI"
+            ? "Wrds AI"
             : data.botName || selectedBot,
         files: data.files || [], // Include file info from backend
       };
@@ -848,7 +848,7 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Smart AI" : selectedBot,
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -858,7 +858,7 @@ const ChatUI = () => {
         sessionId: currentSessionId,
         // botName: selectedBot,
         botName:
-          isSmartAI || activeView === "smartAi" ? "Smart AI" : selectedBot,
+          isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
         isError: true,
       };
     }
@@ -1692,21 +1692,21 @@ const ChatUI = () => {
             isTyping: false,
             isComplete: true,
             tokensUsed: message.tokensUsed || null,
-            botName: message.botName || "Smart AI",
+            botName: message.botName || "Wrds AI",
             files: message.files || [],
           });
         } else if (message.role === "user") {
           // legacy structure (user + model)
           let modelResponse = null;
           let tokensUsed = null;
-          let botName = "Smart AI";
+          let botName = "Wrds AI";
           let j = i + 1;
 
           while (j < rawHistory.length && rawHistory[j].role !== "user") {
             if (rawHistory[j].role === "model") {
               modelResponse = rawHistory[j];
               tokensUsed = modelResponse.tokensUsed || null;
-              botName = modelResponse.botName || "Smart AI";
+              botName = modelResponse.botName || "Wrds AI";
               break;
             }
             j++;
@@ -1759,7 +1759,7 @@ const ChatUI = () => {
               isTyping: false,
               isComplete: true,
               tokensUsed: message.tokensUsed || null,
-              botName: message.botName || "Smart AI",
+              botName: message.botName || "Wrds AI",
               files: message.files || [],
             });
           }
@@ -2487,7 +2487,7 @@ const ChatUI = () => {
               // onClick={() => setIsSmartAI(!isSmartAI)}
             >
               {/* {isSmartAI ? "Smart AI (On)" : "Smart AI"} */}
-              Smart AI
+              Wrds AI
             </Button>
           )}
           {(activeView === "chat" || activeView === "smartAi") && (
@@ -3095,7 +3095,7 @@ const ChatUI = () => {
                                   : ""} */}
 
                                 {isSmartAI
-                                  ? "Smart AI"
+                                  ? "Wrds AI"
                                   : group.botName === "chatgpt-5-mini"
                                   ? "ChatGPT 5-Mini"
                                   : group.botName === "grok"
@@ -4035,7 +4035,7 @@ const ChatUI = () => {
                                   : group.botName === "claude-3-haiku"
                                   ? "Claude-3"
                                   : ""} */}
-                                Smart AI
+                                Wrds AI
                               </Typography>
 
                               <Typography
