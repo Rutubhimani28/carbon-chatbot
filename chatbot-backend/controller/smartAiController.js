@@ -73,13 +73,13 @@ export const handleTokens = async (sessions, session, payload) => {
   // );
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
   // const remainingTokens = Math.max(
   //   0,
-  //   10000 - (grandTotalTokensUsed + tokensUsed)
+  //   50000 - (grandTotalTokensUsed + tokensUsed)
   // );
 
   // const allSessions = await ChatSession.find({ email });
@@ -90,7 +90,7 @@ export const handleTokens = async (sessions, session, payload) => {
   //           );
   //         }, 0);
 
-  //         const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokens);
+  //         const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokens);
   //         remainingTokensAfter = Math.max(0, remainingTokensBefore - totalTokens);
 
   // ✅ Global token check before saving
@@ -2102,7 +2102,7 @@ export const getSmartAiHistory = async (req, res) => {
       );
     }, 0);
 
-    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
 
     // 🟢 Filter Smart AI messages from the current session
     const smartAiHistory = session.history.filter((entry) =>

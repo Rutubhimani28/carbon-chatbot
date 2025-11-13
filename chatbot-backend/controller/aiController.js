@@ -73,13 +73,13 @@ export const handleTokens = async (sessions, session, payload) => {
   // );
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
   // const remainingTokens = Math.max(
   //   0,
-  //   10000 - (grandTotalTokensUsed + tokensUsed)
+  //   50000 - (grandTotalTokensUsed + tokensUsed)
   // );
 
   // const allSessions = await ChatSession.find({ email });
@@ -90,7 +90,7 @@ export const handleTokens = async (sessions, session, payload) => {
   //           );
   //         }, 0);
 
-  //         const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokens);
+  //         const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokens);
   //         remainingTokensAfter = Math.max(0, remainingTokensBefore - totalTokens);
 
   // ✅ Global token check before saving
@@ -187,7 +187,7 @@ export const handleTokens = async (sessions, session, payload) => {
 //   const totalTokensUsed = sessionTotalBefore + tokensUsed;
 //   const remainingTokens = Math.max(
 //     0,
-//     10000 - (grandTotalTokensUsed + tokensUsed)
+//     50000 - (grandTotalTokensUsed + tokensUsed)
 //   );
 
 //   // ✅ Save in session history
@@ -3053,7 +3053,7 @@ export const getChatHistory = async (req, res) => {
       );
     }, 0);
 
-    const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
+    const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
 
     // ✅ Remove duplicate partial responses (same prompt + same tokensUsed)
     const seenKeys = new Set();
@@ -3196,7 +3196,7 @@ export const getChatHistory = async (req, res) => {
 //     );
 
 //     const remainingTokens = parseFloat(
-//       (10000 - grandtotaltokenUsed).toFixed(3)
+//       (50000 - grandtotaltokenUsed).toFixed(3)
 //     );
 
 //     res.json({
@@ -3317,7 +3317,7 @@ export const getAllSessions = async (req, res) => {
       };
     });
 
-    // const remainingTokens = parseFloat((10000 - grandTotalTokens).toFixed(3));
+    // const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
     // const grandTotalTokensFixed = parseFloat(grandTotalTokens.toFixed(3));
 
     // ✅ Use unified token stats (single source of truth - includes chat + search)

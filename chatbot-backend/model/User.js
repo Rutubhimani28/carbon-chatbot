@@ -5,7 +5,7 @@
 //     username: { type: String, required: true, unique: true },
 //     email: { type: String, required: true, unique: true },
 //     password: { type: String, required: true },
-//     remainingTokens: { type: Number, default: 10000 },
+//     remainingTokens: { type: Number, default: 50000 },
 //   },
 //   { timestamps: true }
 // );
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     dateOfBirth: { type: Date, required: true },
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    remainingTokens: { type: Number, default: 10000 },
+    remainingTokens: { type: Number, default: 50000 },
   },
   { timestamps: true }
 );
