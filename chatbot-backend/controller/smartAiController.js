@@ -1529,6 +1529,7 @@ export const getSmartAIResponse = async (req, res) => {
     let responseLength = "";
     let email = "";
     let files = [];
+    let type = "smart Ai";
 
     // Handle multipart/form-data (file uploads)
     if (isMultipart) {
@@ -1542,6 +1543,7 @@ export const getSmartAIResponse = async (req, res) => {
       // botName = req.body.botName;
       responseLength = req.body.responseLength;
       email = req.body.email;
+      type = req.body.type || "smart Ai";
       files = req.files || [];
     } else {
       ({
@@ -1550,6 +1552,7 @@ export const getSmartAIResponse = async (req, res) => {
         // botName,
         responseLength,
         email,
+        type = "smart Ai",
       } = req.body);
     }
 
@@ -1602,7 +1605,7 @@ export const getSmartAIResponse = async (req, res) => {
       }
     }
 
-    const currentSessionId = sessionId || uuidv4();
+    // const currentSessionId = sessionId || uuidv4();
     const originalPrompt = prompt;
     let combinedPrompt = prompt;
 
@@ -1851,16 +1854,39 @@ export const getSmartAIResponse = async (req, res) => {
     const finalReplyHTML = formatResponseToHTML(finalReply);
 
     // Get or create session
-    let session = await ChatSession.findOne({
-      sessionId: currentSessionId,
-      email,
-    });
+    // let session = await ChatSession.findOne({
+    //   sessionId: currentSessionId,
+    //   email,
+    // });
+    // if (!session) {
+    //   session = new ChatSession({
+    //     email,
+    //     sessionId: currentSessionId,
+    //     history: [],
+    //     create_time: new Date(),
+    //     type,
+    //   });
+    // }
+    // ✅ Reuse existing session if exists, else create new
+    let session;
+
+    if (sessionId) {
+      session = await ChatSession.findOne({
+        sessionId,
+        email,
+        type: "smart Ai",
+      });
+    }
+
     if (!session) {
+      // If sessionId was not provided or not found, create new Smart AI session
+      const newSessionId = sessionId || uuidv4();
       session = new ChatSession({
         email,
-        sessionId: currentSessionId,
+        sessionId: newSessionId,
         history: [],
         create_time: new Date(),
+        type: "smart Ai",
       });
     }
 
@@ -1914,7 +1940,7 @@ export const getSmartAIResponse = async (req, res) => {
 
     res.json({
       type: "smart Ai",
-      sessionId: currentSessionId,
+      sessionId: session.sessionId,
       allowed: true,
       response: finalReplyHTML,
       botName,
@@ -2126,14 +2152,13 @@ export const getSmartAiHistory = async (req, res) => {
   }
 };
 
-
 export const getSmartAIAllSessions = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "email is required" });
 
     // 🟢 Fetch all chat sessions for this user
-    const sessions = await ChatSession.find({ email });
+    const sessions = await ChatSession.find({ email, type: "smart Ai" });
 
     // 🟢 Filter sessions that contain Smart AI bots
     const smartAiSessions = sessions.filter((session) =>
@@ -2188,7 +2213,7 @@ export const getSmartAIAllSessions = async (req, res) => {
           prompt: entry.prompt,
           response: displayResponse,
           tokensUsed: entry.tokensUsed || 0,
-          botName: entry.botName || "smart-ai",
+          botName: entry.botName || "smart Ai",
           createdAt: entry.createdAt,
           files: entry.files || [],
         };
@@ -2214,11 +2239,11 @@ export const getSmartAIAllSessions = async (req, res) => {
       const heading = lastEntry?.prompt || "No Heading";
 
       return {
-        type: "smart Ai",
         sessionId: session.sessionId,
         heading,
         email: session.email,
         create_time: session.create_time,
+        type: session.type,
         history: formattedHistory,
         stats: {
           totalPromptTokens,
@@ -2240,12 +2265,11 @@ export const getSmartAIAllSessions = async (req, res) => {
 
     // 🟢 Optionally store grand total
     await ChatSession.updateMany(
-      { email },
+      { email, type: "smart Ai" },
       { $set: { grandTotalTokens: grandTotalTokensFixed } }
     );
 
     res.json({
-      type: "smart Ai",
       sessions: sessionsWithStats,
       grandTotalTokens: grandTotalTokensFixed,
       remainingTokens,

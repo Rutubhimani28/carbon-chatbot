@@ -1178,6 +1178,7 @@ const ChatUI = () => {
       setInitialLoad(false);
     }
   };
+  console.log("chats:::::::::", chats);
 
   const getChatHistory = async (sessionId) => {
     try {
@@ -1256,14 +1257,15 @@ const ChatUI = () => {
       if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 
       const data = await response.json();
-      console.log("SmartAI Sessions:", data);
+      console.log("SmartAI Sessions response::::::", data);
+
+      let sessions = [];
 
       // ✅ Filter only type:"smart Ai"
       const filteredSessions = data.sessions?.filter(
-        (s) => s?.type?.toLowerCase() === "smart Ai"
+        (s) => s?.type?.toLowerCase() === "smart ai"
       );
-
-      let sessions = [];
+      // console.log("session--aya::::::", filteredSessions);
 
       // ✅ Process filtered smart AI sessions only
       if (Array.isArray(filteredSessions) && filteredSessions.length > 0) {
@@ -1295,13 +1297,22 @@ const ChatUI = () => {
 
       // ✅ Store only Smart AI sessions
       setSmartAISessions(sessions || []);
+      // console.log("smartAISessions:::::::::", smartAISessions);
 
       // Auto-load first Smart AI chat
-      if (sessions?.length && initialLoad && !selectedChatId) {
-        const firstSessionId = sessions[0].id;
-        setSelectedChatId(firstSessionId);
-        localStorage.setItem("lastSmartAISessionId", firstSessionId);
-        loadSmartAIHistory(sessions[0].sessionId);
+      // if (sessions?.length && initialLoad && !selectedChatId) {
+      //   const firstSessionId = sessions[0].id;
+      //   setSelectedChatId(firstSessionId);
+      //   localStorage.setItem("lastSmartAISessionId", firstSessionId);
+      //   loadSmartAIHistory(sessions[0].sessionId);
+      // }
+
+      // ✅ Automatically open the LAST Smart AI session (latest)
+      if (sessions.length > 0) {
+        const lastSession = sessions[0]; // since reversed()
+        setSelectedChatId(lastSession.id);
+        localStorage.setItem("lastSmartAISessionId", lastSession.id);
+        loadSmartAIHistory(lastSession.sessionId);
       }
     } catch (err) {
       console.error("Smart AI sessions error:", err);
@@ -1310,6 +1321,7 @@ const ChatUI = () => {
       setInitialLoad(false);
     }
   };
+  console.log("smartAISessions:::::::::", smartAISessions);
 
   // 🧠 Fetch Smart AI chat history
   const getSmartAIHistory = async (sessionId) => {
@@ -1339,7 +1351,7 @@ const ChatUI = () => {
 
       // ✅ Filter only type:"smart Ai"
       const messages = (data.response || data.messages || []).filter(
-        (msg) => msg?.type?.toLowerCase() === "smart Ai"
+        (msg) => msg?.type?.toLowerCase() === "smart ai"
       );
 
       return messages;
@@ -1903,10 +1915,30 @@ const ChatUI = () => {
     const currentSessions =
       activeView === "smartAi" || isSmartAI ? smartAISessions : chats;
 
-    let currentSessionId = selectedChatId
-      ? currentSessions.find((chat) => chat.id === selectedChatId)?.sessionId ||
-        ""
-      : "";
+    // let currentSessionId = selectedChatId
+    //   ? currentSessions.find((chat) => chat.id === selectedChatId)?.sessionId ||
+    //     ""
+    //   : "";
+
+    let currentSessionId = "";
+
+    if (activeView === "smartAi" || isSmartAI) {
+      // 🧠 Smart AI tab → reuse the same open Smart AI session
+      const existing = smartAISessions.find(
+        (s) => s.id === selectedChatId || s.sessionId === selectedChatId
+      );
+      currentSessionId =
+        existing?.sessionId ||
+        localStorage.getItem("lastSmartAISessionId") ||
+        "";
+    } else {
+      // 💬 Normal chat tab
+      const existing = chats.find(
+        (c) => c.id === selectedChatId || c.sessionId === selectedChatId
+      );
+      currentSessionId =
+        existing?.sessionId || localStorage.getItem("lastChatSessionId") || "";
+    }
 
     const messageType =
       activeView === "smartAi" || isSmartAI ? "smart Ai" : "chat";
@@ -1964,6 +1996,7 @@ const ChatUI = () => {
         lastSelectedResponseLength.current || "Short"
       );
       formData.append("sessionId", currentSessionId);
+      formData.append("type", messageType);
 
       selectedFiles.forEach((file) => {
         formData.append("files", file);
@@ -2233,6 +2266,16 @@ const ChatUI = () => {
   ).filter((chat) =>
     chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  console.log("Filtered Chats::::::::::", chats);
+  console.log("Filtered smart Ai::::::::::", smartAISessions);
+
+  // const filteredChats = (
+  //   activeView === "smartAi" || isSmartAI
+  //     ? smartAISessions?.filter((s) => s.type?.toLowerCase() === "smart Ai")
+  //     : chats?.filter((s) => s.type?.toLowerCase() === "chat")
+  // ).filter((chat) =>
+  //   chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
 
   return (
     <Box

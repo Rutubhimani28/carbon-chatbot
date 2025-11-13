@@ -1015,6 +1015,7 @@ export const getAIResponse = async (req, res) => {
     let responseLength = "";
     let email = "";
     let files = [];
+    let type = "chat"; 
 
     // Handle multipart/form-data (file uploads)
     if (isMultipart) {
@@ -1028,6 +1029,7 @@ export const getAIResponse = async (req, res) => {
       botName = req.body.botName;
       responseLength = req.body.responseLength;
       email = req.body.email;
+      type = req.body.type || "chat"; 
       files = req.files || [];
     } else {
       ({
@@ -1036,6 +1038,7 @@ export const getAIResponse = async (req, res) => {
         botName,
         responseLength,
         email,
+        type = "chat",
       } = req.body);
     }
 
@@ -1342,7 +1345,7 @@ export const getAIResponse = async (req, res) => {
         sessionId: currentSessionId,
         history: [],
         create_time: new Date(),
-        type: "chat",
+        type,
       });
     }
 
@@ -3216,7 +3219,7 @@ export const getAllSessions = async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "email is required" });
 
-    const sessions = await ChatSession.find({ email });
+    const sessions = await ChatSession.find({ email , type: "chat" });
 
     let grandTotalTokens = 0;
 
@@ -3298,7 +3301,7 @@ export const getAllSessions = async (req, res) => {
         heading,
         email: session.email,
         create_time: session.create_time,
-        type: "chat",
+        type:  session.type,
         history: formattedHistory,
         stats: {
           totalPromptTokens,
@@ -3327,7 +3330,7 @@ export const getAllSessions = async (req, res) => {
 
     // ✅ Save the grand total into ChatSession for each session (optional: only latest)
     await ChatSession.updateMany(
-      { email },
+      { email , type: "chat"},
       { $set: { grandTotalTokens: grandTotalTokensFixed } }
     );
 
