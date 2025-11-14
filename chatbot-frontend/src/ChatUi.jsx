@@ -58,6 +58,8 @@ import Words1 from "././assets/words1.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
+import { useTheme, useMediaQuery } from "@mui/material";
+// import MenuIcon from "@mui/icons-material/Menu";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -87,6 +89,7 @@ const ChatUI = () => {
   // const [totalTokensUsed, setTotalTokensUsed] = useState(0);
   const [responseLength, setResponseLength] = useState("Short");
   const lastSelectedResponseLength = useRef(responseLength);
+  const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null);
 
   // 🔹 नवी state add करो
   // const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
@@ -138,6 +141,12 @@ const ChatUI = () => {
     setAnchorEl(event.currentTarget);
     setActiveGroup(idx);
   };
+
+  // Inside your component
+  const theme = useTheme();
+  // const isMdScreen = useMediaQuery(theme.breakpoints.down("md"));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -2292,329 +2301,670 @@ const ChatUI = () => {
       <Box
         sx={{
           display: "flex",
-          alignItems: "center",
-          width: "100%",
+          flexDirection: isSmallScreen ? "column" : "row",
+          alignItems: isSmallScreen ? "flex-start" : "center",
+          // width: "100%",
           ml: 0,
-          px: 2,
+          px: { xs: 1, sm: 2, md: 2 },
           flexShrink: 0,
           bgcolor: "#1268fb",
           zIndex: 100,
           position: "sticky",
           top: 0,
-          height: "102px",
+          height: isSmallScreen
+            ? "auto"
+            : { xs: "70px", sm: "85px", lg: "102px" },
+          minHeight: isSmallScreen ? "100px" : "auto",
           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+          py: isSmallScreen ? 1 : 0,
         }}
       >
-        {/* logo */}
-        <img src={Words2} height={85} width={146} />
+        {/* First Row - Logo and Hamburger Menu (only on small screens) */}
+        {isSmallScreen && (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              mb: 1,
+            }}
+          >
+            {/* Logo */}
+            <img src={Words2} height={50} width={100} alt="Logo" />
 
-        <FormControl
-          fullWidth
-          size="small"
-          gap={1}
-          sx={{
-            ml: "58px",
-            display: "flex",
-            flexDirection: "row",
-            gap: 2.5,
-            mt: 0,
-          }}
-        >
-          {(activeView === "chat" || activeView === "smartAi") && (
-            <Autocomplete
-              value={
-                filteredChats.find((chat) => chat.id === selectedChatId) || null
-              }
-              onChange={(event, newValue) => {
-                if (newValue && newValue.id) {
-                  setSelectedChatId(newValue.id);
-                  localStorage.setItem("lastChatSessionId", newValue.id);
-                  loadChatHistory(newValue.sessionId);
-                }
+            {/* Hamburger Menu */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                cursor: "pointer",
               }}
-              getOptionLabel={(option) => option.name || ""}
-              options={filteredChats || []}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              loading={sessionLoading}
-              PopperComponent={StyledPopper}
-              noOptionsText={
-                sessionLoading ? (
-                  <Box sx={{ p: 2 }}>
-                    {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} sx={{ width: "100%", mb: 1 }} />
-                    ))}
-                  </Box>
+              onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  color: "#fff",
+                  display: { xs: "none", sm: "block" },
+                }}
+              >
+                {(username || email)?.split("@")[0]}
+              </Typography>
+              <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
+            </Box>
+          </Box>
+        )}
+
+        {/* Second Row - Dropdowns (only on small screens) */}
+        {isSmallScreen && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              gap: 1,
+            }}
+          >
+            {/* For Chat/SmartAI View */}
+            {(activeView === "chat" || activeView === "smartAi") && (
+              <>
+                {/* Session Dropdown */}
+                <Autocomplete
+                  value={
+                    filteredChats.find((chat) => chat.id === selectedChatId) ||
+                    null
+                  }
+                  onChange={(event, newValue) => {
+                    if (newValue && newValue.id) {
+                      setSelectedChatId(newValue.id);
+                      localStorage.setItem("lastChatSessionId", newValue.id);
+                      loadChatHistory(newValue.sessionId);
+                    }
+                  }}
+                  getOptionLabel={(option) => option.name || ""}
+                  options={filteredChats || []}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  loading={sessionLoading}
+                  PopperComponent={StyledPopper}
+                  noOptionsText={
+                    sessionLoading ? (
+                      <Box sx={{ p: 2 }}>
+                        {[...Array(3)].map((_, i) => (
+                          <Skeleton key={i} sx={{ width: "100%", mb: 1 }} />
+                        ))}
+                      </Box>
+                    ) : (
+                      "No session found"
+                    )
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Sessions"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        bgcolor: "#fff",
+                        borderRadius: "5px",
+                        width: "100%",
+                        "& .MuiOutlinedInput-input": {
+                          fontSize: "13px",
+                        },
+                        "& .MuiOutlinedInput-root": {
+                          height: "32px",
+                        },
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            fontFamily: "Calibri, sans-serif",
+                          }}
+                        >
+                          {option.name.replace(/\b\w/g, (char) =>
+                            char.toUpperCase()
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "gray",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {formatChatTime(new Date(option.createTime))}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                />
+
+                {/* Model Dropdown */}
+                {activeView === "chat" && (
+                  <Select
+                    labelId="bot-select-label"
+                    value={selectedBot}
+                    onChange={(e) => setSelectedBot(e.target.value)}
+                    sx={{
+                      bgcolor: "#fff",
+                      borderRadius: "5px",
+                      height: "32px",
+                      width: "28%",
+                      "& .MuiSelect-select": {
+                        fontSize: "13px",
+                        py: 0.5,
+                      },
+                    }}
+                  >
+                    <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
+                      ChatGPT 5-Mini
+                    </MenuItem>
+                    <MenuItem value="grok" sx={{ fontSize: "13px" }}>
+                      Grok 3-Mini
+                    </MenuItem>
+                    <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
+                      Claude-3
+                    </MenuItem>
+                  </Select>
+                )}
+              </>
+            )}
+
+            {/* For Browsing View - AI History Dropdown */}
+            {activeView === "search2" && (
+              <Select
+                value={grokcustomValue}
+                onChange={async (e) => {
+                  const selected = e.target.value;
+                  setGrokCustomValue(selected);
+                  setSelectedGrokQuery(selected);
+                  await handleSearch(selected);
+                }}
+                displayEmpty
+                IconComponent={() => null}
+                sx={{
+                  bgcolor: "#fff",
+                  borderRadius: "5px",
+                  width: "100%",
+                  height: "32px",
+                  "& .MuiSelect-select": {
+                    pl: 1.5,
+                    fontSize: "13px",
+                  },
+                }}
+              >
+                <MenuItem value="" disabled sx={{ fontSize: "13px" }}>
+                  AI History
+                </MenuItem>
+                {historyLoading ? (
+                  <MenuItem disabled sx={{ fontSize: "13px" }}>
+                    Loading...
+                  </MenuItem>
+                ) : grokhistoryList.length > 0 ? (
+                  grokhistoryList.map((query, idx) => (
+                    <MenuItem
+                      key={idx}
+                      value={query}
+                      sx={{
+                        fontSize: "13px",
+                        fontFamily: "Calibri, sans-serif",
+                        fontWeight: 400,
+                      }}
+                    >
+                      {query}
+                    </MenuItem>
+                  ))
                 ) : (
-                  "No session found"
-                )
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  placeholder="Select chat session"
-                  variant="outlined"
-                  size="small"
+                  <MenuItem disabled sx={{ fontSize: "13px" }}>
+                    No history found
+                  </MenuItem>
+                )}
+              </Select>
+            )}
+          </Box>
+        )}
+
+        {/* Desktop Layout - Hidden on small screens */}
+        {!isSmallScreen && (
+          <>
+            {/* Logo */}
+            <img src={Words2} height={85} width={146} alt="Logo" />
+
+            {/* Navigation Container */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                ml: { xs: 1, sm: 2, md: 3, lg: "58px" },
+                gap: { xs: 1, sm: 1.5, md: 2, lg: 2.5 },
+                flex: 1,
+              }}
+            >
+              {/* Session Dropdown */}
+              {(activeView === "chat" || activeView === "smartAi") && (
+                <Autocomplete
+                  value={
+                    filteredChats.find((chat) => chat.id === selectedChatId) ||
+                    null
+                  }
+                  onChange={(event, newValue) => {
+                    if (newValue && newValue.id) {
+                      setSelectedChatId(newValue.id);
+                      localStorage.setItem("lastChatSessionId", newValue.id);
+                      loadChatHistory(newValue.sessionId);
+                    }
+                  }}
+                  getOptionLabel={(option) => option.name || ""}
+                  options={filteredChats || []}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  loading={sessionLoading}
+                  PopperComponent={StyledPopper}
+                  noOptionsText={
+                    sessionLoading ? (
+                      <Box sx={{ p: 2 }}>
+                        {[...Array(3)].map((_, i) => (
+                          <Skeleton key={i} sx={{ width: "100%", mb: 1 }} />
+                        ))}
+                      </Box>
+                    ) : (
+                      "No session found"
+                    )
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      placeholder="Sessions"
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        bgcolor: "#fff",
+                        borderRadius: "5px",
+                        width: "157px",
+                        maxWidth: "190px",
+                        "& .MuiOutlinedInput-input": {
+                          fontSize: "17px",
+                        },
+                        "& .MuiOutlinedInput-root": {
+                          height: "30px",
+                        },
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <Typography
+                          sx={{
+                            fontSize: "17px",
+                            fontFamily: "Calibri, sans-serif",
+                          }}
+                        >
+                          {option.name.replace(/\b\w/g, (char) =>
+                            char.toUpperCase()
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "gray",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {formatChatTime(new Date(option.createTime))}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                />
+              )}
+
+              {/* Model Dropdown */}
+              {activeView === "chat" && (
+                <Select
+                  labelId="bot-select-label"
+                  value={selectedBot}
+                  onChange={(e) => setSelectedBot(e.target.value)}
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    mt: "0px",
+                    height: "30px",
                     width: "157px",
                     maxWidth: "190px",
-                    "& .MuiOutlinedInput-input": { fontSize: "17px" },
-                    "& .MuiOutlinedInput-root": {
-                      height: "30px", // ↓ smaller overall height
+                    "& .MuiSelect-select": {
+                      fontSize: "16px",
+                      py: 1,
                     },
                   }}
-                />
+                >
+                  <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "16px" }}>
+                    ChatGPT 5-Mini
+                  </MenuItem>
+                  <MenuItem value="grok" sx={{ fontSize: "16px" }}>
+                    Grok 3-Mini
+                  </MenuItem>
+                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "16px" }}>
+                    Claude-3
+                  </MenuItem>
+                </Select>
               )}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  <Box
+
+              {/* AI Grok history */}
+              {activeView === "search2" && (
+                <Select
+                  value={grokcustomValue}
+                  onChange={async (e) => {
+                    const selected = e.target.value;
+                    setGrokCustomValue(selected);
+                    setSelectedGrokQuery(selected);
+                    await handleSearch(selected);
+                  }}
+                  displayEmpty
+                  IconComponent={() => null}
+                  sx={{
+                    bgcolor: "#fff",
+                    borderRadius: "5px",
+                    width: "180px",
+                    height: "34px",
+                    "& .MuiSelect-select": {
+                      pl: 1.5,
+                      fontSize: "16px",
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled sx={{ fontSize: "16px" }}>
+                    AI History
+                  </MenuItem>
+                  {historyLoading ? (
+                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                      Loading...
+                    </MenuItem>
+                  ) : grokhistoryList.length > 0 ? (
+                    grokhistoryList.map((query, idx) => (
+                      <MenuItem
+                        key={idx}
+                        value={query}
+                        sx={{
+                          fontSize: "17px",
+                          fontFamily: "Calibri, sans-serif",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {query}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                      No history found
+                    </MenuItem>
+                  )}
+                </Select>
+              )}
+
+              {/* Wrds AI Button and Add Button */}
+              {(activeView === "chat" || activeView === "smartAi") && (
+                <>
+                  <Button
+                    variant="contained"
+                    size="small"
                     sx={{
-                      display: "flex",
-                      flexDirection: "column",
+                      bgcolor: "#1976d2",
+                      textTransform: "none",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      px: 2,
+                      height: "32px",
+                    }}
+                    onClick={() => {
+                      setActiveView("smartAi");
+                      setIsSmartAI(false);
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: "17px",
-                        fontFamily: "Calibri, sans-serif",
-                      }}
-                    >
-                      {option.name.replace(/\b\w/g, (char) =>
-                        char.toUpperCase()
-                      )}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: "gray" }}>
-                      {formatChatTime(new Date(option.createTime))}
-                    </Typography>
+                    Wrds AI
+                  </Button>
+                  <Box
+                    onClick={createNewChat}
+                    sx={{
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                    }}
+                  >
+                    <AddIcon sx={{ color: "#fff", fontSize: 24 }} />
                   </Box>
-                </li>
+                </>
               )}
-              sx={{
-                "& .MuiAutocomplete-option": {
-                  borderRadius: 1.5,
-                  my: 0.5,
-                },
-              }}
-            />
-          )}
 
-          {activeView === "chat" && (
-            <Select
-              labelId="bot-select-label"
-              value={selectedBot}
-              onChange={(e) => setSelectedBot(e.target.value)}
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: "5px",
-                mt: "0px",
-                height: "30px",
-                width: "157px",
-                maxWidth: "190px",
-              }}
-            >
-              <MenuItem value="chatgpt-5-mini">ChatGPT 5-Mini</MenuItem>
-              <MenuItem value="grok">Grok 3-Mini</MenuItem>
-              <MenuItem value="claude-3-haiku">Claude-3</MenuItem>
-            </Select>
-          )}
-
-          {/* AI Grok history */}
-          {activeView === "search2" && (
-            <Select
-              value={grokcustomValue}
-              onChange={async (e) => {
-                const selected = e.target.value;
-                setGrokCustomValue(selected);
-                setSelectedGrokQuery(selected);
-                await handleSearch(selected);
-                // setTimeout(() => setCustomValue(""), 500);
-              }}
-              displayEmpty
-              IconComponent={() => null} // removes arrow
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: "5px",
-                maxWidth: "200px",
-                width: "180px",
-                height: "34px",
-                mt: 0,
-                "& .MuiSelect-select": {
-                  pl: 1.5, // small padding for text
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                AI History
-              </MenuItem>
-              {historyLoading ? (
-                <MenuItem disabled>Loading...</MenuItem>
-              ) : grokhistoryList.length > 0 ? (
-                grokhistoryList.map((query, idx) => (
-                  <MenuItem
-                    key={idx}
-                    value={query}
+              {/* Tabs */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  ml: 3,
+                  gap: 3.5,
+                  flex: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                  }}
+                  onClick={() => {
+                    setActiveView("chat");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
                     sx={{
                       fontSize: "17px",
-                      fontFamily: "Calibri, sans-serif",
-                      fontWeight: 400,
+                      fontWeight: activeView === "chat" ? 600 : 400,
+                      color: activeView === "chat" ? "#fff" : "inherit",
+                      transition: "color 0.3s ease",
                     }}
                   >
-                    {query}
-                  </MenuItem>
-                ))
-              ) : (
-                <MenuItem disabled>No history found</MenuItem>
-              )}
-            </Select>
-          )}
+                    Chat
+                  </Typography>
+                  {activeView === "chat" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -8,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
 
-          {(activeView === "chat" || activeView === "smartAi") && (
-            <Button
-              variant="contained"
-              size="small"
-              sx={{
-                ml: 1,
-                bgcolor: "#1976d2",
-                textTransform: "none",
-                borderRadius: "8px",
-              }}
-              onClick={() => {
-                setActiveView("smartAi");
-                setIsSmartAI(false);
-              }}
-              // onClick={() => setIsSmartAI(!isSmartAI)}
-            >
-              {/* {isSmartAI ? "Smart AI (On)" : "Smart AI"} */}
-              Wrds AI
-            </Button>
-          )}
-          {(activeView === "chat" || activeView === "smartAi") && (
-            <Box onClick={createNewChat}>
-              <AddIcon sx={{ alignItems: "center", mt: 0.3 }} />
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                  }}
+                  onClick={() => setActiveView("search2")}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "17px",
+                      fontWeight: activeView === "search2" ? 600 : 400,
+                      color: activeView === "search2" ? "#fff" : "inherit",
+                      transition: "color 0.3s ease",
+                    }}
+                  >
+                    Browsing
+                  </Typography>
+                  {activeView === "search2" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -8,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
             </Box>
-          )}
-        </FormControl>
 
-        {/* add new */}
+            {/* User Info */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 1,
+                mr: "38px",
+                cursor: "pointer",
+              }}
+              onClick={(event) => setAnchorsEl(event.currentTarget)}
+            >
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: "17px",
+                  color: "#fff",
+                }}
+              >
+                {(username || email)?.charAt(0).toUpperCase() +
+                  (username || email)?.slice(1)}
+              </Typography>
+              <PersonIcon sx={{ fontSize: 29, color: "#fff" }} />
+            </Box>
+          </>
+        )}
 
-        {/* tab */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            mr: "36px",
-            gap: 3.5,
-            mt: 0,
+        {/* Mobile Menu with all options */}
+        <Menu
+          anchorEl={mobileMenuAnchor}
+          open={Boolean(mobileMenuAnchor)}
+          onClose={() => setMobileMenuAnchor(null)}
+          PaperProps={{
+            sx: {
+              width: 280,
+              borderRadius: 2,
+              p: 1,
+            },
           }}
         >
-          <Box
-            sx={{
-              gap: 1,
-              cursor: "pointer",
-              position: "relative", // needed for underline positioning
-              pb: "0px",
-            }}
+          {/* Navigation Tabs in Mobile Menu */}
+          <MenuItem
             onClick={() => {
               setActiveView("chat");
               setIsSmartAI(false);
+              setMobileMenuAnchor(null);
+            }}
+            sx={{
+              backgroundColor:
+                activeView === "chat" ? "#f0f0f0" : "transparent",
+              borderRadius: 1,
+              mb: 0.5,
             }}
           >
             <Typography
-              variant="h6"
               sx={{
-                mb: 1,
-                fontSize: "17px",
+                fontSize: "16px",
                 fontWeight: activeView === "chat" ? 600 : 400,
-                color: activeView === "chat" ? "#fff" : "inherit",
-                transition: "color 0.3s ease",
               }}
             >
               Chat
             </Typography>
+          </MenuItem>
 
-            {activeView === "chat" && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "3px",
-                  backgroundColor: "#fff",
-                  borderRadius: "2px",
-                  transition: "all 0.3s ease",
-                }}
-              />
-            )}
-          </Box>
-
-          <Box
-            sx={{
-              gap: 1,
-              cursor: "pointer",
-              position: "relative",
-              pb: "0px",
+          <MenuItem
+            onClick={() => {
+              setActiveView("search2");
+              setMobileMenuAnchor(null);
             }}
-            onClick={() => setActiveView("search2")}
+            sx={{
+              backgroundColor:
+                activeView === "search2" ? "#f0f0f0" : "transparent",
+              borderRadius: 1,
+              mb: 0.5,
+            }}
           >
             <Typography
-              variant="h6"
               sx={{
-                mb: 1,
-                fontSize: "17px",
+                fontSize: "16px",
                 fontWeight: activeView === "search2" ? 600 : 400,
-                color: activeView === "search2" ? "#fff" : "inherit",
-                transition: "color 0.3s ease",
               }}
             >
               Browsing
             </Typography>
+          </MenuItem>
 
-            {activeView === "search2" && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "3px",
-                  backgroundColor: "#fff",
-                  // backgroundColor: "#2F67F6",
-                  borderRadius: "2px",
-                  transition: "all 0.3s ease",
-                }}
-              />
-            )}
-          </Box>
-        </Box>
-
-        {/* Username + Icon (click to open menu) */}
-        <Box
-          sx={{
-            display: "flex",
-            // alignItems: "center",
-            alignItems: "flex-end",
-            gap: 1,
-            mr: "38px",
-            cursor: "pointer",
-            mt: 0,
-          }}
-          onClick={(event) => setAnchorsEl(event.currentTarget)}
-        >
-          <Typography
-            variant="subtitle1"
-            sx={{ fontWeight: "bold", fontSize: "17px", color: "#fff" }}
+          {/* Wrds AI in Mobile Menu */}
+          <MenuItem
+            onClick={() => {
+              setActiveView("smartAi");
+              setIsSmartAI(false);
+              setMobileMenuAnchor(null);
+            }}
+            sx={{ borderRadius: 1, mb: 0.5 }}
           >
-            {(username || email)?.charAt(0).toUpperCase() +
-              (username || email)?.slice(1)}
-          </Typography>
+            <Typography sx={{ fontSize: "16px" }}>Wrds AI</Typography>
+          </MenuItem>
 
-          <PersonIcon sx={{ fontSize: 29, color: "#fff" }} />
-        </Box>
+          {/* New Chat in Mobile Menu */}
+          <MenuItem
+            onClick={() => {
+              createNewChat();
+              setMobileMenuAnchor(null);
+            }}
+            sx={{ borderRadius: 1, mb: 0.5 }}
+          >
+            <Typography sx={{ fontSize: "16px" }}>New Chat</Typography>
+          </MenuItem>
 
-        {/* Dropdown Menu */}
+          <Divider sx={{ my: 1 }} />
+
+          {/* User Actions */}
+          <MenuItem
+            onClick={() => {
+              setMobileMenuAnchor(null);
+              setOpenProfile(true);
+            }}
+          >
+            <PersonRoundedIcon fontSize="small" sx={{ mr: 1 }} />
+            Profile
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setMobileMenuAnchor(null);
+              localStorage.clear();
+              window.location.href = "/login";
+            }}
+          >
+            <LogoutTwoToneIcon fontSize="small" sx={{ mr: 1, color: "red" }} />
+            Logout
+          </MenuItem>
+        </Menu>
+
+        {/* Existing Desktop User Menu */}
         <Menu
           anchorEl={anchorsEl}
           open={Boolean(anchorsEl)}
@@ -2638,7 +2988,7 @@ const ChatUI = () => {
           <MenuItem
             onClick={() => {
               handleCloseMenu();
-              setOpenProfile(true); // Profile modal open
+              setOpenProfile(true);
             }}
           >
             <PersonRoundedIcon fontSize="small" sx={{ mr: 1 }} />
@@ -2649,37 +2999,13 @@ const ChatUI = () => {
             onClick={() => {
               handleCloseMenu();
               localStorage.clear();
-              window.location.href = "/login"; // redirect to login
+              window.location.href = "/login";
             }}
           >
             <LogoutTwoToneIcon fontSize="small" sx={{ mr: 1, color: "red" }} />
             Logout
           </MenuItem>
         </Menu>
-
-        {/* Custom Dropdown (no arrow) */}
-        {/* <FormControl fullWidth size="small" sx={{ maxWidth: 175 }}>
-            <Select
-              value={customValue}
-              onChange={(e) => setCustomValue(e.target.value)}
-              displayEmpty
-              IconComponent={() => null} // removes arrow
-              sx={{
-                bgcolor: "#fff",
-                borderRadius: "5px",
-                "& .MuiSelect-select": {
-                  pl: 1.5, // small padding for text
-                },
-              }}
-            >
-              <MenuItem value="" disabled>
-                Select Option
-              </MenuItem>
-              <MenuItem value="option1">Option 1</MenuItem>
-              <MenuItem value="option2">Option 2</MenuItem>
-              <MenuItem value="option3">Option 3</MenuItem>
-            </Select>
-          </FormControl> */}
       </Box>
 
       <Box
@@ -3307,39 +3633,7 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
-                  {/* File Attachment Button - Positioned absolutely inside the container */}
                   {/* <IconButton
-                component="label"
-                sx={{
-                  color: "#2F67F6",
-                  position: "absolute",
-                  left: "15px",
-                  top: "52%",
-                  transform: "translateY(-50%)",
-                  zIndex: 2,
-                  backgroundColor: "white",
-                  borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
-                  // boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  
-                }}
-              >
-                <input
-                  type="file"
-                  hidden
-                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setSelectedFile(file);
-                      console.log("File selected:", file);
-                    }
-                  }}
-                />
-                <AttachFileIcon fontSize="small" />
-              </IconButton> */}
-                  <IconButton
                     component="label"
                     sx={{
                       color: "#2F67F6",
@@ -3383,7 +3677,7 @@ const ChatUI = () => {
                       }}
                     />
                     <AttachFileIcon fontSize="small" />
-                  </IconButton>
+                  </IconButton> */}
 
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
@@ -3408,16 +3702,16 @@ const ChatUI = () => {
                         minHeight: "67px",
                         padding:
                           selectedFiles.length > 0
-                            ? "30px 14px 8.5px 37px !important"
-                            : "0px !important",
-                        paddingLeft: "37px !important", // Space for file icon
-                        paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
+                            ? "30px 14px 8.5px 14px !important"
+                            : "0px 14px 0px 14px !important",
+                        paddingTop: selectedFiles.length > 0 ? "30px" : "0px",
                       },
                       "& .MuiOutlinedInput-input": {
                         padding: "8px",
                         height: "auto",
                         minHeight: "24px",
                         marginTop: selectedFiles.length > 0 ? "24px" : "0px",
+                        paddingLeft: "40px !important", // Space for file icon
                       },
                       "& .Mui-disabled": {
                         opacity: 0.5,
@@ -3429,61 +3723,100 @@ const ChatUI = () => {
                     multiline
                     maxRows={selectedFiles.length > 0 ? 4 : 3}
                     InputProps={{
-                      startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "8px",
-                            left: "11px",
-                            display: "flex",
-                            alignItems: "center",
-                            flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
-                            gap: 0.5, // 🔹 Files વચ્ચે gap
-                            // maxWidth: "200px", // 🔹 Maximum width
-                            maxWidth: "calc(100% - 50px)", // Prevent overflow
-                          }}
-                        >
-                          {/* File Name Display */}
-                          {selectedFiles.map((file, index) => (
+                      startAdornment: (
+                        <>
+                          {/* Attach File Icon - Always visible */}
+                          <IconButton
+                            component="label"
+                            sx={{
+                              color: "#2F67F6",
+                              position: "absolute",
+                              left: "8px",
+                              bottom:
+                                selectedFiles.length > 0 ? "34px" : "16px",
+                              zIndex: 2,
+                              borderRadius: "50%",
+                              width: "32px",
+                              height: "32px",
+                              "&:hover": {
+                                backgroundColor: "rgba(47, 103, 246, 0.1)",
+                              },
+                            }}
+                          >
+                            <input
+                              type="file"
+                              hidden
+                              multiple
+                              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                if (files.length > 0) {
+                                  setSelectedFiles((prevFiles) => {
+                                    const newFiles = [...prevFiles, ...files];
+                                    return newFiles.slice(0, 5);
+                                  });
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                            <AttachFileIcon fontSize="small" />
+                          </IconButton>
+
+                          {/* File Name Display - When files are selected */}
+                          {selectedFiles.length > 0 && (
                             <Box
                               sx={{
+                                position: "absolute",
+                                top: "8px",
+                                left: "45px",
                                 display: "flex",
                                 alignItems: "center",
-                                backgroundColor: "#f0f4ff",
-                                borderRadius: "12px",
-                                padding: "2px 8px",
-                                border: "1px solid #2F67F6",
-                                maxWidth: "120px",
-                                mb: 0.5,
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                                maxWidth: "calc(100% - 100px)",
                               }}
                             >
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "#2F67F6",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "11px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                {/* {file.name} */}
-                                {file.name.length > 15
-                                  ? file.name.substring(0, 12) + "..."
-                                  : file.name}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                // onClick={() => setSelectedFiles(null)}
-                                onClick={() => removeFile(index)} // 🔹 index પાસ કરો
-                                sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
-                              >
-                                <CloseIcon fontSize="small" />
-                              </IconButton>
+                              {selectedFiles.map((file, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    backgroundColor: "#f0f4ff",
+                                    borderRadius: "12px",
+                                    padding: "2px 8px",
+                                    border: "1px solid #2F67F6",
+                                    maxWidth: "120px",
+                                    mb: 0.5,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {file.name.length > 15
+                                      ? file.name.substring(0, 12) + "..."
+                                      : file.name}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => removeFile(index)}
+                                    sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                                  >
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              ))}
                             </Box>
-                          ))}
-                        </Box>
+                          )}
+                        </>
                       ),
 
                       endAdornment: (
@@ -3527,23 +3860,9 @@ const ChatUI = () => {
                           )}
                         </Box>
                       ),
-
-                      // endAdornment: (
-                      //   <IconButton
-                      //     onClick={isListening ? stopListening : startListening}
-                      //     sx={{
-                      //       color: isListening ? "red" : "#10a37f",
-                      //       mr: 1,
-                      //     }}
-                      //     title={
-                      //       isListening ? "Stop recording" : "Start voice input"
-                      //     }
-                      //   >
-                      //     {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
-                      //   </IconButton>
-                      // ),
                     }}
                   />
+
                   {console.log("selectedFiles length:", selectedFiles.length)}
                   <Box
                     sx={{
@@ -4240,39 +4559,7 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
-                  {/* File Attachment Button - Positioned absolutely inside the container */}
                   {/* <IconButton
-                component="label"
-                sx={{
-                  color: "#2F67F6",
-                  position: "absolute",
-                  left: "15px",
-                  top: "52%",
-                  transform: "translateY(-50%)",
-                  zIndex: 2,
-                  backgroundColor: "white",
-                  borderRadius: "50%",
-                  width: "32px",
-                  height: "32px",
-                  // boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                  
-                }}
-              >
-                <input
-                  type="file"
-                  hidden
-                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      setSelectedFile(file);
-                      console.log("File selected:", file);
-                    }
-                  }}
-                />
-                <AttachFileIcon fontSize="small" />
-              </IconButton> */}
-                  <IconButton
                     component="label"
                     sx={{
                       color: "#2F67F6",
@@ -4316,7 +4603,7 @@ const ChatUI = () => {
                       }}
                     />
                     <AttachFileIcon fontSize="small" />
-                  </IconButton>
+                  </IconButton> */}
 
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
@@ -4341,13 +4628,12 @@ const ChatUI = () => {
                         minHeight: "67px",
                         padding:
                           selectedFiles.length > 0
-                            ? "30px 14px 8.5px 37px !important"
-                            : "0px !important",
-                        paddingLeft: "37px !important", // Space for file icon
-                        paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
+                            ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
+                            : "12px 14px 12px 50px !important", // Added padding for file icon
+                        paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
                       },
                       "& .MuiOutlinedInput-input": {
-                        padding: "8px",
+                        padding: "8px 0", // Remove left/right padding since we have container padding
                         height: "auto",
                         minHeight: "24px",
                         marginTop: selectedFiles.length > 0 ? "24px" : "0px",
@@ -4362,61 +4648,100 @@ const ChatUI = () => {
                     multiline
                     maxRows={selectedFiles.length > 0 ? 4 : 3}
                     InputProps={{
-                      startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
-                        <Box
-                          sx={{
-                            position: "absolute",
-                            top: "8px",
-                            left: "11px",
-                            display: "flex",
-                            alignItems: "center",
-                            flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
-                            gap: 0.5, // 🔹 Files વચ્ચે gap
-                            // maxWidth: "200px", // 🔹 Maximum width
-                            maxWidth: "calc(100% - 50px)", // Prevent overflow
-                          }}
-                        >
-                          {/* File Name Display */}
-                          {selectedFiles.map((file, index) => (
+                      startAdornment: (
+                        <>
+                          {/* Attach File Icon - Always visible inside TextField */}
+                          <IconButton
+                            component="label"
+                            sx={{
+                              color: "#2F67F6",
+                              position: "absolute",
+                              left: "12px",
+                              bottom:
+                                selectedFiles.length > 0 ? "34px" : "18px",
+                              zIndex: 2,
+                              borderRadius: "50%",
+                              width: "32px",
+                              height: "32px",
+                              "&:hover": {
+                                backgroundColor: "rgba(47, 103, 246, 0.1)",
+                              },
+                            }}
+                          >
+                            <input
+                              type="file"
+                              hidden
+                              multiple
+                              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                if (files.length > 0) {
+                                  setSelectedFiles((prevFiles) => {
+                                    const newFiles = [...prevFiles, ...files];
+                                    return newFiles.slice(0, 5);
+                                  });
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                            <AttachFileIcon fontSize="small" />
+                          </IconButton>
+
+                          {/* File Name Display - When files are selected */}
+                          {selectedFiles.length > 0 && (
                             <Box
                               sx={{
+                                position: "absolute",
+                                top: "8px",
+                                left: "50px", // Adjusted to align with increased padding
                                 display: "flex",
                                 alignItems: "center",
-                                backgroundColor: "#f0f4ff",
-                                borderRadius: "12px",
-                                padding: "2px 8px",
-                                border: "1px solid #2F67F6",
-                                maxWidth: "120px",
-                                mb: 0.5,
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                                maxWidth: "calc(100% - 100px)",
                               }}
                             >
-                              <Typography
-                                variant="caption"
-                                sx={{
-                                  color: "#2F67F6",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                  fontSize: "11px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                {/* {file.name} */}
-                                {file.name.length > 15
-                                  ? file.name.substring(0, 12) + "..."
-                                  : file.name}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                // onClick={() => setSelectedFiles(null)}
-                                onClick={() => removeFile(index)} // 🔹 index પાસ કરો
-                                sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
-                              >
-                                <CloseIcon fontSize="small" />
-                              </IconButton>
+                              {selectedFiles.map((file, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    backgroundColor: "#f0f4ff",
+                                    borderRadius: "12px",
+                                    padding: "2px 8px",
+                                    border: "1px solid #2F67F6",
+                                    maxWidth: "120px",
+                                    mb: 0.5,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {file.name.length > 15
+                                      ? file.name.substring(0, 12) + "..."
+                                      : file.name}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => removeFile(index)}
+                                    sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                                  >
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              ))}
                             </Box>
-                          ))}
-                        </Box>
+                          )}
+                        </>
                       ),
 
                       endAdornment: (
@@ -4460,21 +4785,6 @@ const ChatUI = () => {
                           )}
                         </Box>
                       ),
-
-                      // endAdornment: (
-                      //   <IconButton
-                      //     onClick={isListening ? stopListening : startListening}
-                      //     sx={{
-                      //       color: isListening ? "red" : "#10a37f",
-                      //       mr: 1,
-                      //     }}
-                      //     title={
-                      //       isListening ? "Stop recording" : "Start voice input"
-                      //     }
-                      //   >
-                      //     {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
-                      //   </IconButton>
-                      // ),
                     }}
                   />
                   {console.log("selectedFiles length:", selectedFiles.length)}

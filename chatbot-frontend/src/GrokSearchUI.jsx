@@ -331,22 +331,23 @@ export default function GrokSearchUI(props) {
   return (
     // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
     <Box sx={{ display: "block", width: "100%" }}>
-      <Box sx={{width: "100%", mb: 1 }}>
+      <Box sx={{ width: "100%", mb: 1 }}>
+        {/* search and drop down */}
         <Box
           sx={{
             position: "sticky",
             top: 85,
             bgcolor: "#fff",
             pt: 5,
-            pb: 3,
+            pb: 1,
             mb: 2,
             display: "flex",
-
+            flexDirection: "row", // Ensure row layout
+            width: { xs: "95%", sm: "90%", md: "67%", lg: "71%" }, // Responsive width
+            margin: "0 auto", // Center horizontally
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "center", // Center content inside
             gap: 1.5,
-            width: "75%",
-            mx: "auto",
           }}
         >
           {/* 🔹 Search TextField with icon inside */}
@@ -355,7 +356,7 @@ export default function GrokSearchUI(props) {
             variant="outlined"
             placeholder="Search..."
             value={query}
-            multiline // ✅ enables multi-line input
+            multiline
             minRows={2}
             maxRows={5}
             onChange={(e) => setQuery(e.target.value)}
@@ -368,20 +369,18 @@ export default function GrokSearchUI(props) {
                 borderRadius: "20px",
                 height: "auto",
                 minHeight: "67px",
-                  display: "flex",
+                display: "flex",
                 alignItems: "center",
-                 justifyContent: "center",
+                justifyContent: "center",
                 paddingRight: "1px",
               },
               "& .MuiOutlinedInput-input": {
-                
                 paddingLeft: "20px",
-                lineHeight: "1.5", // ✅ nice text spacing
-                whiteSpace: "pre-wrap", // ✅ wraps text naturally
+                lineHeight: "1.5",
+                whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
                 alignItems: "center",
                 justifyContent: "center",
-              
               },
               "& .MuiInputBase-input::placeholder": {
                 top: "50%",
@@ -391,19 +390,17 @@ export default function GrokSearchUI(props) {
             inputProps={{
               style: {
                 display: "flex",
-                alignItems: "center", // ✅ keeps text vertically centered
+                alignItems: "center",
                 justifyContent: "center",
-              }, // padding for text
+              },
             }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton onClick={() => handleSearch()}>
-                    {/* <SearchIcon sx={{ color: "#555" }} /> */}
                     <img
                       src={search}
-                      alt=""
-                      srcset=""
+                      alt="Search"
                       height={"40px"}
                       width={"40px"}
                     />
@@ -435,10 +432,11 @@ export default function GrokSearchUI(props) {
             >
               <MenuItem value={3}>3 Links</MenuItem>
               <MenuItem value={5}>5 Links</MenuItem>
-              {/* <MenuItem value={10}>10 Links</MenuItem> */}
             </Select>
           </FormControl>
         </Box>
+
+        {/* 🔹 token count display */}
         <Box sx={{ mt: 0, textAlign: "left", width: "85%" }}>
           <p
             style={{
@@ -455,32 +453,34 @@ export default function GrokSearchUI(props) {
           </p>
         </Box>
       </Box>
+
       <Box
         sx={{
           flexGrow: 1,
           height: "100%",
           display: "flex",
-          flexDirection: "row",
-          // alignItems: "center", // horizontal centering
-          // justifyContent: "flex-start", // pushes content to top
-          pt: 2, // optional: adds padding from top
+          flexDirection: { xs: "column", md: "row" }, // Column on mobile, row on desktop
+          alignItems: { xs: "center", md: "flex-start" },
+          justifyContent: "flex-start",
+          pt: 2,
           textAlign: "center",
           color: "#555",
+          gap: { xs: 3, md: 0 }, // Gap on mobile
         }}
       >
+        {/* Left side logo - Hidden on mobile, visible on desktop */}
         <Box
           sx={{
-            display: "flex",
+            display: { xs: "none", md: "flex" }, // Hide on mobile
             alignItems: "center",
             justifyContent: "center",
             flexDirection: "column",
-            gap: 6,
-            width: "13%",
-            maxWidth: "13%",
+            gap: { md: 4, lg: 6 },
+            width: { md: "15%", lg: "13%" },
+            maxWidth: { md: "15%", lg: "13%" },
           }}
         >
-          {/* sirat Ad */}
-
+          {/* Sirat Ad */}
           <Box
             sx={{
               display: "flex",
@@ -488,9 +488,9 @@ export default function GrokSearchUI(props) {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
+              width: "100%",
             }}
           >
-            {/* ✅ Clickable Logo */}
             <Link
               href="https://sirat.earth"
               target="_blank"
@@ -499,31 +499,21 @@ export default function GrokSearchUI(props) {
                 display: "inline-block",
                 textDecoration: "none",
                 "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+                width: "100%",
               }}
             >
               <img
                 src={sirat}
-                height={140}
-                width={200}
-                style={{ objectFit: "contain" }}
+                style={{
+                  objectFit: "contain",
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: { md: "160px", lg: "200px" },
+                  maxHeight: { md: "112px", lg: "140px" },
+                }}
+                alt="Sirat Logo"
               />
-              {/* <Avatar
-              alt="Sirat"
-              src={sirat}
-              sx={{
-                width: 140,
-                height: 140,
-                mb: 1,
-                // border: "2px solid #ddd",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              }}
-            /> */}
             </Link>
-
-            {/* Brand Name */}
-            {/* <Typography variant="subtitle1" sx={{ color: "#000", mb: 0.5 }}>
-            Sirat
-          </Typography> */}
           </Box>
 
           {/* INSEAD Ad */}
@@ -534,9 +524,9 @@ export default function GrokSearchUI(props) {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
+              width: "100%",
             }}
           >
-            {/* ✅ Clickable Logo */}
             <Link
               href="https://www.insead.edu"
               target="_blank"
@@ -545,58 +535,31 @@ export default function GrokSearchUI(props) {
                 display: "inline-block",
                 textDecoration: "none",
                 "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+                width: "100%",
               }}
             >
               <img
                 src={insead}
-                height={140}
-                width={200}
-                style={{ objectFit: "contain" }}
+                style={{
+                  objectFit: "contain",
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: { md: "160px", lg: "200px" },
+                  maxHeight: { md: "112px", lg: "140px" },
+                }}
+                alt="INSEAD Logo"
               />
-              {/* <Avatar
-              alt="INSEAD"
-              src={insead}
-              sx={{
-                width: 140,
-                height: 140,
-                mb: 1,
-                border: "2px solid #ddd",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                mr: 1,
-              }}
-            /> */}
             </Link>
-
-            {/* Brand Name */}
-            {/* <Typography variant="subtitle1" sx={{ color: "#000", mb: 0.5 }}>
-            INSEAD
-          </Typography> */}
           </Box>
         </Box>
 
-        {/* <Box
-          sx={{
-           
-            width: "70%",
-            maxWidth: "70%",
-           
-          }}
-        >
-       */}
-
-        {error && (
-          <p style={{ color: "red", textAlign: "center", marginTop: "10px" }}>
-            {/* {error} */}
-          </p>
-        )}
-        {console.log("results::::", results)}
-        {/* {results && !loading && ( */}
+        {/* Main Content Area */}
         <Box
           sx={{
             mt: 0,
-            width: "90%",
+            width: { xs: "95%", sm: "90%", md: "70%", lg: "74%" }, // Responsive width
             textAlign: "left",
-            mx: 4,
+            mx: { xs: 1, sm: 2, md: 3, lg: 4 },
             // height: "95%",
             // overflowY: "auto",
           }}
@@ -611,7 +574,7 @@ export default function GrokSearchUI(props) {
                     paddingLeft: "4px",
                     fontFamily: "Calibri, sans-serif",
                     fontWeight: "400",
-                    fontSize: "18px",
+                    fontSize: { xs: "16px", sm: "17px", lg: "18px" },
                     color: "#1a1717ff",
                   }}
                 >
@@ -619,12 +582,11 @@ export default function GrokSearchUI(props) {
                 </p>
               )}
               {results?.verifiedLinks?.map((item, idx) => (
-                // {results?.verifiedLinks?.organic?.map((item, idx) => (
                 <Box
                   key={idx}
                   sx={{
                     mb: 2,
-                    p: 1,
+                    p: { xs: 1, sm: 2 },
                     borderRadius: 1,
                     //   backgroundColor: "#f9f9f9",
                     display: "flex",
@@ -634,7 +596,6 @@ export default function GrokSearchUI(props) {
                 >
                   {/* Source Name Badge */}
                   {item?.site && (
-                    // {item?.organic?.[0]?.site &&
                     <Box
                       sx={{
                         display: "inline-flex",
@@ -643,7 +604,7 @@ export default function GrokSearchUI(props) {
                         color: "#17202bff",
                         padding: "2px 8px",
                         borderRadius: "12px",
-                        fontSize: "16px",
+                        fontSize: { xs: "14px", sm: "15px", lg: "16px" },
                         fontWeight: "500",
                         width: "fit-content",
                         mb: 0.5,
@@ -652,39 +613,34 @@ export default function GrokSearchUI(props) {
                       }}
                     >
                       {item.site}
-                      {/* {item?.organic?.[0]?.site} */}
                     </Box>
                   )}
 
                   <a
-                    // href={item?.organic?.[0]?.link}
                     href={item.link}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      fontSize: "16px",
+                      fontSize: { xs: "14px", sm: "15px", lg: "16px" },
                       color: "#006621",
                       cursor: "pointer",
                       fontFamily: "Calibri, sans-serif",
                     }}
                   >
                     {item.link}
-                    {/* {item?.organic?.[0]?.link} */}
                   </a>
                   <a
                     href={item.link}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      // fontWeight: "bold",
-                      fontSize: "17px",
+                      fontSize: { xs: "15px", sm: "16px", lg: "17px" },
                       color: "#1a0dab",
                       fontFamily: "Calibri, sans-serif",
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
                   >
-                    {/* {item?.organic?.[0]?.title} */}
                     {item.title}
                   </a>
                   <p
@@ -695,12 +651,11 @@ export default function GrokSearchUI(props) {
                       overflow: "hidden",
                       margin: "4px 0 0 0",
                       color: "#1a1717ff",
-                      fontSize: "16px",
+                      fontSize: { xs: "14px", sm: "15px", lg: "16px" },
                       fontFamily: "Calibri, sans-serif",
                       fontWeight: 300,
                     }}
                   >
-                    {/* {item?.organic?.[0]?.snippet} */}
                     {item.snippet}
                   </p>
                   {/* Published Date */}
@@ -708,47 +663,29 @@ export default function GrokSearchUI(props) {
                     style={{
                       margin: "2px 0 0 0",
                       color: "#555",
-                      fontSize: "13px",
+                      fontSize: { xs: "12px", sm: "13px" },
                       fontFamily: "Calibri, sans-serif",
                       fontWeight: 300,
                     }}
                   >
-                    {/* {item?.organic?.[0]?.publishedDate
-                    ? new Date(item.publishedDate).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : ""} */}
                     {item.publishedDate}
-                    {/* {item.publishedDate
-                        ? new Date(item.publishedDate).toLocaleDateString(
-                            "en-GB",
-                            {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            }
-                          )
-                        : ""} */}
                   </p>
                 </Box>
               ))}
             </Box>
           )}
         </Box>
-        {/* )} */}
-        {/* </Box> */}
 
+        {/* Right side logo - Hidden on mobile, visible on desktop */}
         <Box
           sx={{
-            display: "flex",
+            display: { xs: "none", md: "flex" }, // Hide on mobile
             alignItems: "center",
             justifyContent: "center",
             flexDirection: "column",
-            gap: 6,
-            width: "13%",
-            maxWidth: "13%",
+            gap: { md: 4, lg: 6 },
+            width: { md: "15%", lg: "13%" },
+            maxWidth: { md: "15%", lg: "13%" },
           }}
         >
           {/* Gofig Ad */}
@@ -759,9 +696,9 @@ export default function GrokSearchUI(props) {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
+              width: "100%",
             }}
           >
-            {/* ✅ Clickable Logo */}
             <Link
               href="https://gofig.in"
               target="_blank"
@@ -770,34 +707,23 @@ export default function GrokSearchUI(props) {
                 display: "inline-block",
                 textDecoration: "none",
                 "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+                width: "100%",
               }}
             >
               <img
                 src={gofig}
-                height={140}
-                width={200}
-                style={{ objectFit: "contain" }}
+                style={{
+                  objectFit: "contain",
+                  width: "100%",
+                  height: "auto",
+                  maxWidth: { md: "160px", lg: "200px" },
+                  maxHeight: { md: "112px", lg: "140px" },
+                }}
+                alt="Gofig Logo"
               />
-              {/* <Avatar
-              alt="Gofig"
-              src={gofig}
-              sx={{
-                width: 140,
-                height: 140,
-                mb: 1,
-                border: "2px solid #ddd",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-              }}
-            /> */}
             </Link>
-
-            {/* Brand Name */}
-            {/* <Typography variant="subtitle1" sx={{ color: "#000", mb: 0.5 }}>
-            Gofig
-          </Typography> */}
           </Box>
 
-          {/* Zomato Ad */}
           {/* Zomato Ad */}
           <Box
             sx={{
@@ -806,9 +732,9 @@ export default function GrokSearchUI(props) {
               alignItems: "center",
               justifyContent: "center",
               textAlign: "center",
+              width: "100%",
             }}
           >
-            {/* ✅ Clickable Logo */}
             <Link
               href="https://www.zomato.com"
               target="_blank"
@@ -817,26 +743,124 @@ export default function GrokSearchUI(props) {
                 display: "inline-block",
                 textDecoration: "none",
                 "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+                width: "100%",
               }}
             >
               <Avatar
                 alt="Zomato1"
                 src={Zomato1}
                 sx={{
-                  width: 100,
-                  height: 100,
+                  width: { md: 90, lg: 100 },
+                  height: { md: 90, lg: 100 },
                   mb: 1,
                   border: "2px solid #ddd",
                   boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
                 }}
               />
             </Link>
-
-            {/* Brand Name */}
-            {/* <Typography variant="subtitle1" sx={{ color: "#000", mb: 0.5 }}>
-            Zomato
-          </Typography> */}
           </Box>
+        </Box>
+
+        {/* Mobile Ads - Only show on small screens */}
+        <Box
+          sx={{
+            display: { xs: "flex", md: "none" },
+            alignItems: "center",
+            justifyContent: "space-around",
+            width: "100%",
+            gap: 2,
+            mt: 2,
+            px: 2,
+          }}
+        >
+          {/* Mobile Sirat Ad */}
+          <Link
+            href="https://sirat.earth"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-block",
+              textDecoration: "none",
+              "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+            }}
+          >
+            <img
+              src={sirat}
+              style={{
+                height: 80,
+                width: 100,
+                objectFit: "contain",
+              }}
+              alt="Sirat Logo"
+            />
+          </Link>
+
+          {/* Mobile INSEAD Ad */}
+          <Link
+            href="https://www.insead.edu"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-block",
+              textDecoration: "none",
+              "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+            }}
+          >
+            <img
+              src={insead}
+              style={{
+                height: 80,
+                width: 100,
+                objectFit: "contain",
+              }}
+              alt="INSEAD Logo"
+            />
+          </Link>
+
+          {/* Mobile Gofig Ad */}
+          <Link
+            href="https://gofig.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-block",
+              textDecoration: "none",
+              "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+            }}
+          >
+            <img
+              src={gofig}
+              style={{
+                height: 80,
+                width: 100,
+                objectFit: "contain",
+              }}
+              alt="Gofig Logo"
+            />
+          </Link>
+
+          {/* Mobile Zomato Ad */}
+          <Link
+            href="https://www.zomato.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{
+              display: "inline-block",
+              textDecoration: "none",
+              "&:hover": { transform: "scale(1.05)", transition: "0.3s" },
+            }}
+          >
+            <Avatar
+              alt="Zomato1"
+              src={Zomato1}
+              sx={{
+                width: 70,
+                height: 70,
+                border: "2px solid #ddd",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+              }}
+            />
+          </Link>
         </Box>
       </Box>
     </Box>
