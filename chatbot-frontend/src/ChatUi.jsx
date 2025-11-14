@@ -62,10 +62,12 @@ import StopCircleIcon from "@mui/icons-material/StopCircle";
 const ChatUI = () => {
   const [input, setInput] = useState("");
   const [chats, setChats] = useState([]);
+  const [smartAISessions, setSmartAISessions] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [sessionLoading, setSessionLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [messageGroups, setMessageGroups] = useState([]);
+  const [smartAIMessageGroups, setSmartAIMessageGroups] = useState([[]]); // 🧠 separate Smart AI history
   const [isSending, setIsSending] = useState(false);
   const [isTypingResponse, setIsTypingResponse] = useState(false);
   const messagesEndRef = useRef(null);
@@ -95,6 +97,7 @@ const ChatUI = () => {
   const [customValue, setCustomValue] = useState("");
   const [historyList, setHistoryList] = useState([]); // store user search history
   const [selectedGrokQuery, setSelectedGrokQuery] = useState("");
+  const [isSmartAI, setIsSmartAI] = useState(false);
   // const [error, setError] = useState("");
   // const [tokenCount, setTokenCount] = useState(0);
   const [linkCount, setLinkCount] = useState(3);
@@ -630,7 +633,11 @@ const ChatUI = () => {
   const currentTime = () =>
     new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-  const fetchChatbotResponseWithFiles = async (formData, currentSessionId) => {
+  const fetchChatbotResponseWithFiles = async (
+    formData,
+    currentSessionId,
+    isSmartAI = false
+  ) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -638,12 +645,18 @@ const ChatUI = () => {
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    // 🟢 Add here
+    //  Add here
     currentPromptRef.current = input;
     partialResponseRef.current = "";
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/ai/ask`, {
+      // 👇 Dynamic endpoint
+      const endpoint =
+        isSmartAI || activeView === "smartAi"
+          ? `${apiBaseUrl}/api/ai/SmartAIask`
+          : `${apiBaseUrl}/api/ai/ask`;
+
+      const response = await fetch(endpoint, {
         method: "POST",
         body: formData, // No Content-Type header - browser will set it with boundary
         signal: controller.signal,
@@ -715,7 +728,9 @@ const ChatUI = () => {
         return {
           response: "Not enough tokens to process your request.",
           sessionId: currentSessionId,
-          botName: selectedBot,
+          // botName: selectedBot,
+          botName:
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -731,7 +746,9 @@ const ChatUI = () => {
         return {
           response: data.message,
           sessionId: currentSessionId,
-          botName: selectedBot,
+          // botName: selectedBot,
+          botName:
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -781,7 +798,11 @@ const ChatUI = () => {
         remainingTokens: data.remainingTokens,
         tokensUsed: data.tokensUsed || null,
         totalTokensUsed: data.totalTokensUsed ?? null,
-        botName: data.botName || selectedBot,
+        // botName: data.botName || selectedBot,
+        botName:
+          isSmartAI || activeView === "smartAi"
+            ? "Wrds AI"
+            : data.botName || selectedBot,
         files: data.files || [], // Include file info from backend
       };
     } catch (err) {
@@ -825,7 +846,9 @@ const ChatUI = () => {
         return {
           response: "Not enough tokens to process your request.",
           sessionId: currentSessionId,
-          botName: selectedBot,
+          // botName: selectedBot,
+          botName:
+            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
           isError: true,
         };
       }
@@ -833,7 +856,9 @@ const ChatUI = () => {
       return {
         response: "Sorry, something went wrong.",
         sessionId: currentSessionId,
-        botName: selectedBot,
+        // botName: selectedBot,
+        botName:
+          isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
         isError: true,
       };
     }
@@ -898,6 +923,8 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
 
+      const messageType = activeView === "smartAi" ? "smart Ai" : "chat";
+
       const res = await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -907,6 +934,7 @@ const ChatUI = () => {
           prompt: currentPromptRef.current,
           partialResponse,
           botName: selectedBot,
+          type: messageType, // ✅ add type
         }),
       });
 
@@ -914,23 +942,48 @@ const ChatUI = () => {
       console.log("✅ Partial response saved:", data);
 
       if (data.success) {
-        // ⬇️ Update token count box instantly
-        setMessageGroups((prev) => {
-          const updated = [...prev];
-          const messages = updated[0] || [];
-          const lastMsgIndex = messages.length - 1;
+        // ✅ Update tokens + UI instantly based on type
+        if (messageType === "smart Ai") {
+          // 🧠 Update Smart AI message group
+          setSmartAIMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
+            const lastMsgIndex = messages.length - 1;
 
-          if (lastMsgIndex >= 0) {
-            messages[lastMsgIndex] = {
-              ...messages[lastMsgIndex],
-              isTyping: false,
-              isComplete: false,
-              tokensUsed: data.tokensUsed, // ✅ Show partial token count
-            };
-            updated[0] = messages;
-          }
-          return updated;
-        });
+            if (lastMsgIndex >= 0) {
+              messages[lastMsgIndex] = {
+                ...messages[lastMsgIndex],
+                isTyping: false,
+                isComplete: false,
+                tokensUsed: data.tokensUsed,
+                type: "smart Ai",
+              };
+              updated[0] = messages;
+            }
+
+            return updated;
+          });
+        } else {
+          // 💬 Update Chat message group
+          setMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
+            const lastMsgIndex = messages.length - 1;
+
+            if (lastMsgIndex >= 0) {
+              messages[lastMsgIndex] = {
+                ...messages[lastMsgIndex],
+                isTyping: false,
+                isComplete: false,
+                tokensUsed: data.tokensUsed,
+                type: "chat",
+              };
+              updated[0] = messages;
+            }
+
+            return updated;
+          });
+        }
 
         // ✅ userTokenStats (AFTER save_partial)
         try {
@@ -960,7 +1013,13 @@ const ChatUI = () => {
         }
 
         // re-fetch chat session so DB stays synced
-        await fetchChatSessions();
+        // await fetchChatSessions();
+        // ✅ Re-fetch only relevant sessions
+        if (messageType === "smart Ai") {
+          await fetchSmartAISessions(); // refresh smart Ai tab
+        } else {
+          await fetchChatSessions(); // refresh chat tab
+        }
       }
     } catch (err) {
       console.error("❌ Failed to save partial response:", err);
@@ -969,97 +1028,19 @@ const ChatUI = () => {
 
   // Helper function
   const getCurrentPartialResponse = () => {
-    const lastMsgGroup = messageGroups?.[0] || [];
+    // 🧠 detect which view is active
+    const messageType =
+      activeView === "smartAi" || isSmartAI ? "smart Ai" : "chat";
+
+    // 🧩 choose the correct message source
+    const currentGroups =
+      messageType === "smart Ai" ? smartAIMessageGroups : messageGroups;
+
+    const lastMsgGroup = currentGroups?.[0] || [];
     const lastMsg = lastMsgGroup[lastMsgGroup.length - 1];
     return lastMsg?.responses?.[0] || "";
   };
 
-  // const fetchChatSessions = async () => {
-  //   setSessionLoading(true);
-  //   try {
-  //     const user = JSON.parse(localStorage.getItem("user"));
-  //     if (!user || !user.email) return;
-
-  //     const response = await fetch(
-  //       "https://carbon-chatbot.onrender.com/api/ai/get_user_sessions",
-  //       {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ email: user.email }),
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-
-  //     const data = await response.json();
-  //     console.log("API Response:", data);
-
-  //     // Process the sessions based on API response
-  //     let sessions = [];
-
-  //     if (data.response && Array.isArray(data.response)) {
-  //       if (data.response[0] && data.response[0].user_sessions) {
-  //         sessions = data.response[0].user_sessions.map((session) => {
-  //           // Save token count to localStorage
-  //           if (session.remainingTokens !== undefined) {
-  //             localStorage.setItem(
-  //               `tokens_${session.session_id}`,
-  //               session.remainingTokens.toString()
-  //             );
-  //           }
-  //           return {
-  //             id: session.session_id,
-  //             name:
-  //               session.session_heading ||
-  //               `Chat ${session.session_id.slice(0, 8)}`,
-  //             sessionId: session.session_id,
-  //             createTime: session.create_time || new Date().toISOString(),
-  //             remainingTokens: session.remainingTokens,
-  //           };
-  //         });
-  //       } else {
-  //         sessions = data.response.map((session) => {
-  //           if (session.remainingTokens !== undefined) {
-  //             localStorage.setItem(
-  //               `tokens_${session.session_id}`,
-  //               session.remainingTokens.toString()
-  //             );
-  //           }
-  //           return {
-  //             id: session.session_id,
-  //             name:
-  //               session.session_heading ||
-  //               session.name ||
-  //               `Chat ${session.session_id.slice(0, 8)}`,
-  //             sessionId: session.session_id,
-  //             createTime:
-  //               session.create_time ||
-  //               session.createTime ||
-  //               new Date().toISOString(),
-  //             remainingTokens: session.remainingTokens,
-  //           };
-  //         });
-  //       }
-  //     }
-
-  //     setChats(sessions);
-
-  //     // Select the first chat if none is selected
-  //     if (initialLoad && sessions.length > 0 && !selectedChatId) {
-  //       const firstSessionId = sessions[0].id;
-  //       setSelectedChatId(firstSessionId);
-  //       localStorage.setItem("lastChatSessionId", firstSessionId);
-  //       loadChatHistory(sessions[0].sessionId);
-  //     }
-  //   } catch (error) {
-  //     console.error("API Error:", error);
-  //   } finally {
-  //     setSessionLoading(false);
-  //     setInitialLoad(false);
-  //   }
-  // };
   const fetchChatSessions = async () => {
     setSessionLoading(true);
     try {
@@ -1081,87 +1062,106 @@ const ChatUI = () => {
 
       // Process the sessions based on API response
       let sessions = [];
-      let userRemainingTokens = 0;
-      let userTotalTokensUsed = 0;
 
-      // Extract remaining tokens and total tokens used from the response
-      // if (data.remainingTokens !== undefined) {
-      //   userRemainingTokens = data.remainingTokens;
-      //   setSessionRemainingTokens(userRemainingTokens);
-      // }
-
-      // if (data.grandTotalTokens !== undefined) {
-      //   userTotalTokensUsed = data.grandTotalTokens;
-      //   setTotalTokensUsed(userTotalTokensUsed);
-      // }
+      // ✅ Filter only type:"chat"
+      const filteredSessions = data.sessions?.filter(
+        (s) => s?.type?.toLowerCase() === "chat"
+      );
 
       // Handle different response structures
-      if (data && Array.isArray(data.sessions)) {
-        // Structure 1: response: [{ user_sessions: [...] }]
-        if (data && data?.session?.length > 0) {
-          console.log("data.response_if:::::", data);
-          console.log(
-            "data?.sessions?.history?.length:::::",
-            data?.sessions?.history?.length
-          );
-          // alert("hhhhhhhhh");
+      // if (data && Array.isArray(data.sessions)) {
+      //   // Structure 1: response: [{ user_sessions: [...] }]
+      //   if (data && data?.session?.length > 0) {
+      //     console.log("data.response_if:::::", data);
+      //     console.log(
+      //       "data?.sessions?.history?.length:::::",
+      //       data?.sessions?.history?.length
+      //     );
+      //     // alert("hhhhhhhhh");
 
-          sessions = data?.sessions?.reverse().map((session) => {
-            console.log(
-              "session?.history?.[0]?.totalTokensUsed",
-              session?.history?.[0]?.totalTokensUsed
+      //     sessions = data?.sessions?.reverse().map((session) => {
+      //       console.log(
+      //         "session?.history?.[0]?.totalTokensUsed",
+      //         session?.history?.[0]?.totalTokensUsed
+      //       );
+      //       // Save token count to localStorage
+      //       if (session?.history?.[0]?.totalTokensUsed !== undefined) {
+      //         localStorage.setItem(
+      //           `tokens_${session.sessionId}`,
+      //           session?.history?.[0]?.totalTokensUsed?.toString()
+      //         );
+      //       }
+      //       return {
+      //         id: session.sessionId,
+      //         // name:
+      //         //   session.heading ||
+      //         //   `Chat ${session.sessionId.slice(0, 8)}`,
+      //         name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
+      //         sessionId: session.sessionId,
+      //         createTime: session.create_time || new Date().toISOString(),
+      //         totalTokensUsed: session.totalTokensUsed || 0,
+      //       };
+      //     });
+      //   }
+      //   // Structure 2: response: [{ session_id, session_heading, ... }]
+      //   else {
+      //     console.log(
+      //       "data?.sessions?.history?.length > 0_else:::====",
+      //       data?.sessions?.history?.length > 0
+      //     );
+      //     console.log("data.response_else:::::", data);
+
+      //     sessions = data?.sessions?.reverse().map((session) => {
+      //       if (session?.history?.[0]?.totalTokensUsed !== undefined) {
+      //         localStorage.setItem(
+      //           `tokens_${session.sessionId}`,
+      //           session?.history?.[0]?.totalTokensUsed?.toString()
+      //         );
+      //       }
+      //       return {
+      //         id: session.sessionId,
+      //         // name:
+      //         //   session.heading ||
+      //         //   session.name ||
+      //         //   `Chat ${session.sessionId.slice(0, 8)}`,
+      //         name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
+      //         sessionId: session.sessionId,
+      //         createTime:
+      //           session.create_time ||
+      //           session.createTime ||
+      //           new Date().toISOString(),
+      //         totalTokensUsed: session?.history?.[0]?.totalTokensUsed || 0,
+      //       };
+      //     });
+      //   }
+      // }
+
+      // ✅ Process filtered chat sessions only
+      if (Array.isArray(filteredSessions) && filteredSessions.length > 0) {
+        sessions = filteredSessions.reverse().map((session) => {
+          // ✅ Save token count to localStorage if available
+          if (session?.history?.[0]?.totalTokensUsed !== undefined) {
+            localStorage.setItem(
+              `tokens_${session.sessionId}`,
+              session?.history?.[0]?.totalTokensUsed?.toString()
             );
-            // Save token count to localStorage
-            if (session?.history?.[0]?.totalTokensUsed !== undefined) {
-              localStorage.setItem(
-                `tokens_${session.sessionId}`,
-                session?.history?.[0]?.totalTokensUsed?.toString()
-              );
-            }
-            return {
-              id: session.sessionId,
-              // name:
-              //   session.heading ||
-              //   `Chat ${session.sessionId.slice(0, 8)}`,
-              name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
-              sessionId: session.sessionId,
-              createTime: session.create_time || new Date().toISOString(),
-              totalTokensUsed: session.totalTokensUsed || 0,
-            };
-          });
-        }
-        // Structure 2: response: [{ session_id, session_heading, ... }]
-        else {
-          console.log(
-            "data?.sessions?.history?.length > 0_else:::====",
-            data?.sessions?.history?.length > 0
-          );
-          console.log("data.response_else:::::", data);
-          sessions = data?.sessions?.reverse().map((session) => {
-            if (session?.history?.[0]?.totalTokensUsed !== undefined) {
-              localStorage.setItem(
-                `tokens_${session.sessionId}`,
-                session?.history?.[0]?.totalTokensUsed?.toString()
-              );
-            }
-            return {
-              id: session.sessionId,
-              // name:
-              //   session.heading ||
-              //   session.name ||
-              //   `Chat ${session.sessionId.slice(0, 8)}`,
-              name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
-              sessionId: session.sessionId,
-              createTime:
-                session.create_time ||
-                session.createTime ||
-                new Date().toISOString(),
-              totalTokensUsed: session?.history?.[0]?.totalTokensUsed || 0,
-            };
-          });
-        }
-      }
+          }
 
+          return {
+            id: session.sessionId,
+            name: session.heading || `Chat ${session.sessionId.slice(0, 8)}`,
+            sessionId: session.sessionId,
+            createTime:
+              session.create_time ||
+              session.createTime ||
+              new Date().toISOString(),
+            // totalTokensUsed: session?.history?.[0]?.totalTokensUsed || 0,
+            totalTokensUsed: session.totalTokensUsed || 0,
+            type: "chat", // ✅ always tag as chat type
+          };
+        });
+      }
+      console.log("sessions:::::::", sessions);
       setChats(sessions);
       console.log("response::::::::", initialLoad, sessions, !selectedChatId); // Debug log); // Debug log
       // Select the first chat if none is selected
@@ -1178,41 +1178,8 @@ const ChatUI = () => {
       setInitialLoad(false);
     }
   };
+  console.log("chats:::::::::", chats);
 
-  // const getChatHistory = async (sessionId) => {
-  //   try {
-  //     const user = JSON.parse(localStorage.getItem("user"));
-  //     if (!user || !user.email) return [];
-
-  //     const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/history", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ sessionId, email: user.email }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //     }
-
-  //     const data = await response.json();
-
-  //     // Extract token information from the response
-  //     if (data.remainingTokens !== undefined) {
-  //       setChatRemainingTokens(data.remainingTokens);
-  //     }
-
-  //     // if (data.totalTokensUsed !== undefined) {
-  //     //   setTotalTokensUsed(data.totalTokensUsed);
-  //     // }
-
-  //     return data.response || [];
-  //   } catch (error) {
-  //     console.error("API Error:", error);
-  //     return [];
-  //   } finally {
-  //     setHistoryLoading(false);
-  //   }
-  // };
   const getChatHistory = async (sessionId) => {
     try {
       const user = JSON.parse(localStorage.getItem("user"));
@@ -1244,6 +1211,25 @@ const ChatUI = () => {
         : Array.isArray(data)
         ? data
         : [];
+
+      // ✅ Add/force type:"chat" in each message
+      // const filteredMessages = messagesArray
+      //   .filter((msg) => !msg.type || msg.type.toLowerCase() === "chat")
+      //   .map((msg) => ({
+      //     ...msg,
+      //     type: "chat",
+      //   }));
+
+      // console.log("Filtered chat history:", filteredMessages);
+
+      // return filteredMessages;
+
+      // ✅ Filter only type:"chat"
+      const messages = (data.response || data.messages || []).filter(
+        (msg) => msg?.type?.toLowerCase() === "chat"
+      );
+
+      return messages;
     } catch (error) {
       console.error("API Error:", error);
       return [];
@@ -1252,15 +1238,155 @@ const ChatUI = () => {
     }
   };
 
+  // 🧠 Fetch Smart AI sessions
+  const fetchSmartAISessions = async () => {
+    setSessionLoading(true);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email) return;
+
+      const response = await fetch(
+        `${apiBaseUrl}/api/ai/get_smartAi_sessions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+      const data = await response.json();
+      console.log("SmartAI Sessions response::::::", data);
+
+      let sessions = [];
+
+      // ✅ Filter only type:"smart Ai"
+      const filteredSessions = data.sessions?.filter(
+        (s) => s?.type?.toLowerCase() === "smart ai"
+      );
+      // console.log("session--aya::::::", filteredSessions);
+
+      // ✅ Process filtered smart AI sessions only
+      if (Array.isArray(filteredSessions) && filteredSessions.length > 0) {
+        sessions = filteredSessions.reverse().map((session) => {
+          // ✅ Save token count to localStorage if available
+          if (session?.history?.[0]?.totalTokensUsed !== undefined) {
+            localStorage.setItem(
+              `tokens_${session.sessionId}`,
+              session?.history?.[0]?.totalTokensUsed?.toString()
+            );
+          }
+
+          return {
+            id: session.sessionId,
+            name:
+              session.heading || `Smart AI ${session.sessionId.slice(0, 8)}`,
+            sessionId: session.sessionId,
+            createTime:
+              session.create_time ||
+              session.createTime ||
+              new Date().toISOString(),
+            totalTokensUsed: session.totalTokensUsed || 0,
+            type: "smart Ai", // ✅ always tag as Smart AI type
+          };
+        });
+      }
+
+      console.log("Smart AI sessions (filtered):", sessions);
+
+      // ✅ Store only Smart AI sessions
+      setSmartAISessions(sessions || []);
+      // console.log("smartAISessions:::::::::", smartAISessions);
+
+      // Auto-load first Smart AI chat
+      // if (sessions?.length && initialLoad && !selectedChatId) {
+      //   const firstSessionId = sessions[0].id;
+      //   setSelectedChatId(firstSessionId);
+      //   localStorage.setItem("lastSmartAISessionId", firstSessionId);
+      //   loadSmartAIHistory(sessions[0].sessionId);
+      // }
+
+      // ✅ Automatically open the LAST Smart AI session (latest)
+      if (sessions.length > 0) {
+        const lastSession = sessions[0]; // since reversed()
+        setSelectedChatId(lastSession.id);
+        localStorage.setItem("lastSmartAISessionId", lastSession.id);
+        loadSmartAIHistory(lastSession.sessionId);
+      }
+    } catch (err) {
+      console.error("Smart AI sessions error:", err);
+    } finally {
+      setSessionLoading(false);
+      setInitialLoad(false);
+    }
+  };
+  console.log("smartAISessions:::::::::", smartAISessions);
+
+  // 🧠 Fetch Smart AI chat history
+  const getSmartAIHistory = async (sessionId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email) return [];
+
+      const response = await fetch(`${apiBaseUrl}/api/ai/SmartAIhistory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, email: user.email }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+      const data = await response.json();
+      console.log("Smart AI History:", data);
+
+      if (data.remainingTokens !== undefined)
+        setChatRemainingTokens(data.remainingTokens);
+
+      return Array.isArray(data.response)
+        ? data.response
+        : Array.isArray(data.messages)
+        ? data.messages
+        : [];
+
+      // ✅ Filter only type:"smart Ai"
+      const messages = (data.response || data.messages || []).filter(
+        (msg) => msg?.type?.toLowerCase() === "smart ai"
+      );
+
+      return messages;
+    } catch (err) {
+      console.error("Smart AI history error:", err);
+      return [];
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!historyLoading && messageGroups.length > 0) {
+    // 🧠 choose which message list to scroll based on active view
+    const currentGroups =
+      activeView === "smartAi" || isSmartAI
+        ? smartAIMessageGroups
+        : messageGroups;
+
+    if (!historyLoading && currentGroups.length > 0) {
       scrollToBottom();
     }
-  }, [historyLoading, messageGroups, scrollToBottom]);
+  }, [
+    historyLoading,
+    messageGroups,
+    ,
+    smartAIMessageGroups,
+    activeView,
+    isSmartAI,
+    scrollToBottom,
+  ]);
 
   // useEffect(() => {
   //   fetchChatSessions();
   // }, []);
+
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user || !user.email) {
@@ -1308,367 +1434,29 @@ const ChatUI = () => {
     })();
 
     // Fetch chat sessions after confirming user exists
-    fetchChatSessions();
-  }, []);
+    // fetchChatSessions();
 
-  // useEffect(() => {
-  //   if (!selectedChatId) return;
+    // ✅ Fetch data depending on selected view
+    if (isSmartAI || activeView === "smartAi") {
+      console.log("🧠 Loading Smart AI sessions...");
+      fetchSmartAISessions();
+    } else {
+      console.log("💬 Loading normal chat sessions...");
+      fetchChatSessions();
+    }
+  }, [activeView, isSmartAI]);
 
-  //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-
-  //   if (!selectedChat) return;
-  //   if (skipHistoryLoad) {
-  //     setSkipHistoryLoad(false);
-  //     return;
-  //   }
-
-  //   // if (selectedChatId) {
-  //   //   const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-  //   //   if (selectedChat) {
-
-  //   if (selectedChat.sessionId) {
-  //     loadChatHistory(selectedChat.sessionId);
-
-  //     // Load the latest token count for this session
-  //     const savedTokens = localStorage.getItem(
-  //       `tokens_${selectedChat.sessionId}`
-  //     );
-  //     if (savedTokens) {
-  //       setRemainingTokens(Number(savedTokens)); // ✅ add this line
-  //       console.log("Current tokens:", savedTokens);
-  //     }
-  //   } else {
-  //     setMessageGroups([[]]);
-  //   }
-  // }, [selectedChatId, skipHistoryLoad]);
-
-  // const loadChatHistory = async (sessionId) => {
-  //   if (!sessionId) {
-  //     setMessageGroups([[]]);
-  //     return;
-  //   }
-
-  //   setHistoryLoading(true);
-
-  //   try {
-  //     // Fetch from API
-  //     const rawHistory = await getChatHistory(sessionId);
-
-  //     // Load token count from localStorage
-  //     // const savedTokens = localStorage.getItem(`tokens_${sessionId}`);
-  //     // const tokenCount = savedTokens ? parseInt(savedTokens) : null;
-
-  //     // Process the history into message groups
-  //     const processedGroups = [];
-
-  //     for (let i = 0; i < rawHistory.length; i++) {
-  //       const message = rawHistory[i];
-
-  //       // if (message.role === "user") {
-  //       //   // Find the corresponding model response
-  //       //   let modelResponse = null;
-  //       //   let tokensUsed = null;
-  //       //   let j = i + 1;
-
-  //       //   while (j < rawHistory.length && rawHistory[j].role !== "user") {
-  //       //     if (rawHistory[j].role === "model") {
-  //       //       modelResponse = rawHistory[j];
-  //       //       // Extract tokens used from the response if available
-  //       //       tokensUsed = modelResponse.tokensUsed || null;
-  //       //       break;
-  //       //     }
-  //       //     j++;
-  //       //   }
-
-  //       //   if (modelResponse) {
-  //       //     processedGroups.push({
-  //       //       prompt: message.content,
-  //       //       responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
-  //       //       time: new Date(
-  //       //         message.timestamp || message.create_time || Date.now()
-  //       //       ).toLocaleTimeString([], {
-  //       //         hour: "2-digit",
-  //       //         minute: "2-digit",
-  //       //       }),
-  //       //       currentSlide: 0,
-  //       //       isTyping: false,
-  //       //       isComplete: true,
-  //       //       // tokensUsed: message.tokensUsed || null, // Add this line
-  //       //       tokensUsed: tokensUsed, // Store tokens used
-  //       //     });
-  //       //   } else {
-  //       //     // Handle case where there's a user message but no response yet
-  //       //     processedGroups.push({
-  //       //       prompt: message.content,
-  //       //       responses: ["No response available"],
-  //       //       time: new Date(
-  //       //         message.timestamp || message.create_time || Date.now()
-  //       //       ).toLocaleTimeString([], {
-  //       //         hour: "2-digit",
-  //       //         minute: "2-digit",
-  //       //       }),
-  //       //       currentSlide: 0,
-  //       //       isTyping: false,
-  //       //       isComplete: true,
-  //       //       tokensUsed: null,
-  //       //     });
-  //       //   }
-  //       // }
-
-  //       // The backend now returns objects with prompt, response, tokensUsed, etc.
-  //       if (message.prompt) {
-  //         // This is a user message with a prompt field
-  //         processedGroups.push({
-  //           prompt: message.prompt,
-  //           responses: [
-  //             message.response
-  //               ? message.response.replace(/\n\n/g, "<br/>")
-  //               : "No response available",
-  //           ],
-  //           time: new Date(
-  //             message.create_time || Date.now()
-  //           ).toLocaleTimeString([], {
-  //             hour: "2-digit",
-  //             minute: "2-digit",
-  //           }),
-  //           currentSlide: 0,
-  //           isTyping: false,
-  //           isComplete: true,
-  //           tokensUsed: message.tokensUsed || null,
-  //           botName: message.botName || "chatgpt-5-mini", // Add botName from history
-  //           files: message.files || [], // Include files from history
-  //         });
-  //       } else if (message.role === "user") {
-  //         // Fallback for old format - find the corresponding model response
-  //         let modelResponse = null;
-  //         let tokensUsed = null;
-  //         let j = i + 1;
-
-  //         while (j < rawHistory.length && rawHistory[j].role !== "user") {
-  //           if (rawHistory[j].role === "model") {
-  //             modelResponse = rawHistory[j];
-  //             // Extract tokens used from the response if available
-  //             tokensUsed = modelResponse.tokensUsed || null;
-  //             break;
-  //           }
-  //           j++;
-  //         }
-
-  //         if (modelResponse) {
-  //           processedGroups.push({
-  //             prompt: message.content,
-  //             responses: [modelResponse.content.replace(/\n\n/g, "<br/>")],
-  //             time: new Date(
-  //               message.timestamp || message.create_time || Date.now()
-  //             ).toLocaleTimeString([], {
-  //               hour: "2-digit",
-  //               minute: "2-digit",
-  //             }),
-  //             currentSlide: 0,
-  //             isTyping: false,
-  //             isComplete: true,
-  //             tokensUsed: tokensUsed,
-  //             botName: message.botName || "chatgpt-5-mini", // Add botName from history
-  //             files: message.files || [], // Include files from history
-  //           });
-  //         } else {
-  //           // Handle case where there's a user message but no response yet
-  //           processedGroups.push({
-  //             prompt: message.content,
-  //             responses: ["No response available"],
-  //             time: new Date(
-  //               message.timestamp || message.create_time || Date.now()
-  //             ).toLocaleTimeString([], {
-  //               hour: "2-digit",
-  //               minute: "2-digit",
-  //             }),
-  //             currentSlide: 0,
-  //             isTyping: false,
-  //             isComplete: true,
-  //             tokensUsed: null,
-  //             botName: message.botName || "chatgpt-5-mini", // Add botName from history
-  //             files: message.files || [], // Include files from history
-  //           });
-  //         }
-  //       }
-  //     }
-
-  //     setMessageGroups([processedGroups]);
-  //   } catch (error) {
-  //     console.error("Error loading chat history:", error);
-  //     setMessageGroups([[]]);
-  //   } finally {
-  //     setHistoryLoading(false);
-  //     setTimeout(() => scrollToBottom(), 200);
-  //   }
-  // };
-
-  // const fetchChatbotResponse = async (text, currentSessionId) => {
-  //     if (abortControllerRef.current) {
-  //       abortControllerRef.current.abort();
-  //     }
-
-  //     const controller = new AbortController();
-  //     abortControllerRef.current = controller;
-
-  //     const payload = {
-  //       email: user.email,
-  //       create_time: new Date().toISOString(),
-  //       prompt: text,
-  //       sessionId: currentSessionId || "", // Send blank if no session ID
-  //       maxWords: maxWords,
-  //     };
-
-  //     try {
-  //       const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify(payload),
-  //         signal: controller.signal,
-  //       });
-
-  //       if (!response.ok) {
-  //         throw new Error(`HTTP error! status: ${response.status}`);
-  //       }
-
-  //       abortControllerRef.current = null;
-  //       const data = await response.json();
-
-  //       console.log("API Response:", data);
-  //       console.log("Available token fields:", {
-  //         tokensUsed: data.tokensUsed,
-  //         usage: data.usage,
-  //         remainingTokens: data.remainingTokens,
-  //         total_tokens: data.usage?.total_tokens,
-  //       });
-
-  //       return {
-  //         response: data.response.replace(/\n\n/g, "<br/>"),
-  //         sessionId: data.sessionId, // This will be the new session ID from the server
-  //         remainingTokens: data.remainingTokens,
-  //         tokensUsed: data.tokensUsed || data.usage?.total_tokens || null,
-  //         totalTokensUsed: data.totalTokensUsed || null, // ✅ include here
-  //       };
-  //     } catch (err) {
-  //       if (err?.name === "AbortError") {
-  //         console.log("Request was aborted");
-  //         return null;
-  //       }
-  //       console.error(err);
-  //       return {
-  //         response: "Sorry, something went wrong.",
-  //         sessionId: currentSessionId,
-  //       };
-  //     }
-  //   };
-
-  // const fetchChatbotResponse = async (text, currentSessionId) => {
-  //   if (abortControllerRef.current) {
-  //     abortControllerRef.current.abort();
-  //   }
-
-  //   const controller = new AbortController();
-  //   abortControllerRef.current = controller;
-
-  //   // 🔹 Get user email from localStorage (saved during login)
-  //   const user = JSON.parse(localStorage.getItem("user"));
-  //   const email = user?.email;
-
-  //   if (!email) {
-  //     console.error("No user email found in localStorage");
-  //     return {
-  //       response: "User not logged in. Please login again.",
-  //       sessionId: currentSessionId,
-  //     };
-  //   }
-
-  //   const payload = {
-  //     email, //  dynamic from login
-  //     create_time: new Date().toISOString(),
-  //     prompt: text,
-  //     sessionId: currentSessionId || "",
-  //     responseLength,
-  //     botName: selectedBot, // Include the selected bot name in the request
-  //   };
-
-  //   try {
-  //     const response = await fetch("https://carbon-chatbot.onrender.com/api/ai/ask", {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify(payload),
-  //       signal: controller.signal,
-  //     });
-
-  //     // if (!response.ok) {
-  //     //   throw new Error(`HTTP error! status: ${response.status}`);
-  //     // }
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-
-  //       //  Show SweetAlert if tokens not enough
-  //       if (
-  //         response.status === 400 &&
-  //         errorData.message === "Not enough tokens"
-  //       ) {
-  //         await Swal.fire({
-  //           title: "Not enough tokens!",
-  //           text: "You don’t have enough tokens to continue.",
-  //           icon: "warning",
-  //           showCancelButton: true,
-  //           showDenyButton: true,
-  //           confirmButtonText: "Ok",
-  //           denyButtonText: "Switch to Free Model",
-  //           cancelButtonText: "Purchase Tokens",
-  //         }).then((result) => {
-  //           if (result.isConfirmed) {
-  //             // just close
-  //           } else if (result.isDenied) {
-  //             // switch to free model
-  //             setSelectedBot("chatgpt-5-mini");
-  //           } else if (result.isDismissed) {
-  //             // purchase tokens → redirect
-  //             window.location.href = "/purchase";
-  //           }
-  //         });
-  //       }
-
-  //       throw new Error(
-  //         errorData.message || `HTTP error! status: ${response.status}`
-  //       );
-  //     }
-
-  //     abortControllerRef.current = null;
-  //     const data = await response.json();
-
-  //     console.log("API Response:", data);
-
-  //     return {
-  //       response: data.response?.replace(/\n\n/g, "<br/>") || "",
-  //       sessionId: data.sessionId,
-  //       remainingTokens: data.remainingTokens,
-  //       // tokensUsed: data.tokensUsed ?? null,
-  //       tokensUsed: data.tokensUsed || data.usage?.total_tokens || null,
-  //       totalTokensUsed: data.totalTokensUsed ?? null,
-  //       botName: data.botName || selectedBot, // Return the bot name from the response
-  //     };
-  //   } catch (err) {
-  //     if (err?.name === "AbortError") {
-  //       console.log("Request was aborted");
-  //       return null;
-  //     }
-  //     console.error("fetchChatbotResponse error:", err);
-  //     return {
-  //       response: "Sorry, something went wrong.",
-  //       sessionId: currentSessionId,
-  //       botName: selectedBot, // Return the selected bot name even on error
-  //     };
-  //   }
-  // };
   useEffect(() => {
     if (!selectedChatId) return;
 
-    const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+    // const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+    // 🧠 Choose correct session list
+    const currentSessions =
+      activeView === "smartAi" || isSmartAI ? smartAISessions : chats;
+
+    const selectedChat = currentSessions.find(
+      (chat) => chat.id === selectedChatId
+    );
 
     if (!selectedChat) return;
     if (skipHistoryLoad) {
@@ -1679,20 +1467,47 @@ const ChatUI = () => {
     console.log("Loading chat history for session:", selectedChat.sessionId); // Debug log
 
     if (selectedChat.sessionId) {
-      loadChatHistory(selectedChat.sessionId);
+      if (activeView === "smartAi") {
+        // 🧠 Smart AI tab
+        loadSmartAIHistory(selectedChat.sessionId);
 
-      // Load the latest token count for this session
-      const savedTokens = localStorage.getItem(
-        `tokens_${selectedChat.sessionId}`
-      );
-      if (savedTokens) {
-        setRemainingTokens(Number(savedTokens));
-        console.log("Current tokens:", savedTokens);
+        // 🔹 Load latest token count for Smart AI
+        const savedTokens = localStorage.getItem(
+          `tokens_${selectedChat.sessionId}_smartAi`
+        );
+        if (savedTokens) {
+          setRemainingTokens(Number(savedTokens));
+          console.log("Smart AI tokens:", savedTokens);
+        }
+      } else {
+        // 💬 Chat tab
+        loadChatHistory(selectedChat.sessionId);
+
+        // 🔹 Load latest token count for Chat
+        const savedTokens = localStorage.getItem(
+          `tokens_${selectedChat.sessionId}_chat`
+        );
+        if (savedTokens) {
+          setRemainingTokens(Number(savedTokens));
+          console.log("Chat tokens:", savedTokens);
+        }
       }
     } else {
-      setMessageGroups([[]]);
+      // 🧹 Reset UI if no session
+      if (activeView === "smartAi") {
+        setSmartAIMessageGroups([[]]);
+      } else {
+        setMessageGroups([[]]);
+      }
     }
-  }, [selectedChatId, skipHistoryLoad]);
+  }, [
+    selectedChatId,
+    skipHistoryLoad,
+    activeView,
+    isSmartAI,
+    chats,
+    smartAISessions,
+  ]);
 
   const loadChatHistory = async (sessionId) => {
     console.log("Fetching history for sessionId:::::::::::::", loadChatHistory); // Debug log
@@ -1839,6 +1654,129 @@ const ChatUI = () => {
     }
   };
 
+  const loadSmartAIHistory = async (sessionId) => {
+    console.log("🧠 Fetching Smart AI history for sessionId:", sessionId);
+    if (!sessionId) {
+      setSmartAIMessageGroups([[]]); // ✅ clear Smart AI messages
+      return;
+    }
+
+    setHistoryLoading(true);
+
+    try {
+      // 1️⃣ Fetch Smart AI history data
+      const rawHistory = await getSmartAIHistory(sessionId);
+
+      // 2️⃣ Process Smart AI messages
+      const processedGroups = [];
+
+      for (let i = 0; i < rawHistory.length; i++) {
+        const message = rawHistory[i];
+
+        if (message.prompt) {
+          processedGroups.push({
+            id: message.id || `smartMsg_${i}`,
+            prompt: message.prompt,
+            responses: [
+              message.response
+                ? message.response.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed: message.tokensUsed || null,
+            botName: message.botName || "Wrds AI",
+            files: message.files || [],
+          });
+        } else if (message.role === "user") {
+          // legacy structure (user + model)
+          let modelResponse = null;
+          let tokensUsed = null;
+          let botName = "Wrds AI";
+          let j = i + 1;
+
+          while (j < rawHistory.length && rawHistory[j].role !== "user") {
+            if (rawHistory[j].role === "model") {
+              modelResponse = rawHistory[j];
+              tokensUsed = modelResponse.tokensUsed || null;
+              botName = modelResponse.botName || "Wrds AI";
+              break;
+            }
+            j++;
+          }
+
+          processedGroups.push({
+            id: message.id || `smartMsg_${i}`,
+            prompt: message.content,
+            responses: [
+              modelResponse
+                ? modelResponse.content.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.timestamp || message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed,
+            botName,
+            files: message.files || [],
+          });
+        }
+      }
+
+      // 3️⃣ Handle fallback case
+      if (processedGroups.length === 0 && rawHistory.length > 0) {
+        rawHistory.forEach((message, index) => {
+          if (message.content) {
+            processedGroups.push({
+              id: `smartMsg_${index}`,
+              prompt:
+                message.role === "user" ? message.content : "System message",
+              responses: [
+                message.role === "model"
+                  ? message.content.replace(/\n\n/g, "<br/>")
+                  : "Waiting for response...",
+              ],
+              time: new Date(
+                message.timestamp || message.create_time || Date.now()
+              ).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              currentSlide: 0,
+              isTyping: false,
+              isComplete: true,
+              tokensUsed: message.tokensUsed || null,
+              botName: message.botName || "Wrds AI",
+              files: message.files || [],
+            });
+          }
+        });
+      }
+
+      // 4️⃣ Save Smart AI messages to a separate state
+      setSmartAIMessageGroups([processedGroups]); // ✅ separate from chat
+    } catch (error) {
+      console.error("❌ Error loading Smart AI history:", error);
+      setSmartAIMessageGroups([[]]);
+    } finally {
+      setHistoryLoading(false);
+      setTimeout(() => scrollToBottom(), 200);
+    }
+  };
+
   const fetchChatbotResponse = async (text, currentSessionId) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -1959,312 +1897,6 @@ const ChatUI = () => {
     }
   };
 
-  // const handleSend = async () => {
-  //   if (!input.trim() || isSending) return;
-
-  //   isStoppedRef.current = false;
-  //   const prompt = input.trim();
-  //   setInput("");
-  //   setIsSending(true);
-  //   setIsTypingResponse(true);
-
-  //   // ✅ Unique message ID
-  //   const messageId =
-  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-
-  //   let currentSessionId = selectedChatId
-  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-  //     : "";
-
-  //   // ✅ PUSH message immutably (prevent duplicates)
-  //   setMessageGroups((prev) => {
-  //     const messages = prev[0] || [];
-
-  //     // Optional: check for duplicate by id (safety)
-  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
-  //     if (alreadyExists) return prev;
-
-  //     const newMessage = {
-  //       id: messageId,
-  //       prompt,
-  //       responses: ["Thinking..."],
-  //       time: currentTime(),
-  //       currentSlide: 0,
-  //       isTyping: true,
-  //       isComplete: false,
-  //       tokensUsed: null,
-  //       botName: selectedBot,
-  //     };
-
-  //     return [[...messages, newMessage]];
-  //   });
-
-  //   try {
-  //     // 🔹 API call
-  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
-  //     if (isStoppedRef.current || !result) return;
-
-  //     // 🔸 Save tokens
-  //     if (result.remainingTokens !== undefined) {
-  //       setChatRemainingTokens(result.remainingTokens);
-  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     }
-  //     if (result.totalTokensUsed !== undefined) {
-  //       setTotalTokensUsed(result.totalTokensUsed);
-  //     }
-
-  //     // 🔹 Update session ID if new
-  //     if (!currentSessionId && result.sessionId) {
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.id === selectedChatId
-  //             ? { ...chat, sessionId: result.sessionId }
-  //             : chat
-  //         )
-  //       );
-  //       currentSessionId = result.sessionId;
-  //       localStorage.setItem("lastChatSessionId", selectedChatId);
-  //     }
-
-  //     // ✅ Typing effect
-  //     const chars = result.response.split("");
-  //     let currentText = "";
-
-  //     for (let i = 0; i < chars.length; i += 5) {
-  //       if (isStoppedRef.current) break;
-  //       currentText += chars.slice(i, i + 5).join("");
-
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const messages = updated[0] || [];
-
-  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //         if (groupIndex !== -1) {
-  //           const updatedMessage = {
-  //             ...messages[groupIndex],
-  //             responses: [currentText],
-  //             isTyping: !isStoppedRef.current,
-  //             isComplete: !isStoppedRef.current,
-  //             tokensUsed: result.tokensUsed || null,
-  //             botName: result.botName || selectedBot,
-  //           };
-
-  //           const newMessages = [...messages];
-  //           newMessages[groupIndex] = updatedMessage;
-
-  //           return [newMessages];
-  //         }
-  //         return updated;
-  //       });
-
-  //       await new Promise((resolve) => setTimeout(resolve, 15));
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to send message:", error);
-
-  //     setMessageGroups((prev) => {
-  //       const updated = [...prev];
-  //       const messages = updated[0] || [];
-
-  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //       if (groupIndex !== -1) {
-  //         const errorMessage = {
-  //           ...messages[groupIndex],
-  //           isTyping: false,
-  //           isComplete: false,
-  //           responses: ["Sorry, something went wrong."],
-  //           tokensUsed: null,
-  //         };
-
-  //         const newMessages = [...messages];
-  //         newMessages[groupIndex] = errorMessage;
-
-  //         return [newMessages];
-  //       }
-  //       return updated;
-  //     });
-  //   } finally {
-  //     setIsSending(false);
-  //     setIsTypingResponse(false);
-  //     scrollToBottom();
-  //     setResponseLength("Response Length:");
-  //     fetchChatSessions();
-  //   }
-  // };
-
-  // const handleSend = async () => {
-  //   if (!input.trim() || isSending) return;
-
-  //   // 🔹 Prepare files data if any files are selected
-  //   if (selectedFiles.length > 0) {
-  //     console.log("Sending files:", selectedFiles);
-  //     // અહીં તમે files ને server પર upload કરવાનો logic ઉમેરી શકો
-  //     // Example: FormData બનાવીને files ઉમેરો
-  //     const formData = new FormData();
-  //     formData.append("prompt", input.trim());
-  //     formData.append("email", user.email);
-  //     formData.append("botName", selectedBot);
-  //     formData.append("responseLength", responseLength);
-
-  //     selectedFiles.forEach((file, index) => {
-  //       formData.append(`files`, file);
-  //     });
-
-  //     // અહીં તમારો file upload API call ઉમેરો
-  //   }
-
-  //   isStoppedRef.current = false;
-  //   const prompt = input.trim();
-  //   setInput("");
-  //   setIsSending(true);
-  //   setIsTypingResponse(true);
-
-  //   const messageId =
-  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-
-  //   let currentSessionId = selectedChatId
-  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-  //     : "";
-
-  //   setMessageGroups((prev) => {
-  //     const messages = prev[0] || [];
-  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
-  //     if (alreadyExists) return prev;
-
-  //     const newMessage = {
-  //       id: messageId,
-  //       prompt,
-  //       responses: ["Thinking..."],
-  //       time: currentTime(),
-  //       currentSlide: 0,
-  //       isTyping: true,
-  //       isComplete: false,
-  //       tokensUsed: null,
-  //       botName: selectedBot,
-  //     };
-
-  //     return [[...messages, newMessage]];
-  //   });
-
-  //   try {
-  //     const result = await fetchChatbotResponse(prompt, currentSessionId);
-  //     if (isStoppedRef.current || !result) return;
-
-  //     // 🔹 Check if this is an error response (like "Not enough tokens")
-  //     if (result.isError) {
-  //       // Directly show the error message without typing effect
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const messages = updated[0] || [];
-
-  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //         if (groupIndex !== -1) {
-  //           const errorMessage = {
-  //             ...messages[groupIndex],
-  //             isTyping: false,
-  //             isComplete: true,
-  //             responses: [result.response], // Use the actual error message
-  //             tokensUsed: null,
-  //           };
-
-  //           const newMessages = [...messages];
-  //           newMessages[groupIndex] = errorMessage;
-
-  //           return [newMessages];
-  //         }
-  //         return updated;
-  //       });
-  //       return; // Exit early for error responses
-  //     }
-
-  //     // 🔹 Normal successful response processing continues below...
-  //     if (result.remainingTokens !== undefined) {
-  //       setChatRemainingTokens(result.remainingTokens);
-  //       const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     }
-  //     if (result.totalTokensUsed !== undefined) {
-  //       setTotalTokensUsed(result.totalTokensUsed);
-  //     }
-
-  //     if (!currentSessionId && result.sessionId) {
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.id === selectedChatId
-  //             ? { ...chat, sessionId: result.sessionId }
-  //             : chat
-  //         )
-  //       );
-  //       currentSessionId = result.sessionId;
-  //       localStorage.setItem("lastChatSessionId", selectedChatId);
-  //     }
-
-  //     const chars = result.response.split("");
-  //     let currentText = "";
-
-  //     for (let i = 0; i < chars.length; i += 5) {
-  //       if (isStoppedRef.current) break;
-  //       currentText += chars.slice(i, i + 5).join("");
-
-  //       setMessageGroups((prev) => {
-  //         const updated = [...prev];
-  //         const messages = updated[0] || [];
-
-  //         const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //         if (groupIndex !== -1) {
-  //           const updatedMessage = {
-  //             ...messages[groupIndex],
-  //             responses: [currentText],
-  //             isTyping: !isStoppedRef.current,
-  //             isComplete: !isStoppedRef.current,
-  //             tokensUsed: result.tokensUsed || null,
-  //             botName: result.botName || selectedBot,
-  //           };
-
-  //           const newMessages = [...messages];
-  //           newMessages[groupIndex] = updatedMessage;
-
-  //           return [newMessages];
-  //         }
-  //         return updated;
-  //       });
-
-  //       await new Promise((resolve) => setTimeout(resolve, 15));
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to send message:", error);
-
-  //     setMessageGroups((prev) => {
-  //       const updated = [...prev];
-  //       const messages = updated[0] || [];
-
-  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //       if (groupIndex !== -1) {
-  //         const errorMessage = {
-  //           ...messages[groupIndex],
-  //           isTyping: false,
-  //           isComplete: false,
-  //           responses: ["Sorry, something went wrong."],
-  //           tokensUsed: null,
-  //         };
-
-  //         const newMessages = [...messages];
-  //         newMessages[groupIndex] = errorMessage;
-
-  //         return [newMessages];
-  //       }
-  //       return updated;
-  //     });
-  //   } finally {
-  //     setIsSending(false);
-  //     setIsTypingResponse(false);
-  //     scrollToBottom();
-  //     setResponseLength("Response Length:");
-  //     fetchChatSessions();
-  //   }
-  // };
-
   const handleSend = async (editedPrompt = null, editedId = null) => {
     // if (( !input.trim() && selectedFiles.length === 0) || isSending)
     isStoppedRef.current = false;
@@ -2279,11 +1911,43 @@ const ChatUI = () => {
     const messageId =
       Date.now() + "_" + Math.random().toString(36).substr(2, 5); // always new id
 
-    let currentSessionId = selectedChatId
-      ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-      : "";
+    // 🧠 Choose correct session list
+    const currentSessions =
+      activeView === "smartAi" || isSmartAI ? smartAISessions : chats;
 
-    setMessageGroups((prev) => {
+    // let currentSessionId = selectedChatId
+    //   ? currentSessions.find((chat) => chat.id === selectedChatId)?.sessionId ||
+    //     ""
+    //   : "";
+
+    let currentSessionId = "";
+
+    if (activeView === "smartAi" || isSmartAI) {
+      // 🧠 Smart AI tab → reuse the same open Smart AI session
+      const existing = smartAISessions.find(
+        (s) => s.id === selectedChatId || s.sessionId === selectedChatId
+      );
+      currentSessionId =
+        existing?.sessionId ||
+        localStorage.getItem("lastSmartAISessionId") ||
+        "";
+    } else {
+      // 💬 Normal chat tab
+      const existing = chats.find(
+        (c) => c.id === selectedChatId || c.sessionId === selectedChatId
+      );
+      currentSessionId =
+        existing?.sessionId || localStorage.getItem("lastChatSessionId") || "";
+    }
+
+    const messageType =
+      activeView === "smartAi" || isSmartAI ? "smart Ai" : "chat";
+
+    // 🧠 choose correct state setter
+    const setMessagesFn =
+      messageType === "smart Ai" ? setSmartAIMessageGroups : setMessageGroups;
+
+    setMessagesFn((prev) => {
       const updated = [...prev];
       const messages = updated[0] || [];
 
@@ -2297,7 +1961,8 @@ const ChatUI = () => {
         isTyping: true,
         isComplete: false,
         tokensUsed: null,
-        botName: selectedBot,
+        // botName: selectedBot,
+        botName: messageType === "smart Ai" ? "Smart AI" : selectedBot,
         files: selectedFiles.map((f) => ({ name: f.name })),
       };
 
@@ -2321,7 +1986,9 @@ const ChatUI = () => {
       const formData = new FormData();
       formData.append("prompt", prompt);
       formData.append("email", user.email);
-      formData.append("botName", selectedBot);
+      // formData.append("botName", selectedBot);
+      if (!isSmartAI && activeView !== "smartAi")
+        formData.append("botName", selectedBot);
       // formData.append("responseLength", responseLength || "Short");
       // ✅ Always use last selected option unless user changes it
       formData.append(
@@ -2329,6 +1996,7 @@ const ChatUI = () => {
         lastSelectedResponseLength.current || "Short"
       );
       formData.append("sessionId", currentSessionId);
+      formData.append("type", messageType);
 
       selectedFiles.forEach((file) => {
         formData.append("files", file);
@@ -2336,7 +2004,8 @@ const ChatUI = () => {
 
       const result = await fetchChatbotResponseWithFiles(
         formData,
-        currentSessionId
+        currentSessionId,
+        messageType === "smart Ai" || isSmartAI
       );
 
       if (!result || isStoppedRef.current) return;
@@ -2363,7 +2032,9 @@ const ChatUI = () => {
                   sessionId: selectedChatId || currentSessionId,
                   prompt,
                   partialResponse: allText + lineText,
-                  botName: selectedBot,
+                  // botName: selectedBot,
+                  botName:
+                    messageType === "smart Ai" ? "smart Ai" : selectedBot,
                 }),
               });
             } catch (err) {
@@ -2382,7 +2053,7 @@ const ChatUI = () => {
 
             lineText += chars.slice(i, i + 50).join("");
 
-            setMessageGroups((prev) => {
+            setMessagesFn((prev) => {
               const updated = [...prev];
               const messages = updated[0] || [];
               const index = messages.findIndex((m) => m.id === messageId);
@@ -2393,7 +2064,11 @@ const ChatUI = () => {
                   isTyping: !isStoppedRef.current,
                   isComplete: false,
                   tokensUsed: result.tokensUsed || 0,
-                  botName: result.botName || selectedBot,
+                  // botName: result.botName || selectedBot,
+                  botName:
+                    messageType === "smart Ai"
+                      ? "Smart AI"
+                      : result.botName || selectedBot,
                 };
                 updated[0] = messages;
               }
@@ -2412,7 +2087,7 @@ const ChatUI = () => {
         // ✅ Mark complete after typing done
         // ✅ After typing completes (not stopped)
         if (!isStoppedRef.current) {
-          setMessageGroups((prev) => {
+          setMessagesFn((prev) => {
             const updated = [...prev];
             const messages = updated[0] || [];
             const index = messages.findIndex((m) => m.id === messageId);
@@ -2423,7 +2098,11 @@ const ChatUI = () => {
                 isComplete: true,
                 responses: [allText.trim()],
                 tokensUsed: result.tokensUsed || 0,
-                botName: result.botName || selectedBot,
+                // botName: result.botName || selectedBot,
+                botName:
+                  messageType === "smart Ai"
+                    ? "Smart AI"
+                    : result.botName || selectedBot,
               };
               updated[0] = messages;
             }
@@ -2492,7 +2171,14 @@ const ChatUI = () => {
             }
 
             // 👉 get_user_session
-            await fetchChatSessions();
+            // await fetchChatSessions();
+
+            // ✅ Refresh sessions based on current type
+            if (activeView === "smartAi" || isSmartAI) {
+              await fetchSmartAISessions(); // 🧠 Smart AI tab
+            } else {
+              await fetchChatSessions(); // 💬 Chat tab
+            }
           }
         } catch (err) {
           console.warn("⚠️ Failed to refresh stats after chat:", err.message);
@@ -2501,247 +2187,41 @@ const ChatUI = () => {
     }
   };
 
-  // last meeral working code
-  // const handleSend = async () => {
-  //   if ((!input.trim() && selectedFiles.length === 0) || isSending) return;
-
-  //   isStoppedRef.current = false;
-  //   const prompt = input.trim();
-  //   setInput("");
-  //   setSelectedFiles([]);
-  //   setIsSending(true);
-  //   setIsTypingResponse(true);
-
-  //   const messageId =
-  //     Date.now() + "_" + Math.random().toString(36).substr(2, 5);
-
-  //   let currentSessionId = selectedChatId
-  //     ? chats.find((chat) => chat.id === selectedChatId)?.sessionId || ""
-  //     : "";
-
-  //   // Add message to UI
-  //   setMessageGroups((prev) => {
-  //     const messages = prev[0] || [];
-  //     const alreadyExists = messages.some((msg) => msg.id === messageId);
-  //     if (alreadyExists) return prev;
-
-  //     const newMessage = {
-  //       id: messageId,
-  //       prompt:
-  //         prompt || `Files: ${selectedFiles.map((f) => f.name).join(", ")}`,
-  //       responses: ["Thinking..."],
-  //       time: currentTime(),
-  //       currentSlide: 0,
-  //       isTyping: true,
-  //       isComplete: false,
-  //       tokensUsed: null,
-  //       botName: selectedBot,
-  //       files: selectedFiles.map((f) => ({ name: f.name })), // Store file info for display
-  //     };
-
-  //     return [[...messages, newMessage]];
-  //   });
-
-  //   try {
-  //     // Create FormData for file upload
-  //     const formData = new FormData();
-
-  //     // Add text data
-  //     formData.append("prompt", prompt);
-  //     formData.append("email", user.email);
-  //     formData.append("botName", selectedBot);
-  //     formData.append("responseLength", responseLength);
-  //     formData.append("sessionId", currentSessionId);
-
-  //     // Add files
-  //     selectedFiles.forEach((file) => {
-  //       formData.append("files", file);
-  //     });
-
-  //     // Call the API with FormData
-  //     const result = await fetchChatbotResponseWithFiles(
-  //       formData,
-  //       currentSessionId
-  //     );
-
-  //     if (!result || isStoppedRef.current) return;
-
-  //     // Handle token updates and response (same as before)
-  //     if (result.remainingTokens !== undefined) {
-  //       setChatRemainingTokens(result.remainingTokens);
-  //       // const storageKey = `tokens_${currentSessionId || result.sessionId}`;
-  //       // localStorage.setItem(storageKey, result.remainingTokens.toString());
-  //     }
-  //     if (result.totalTokensUsed !== undefined) {
-  //       setTotalTokensUsed(result.totalTokensUsed);
-  //     }
-
-  //     // ✅ Add this line
-  //     const tokensUsedFromAPI = result.tokensUsed || 0;
-
-  //     if (!currentSessionId && result.sessionId) {
-  //       setChats((prev) =>
-  //         prev.map((chat) =>
-  //           chat.id === selectedChatId
-  //             ? { ...chat, sessionId: result.sessionId }
-  //             : chat
-  //         )
-  //       );
-  //       currentSessionId = result.sessionId;
-  //       localStorage.setItem("lastChatSessionId", selectedChatId);
-  //     }
-
-  //     // Clear files after successful send
-  //     // setSelectedFiles([]);
-
-  //     // Typing effect for response
-  //     // if (!result.isError) {
-  //     //   const chars = result.response.split("");
-  //     //   let currentText = "";
-
-  //     //   for (let i = 0; i < chars.length; i += 5) {
-  //     //     if (isStoppedRef.current) break;
-  //     //     currentText += chars.slice(i, i + 5).join("");
-
-  //     //     setMessageGroups((prev) => {
-  //     //       const updated = [...prev];
-  //     //       const messages = updated[0] || [];
-  //     //       const index = messages.findIndex((m) => m.id === messageId);
-  //     //       if (index !== -1) {
-  //     //         messages[index] = {
-  //     //           ...messages[index],
-  //     //           responses: [currentText],
-  //     //           isTyping: !isStoppedRef.current,
-  //     //           isComplete: !isStoppedRef.current,
-  //     //           tokensUsed: Math.floor(
-  //     //             (result.tokensUsed || 0) * (i / chars.length)
-  //     //           ),
-  //     //           botName: result.botName || selectedBot,
-  //     //         };
-  //     //         updated[0] = messages;
-  //     //       }
-  //     //       return updated;
-  //     //     });
-
-  //     //     await new Promise((resolve) => setTimeout(resolve, 10));
-  //     //   }
-  //     // }
-
-  //     if (!result.isError) {
-  //       const lines = result.response.split("\n");
-  //       let allText = "";
-
-  //       const LINES_PER_BATCH = 35; // 👉 number of lines to type together
-
-  //       for (let l = 0; l < lines.length; l += LINES_PER_BATCH) {
-  //         if (isStoppedRef.current) break;
-
-  //         // take 2–3 lines at once
-  //         const batch = lines.slice(l, l + LINES_PER_BATCH).join("\n");
-
-  //         let lineText = "";
-  //         const chars = batch.split("");
-
-  //         for (let i = 0; i < chars.length; i += 50) {
-  //           // 3 chars at a time
-  //           // 2 chars at a time
-  //           if (isStoppedRef.current) break;
-  //           lineText += chars.slice(i, i + 50).join("");
-
-  //           setMessageGroups((prev) => {
-  //             const updated = [...prev];
-  //             const messages = updated[0] || [];
-  //             const index = messages.findIndex((m) => m.id === messageId);
-  //             if (index !== -1) {
-  //               messages[index] = {
-  //                 ...messages[index],
-  //                 responses: [allText + lineText],
-  //                 isTyping: !isStoppedRef.current,
-  //                 isComplete: false,
-  //                 //   tokensUsed: Math.floor(
-  //                 //   (result.tokensUsed || 0) * (i / chars.length)
-  //                 // ),
-  //                 tokensUsed: result.tokensUsed || 0,
-  //                 botName: result.botName || selectedBot,
-  //               };
-  //               updated[0] = messages;
-  //             }
-  //             return updated;
-  //           });
-
-  //           await new Promise((resolve) => setTimeout(resolve, 0)); // typing speed
-  //         }
-
-  //         allText += lineText + "\n";
-  //         await new Promise((resolve) => setTimeout(resolve, 0)); // pause between lines
-  //       }
-
-  //       // Mark as complete
-  //       //   setMessageGroups((prev) => {
-  //       //     const updated = [...prev];
-  //       //     const messages = updated[0] || [];
-  //       //     const index = messages.findIndex((m) => m.id === messageId);
-  //       //     if (index !== -1) {
-  //       //       messages[index] = {
-  //       //         ...messages[index],
-  //       //         isTyping: false,
-  //       //         isComplete: true,
-  //       //         responses: [allText.trim()],
-  //       //       };
-  //       //       updated[0] = messages;
-  //       //     }
-  //       //     return updated;
-  //       //   }
-  //       // );
-  //     }
-  //   } catch (error) {
-  //     console.error("Failed to send message:", error);
-  //     setMessageGroups((prev) => {
-  //       const updated = [...prev];
-  //       const messages = updated[0] || [];
-
-  //       const groupIndex = messages.findIndex((g) => g.id === messageId);
-  //       if (groupIndex !== -1) {
-  //         const errorMessage = {
-  //           ...messages[groupIndex],
-  //           isTyping: false,
-  //           isComplete: false,
-  //           responses: ["Sorry, something went wrong."],
-  //           tokensUsed: null,
-  //         };
-
-  //         const newMessages = [...messages];
-  //         newMessages[groupIndex] = errorMessage;
-
-  //         return [newMessages];
-  //       }
-  //       return updated;
-  //     });
-  //   } finally {
-  //     setIsSending(false);
-  //     setIsTypingResponse(false);
-  //     scrollToBottom();
-  //     setResponseLength(" ");
-  //     fetchChatSessions();
-  //   }
-  // };
-
   const createNewChat = () => {
     const newSessionId = generateSessionId(); // Generate a proper session ID
     const newChat = {
       // id: `temp_${Date.now()}`, // temporary ID for UI
       id: newSessionId,
-      name: `Chat ${chats.length + 1}`,
+      name:
+        activeView === "smartAi" || isSmartAI
+          ? `Smart AI ${smartAISessions?.length + 1 || 1}`
+          : `Chat ${chats.length + 1}`,
       // sessionId: "", // blank session ID
       sessionId: newSessionId,
       createTime: new Date().toISOString(),
     };
 
-    setChats((prev) => [newChat, ...prev]);
-    setSkipHistoryLoad(true); // prevent history load
-    setSelectedChatId(newChat.id);
-    localStorage.setItem("lastChatSessionId", newChat.id);
-    setMessageGroups([[]]); // reset messages
+    if (activeView === "smartAi" || isSmartAI) {
+      // 🧠 Smart AI Chat
+      setSmartAISessions((prev) => [newChat, ...prev]); // Add to Smart AI session list
+      setSkipHistoryLoad(true);
+      setSelectedChatId(newChat.id);
+      localStorage.setItem("lastSmartAISessionId", newChat.id);
+      setSmartAIMessageGroups([[]]); // Reset Smart AI message history
+    } else {
+      // 💬 Normal Chat
+      setChats((prev) => [newChat, ...prev]); // Add to chat list
+      setSkipHistoryLoad(true);
+      setSelectedChatId(newChat.id);
+      localStorage.setItem("lastChatSessionId", newChat.id);
+      setMessageGroups([[]]); // Reset normal chat messages
+    }
+
+    // setChats((prev) => [newChat, ...prev]);
+    // setSkipHistoryLoad(true); // prevent history load
+    // setSelectedChatId(newChat.id);
+    // localStorage.setItem("lastChatSessionId", newChat.id);
+    // setMessageGroups([[]]); // reset messages
   };
 
   function formatChatTime(date) {
@@ -2781,9 +2261,21 @@ const ChatUI = () => {
     return `${fullDate},  ${timeStr}`;
   }
 
-  const filteredChats = chats.filter((chat) =>
+  const filteredChats = (
+    activeView === "smartAi" || isSmartAI ? smartAISessions : chats
+  ).filter((chat) =>
     chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  console.log("Filtered Chats::::::::::", chats);
+  console.log("Filtered smart Ai::::::::::", smartAISessions);
+
+  // const filteredChats = (
+  //   activeView === "smartAi" || isSmartAI
+  //     ? smartAISessions?.filter((s) => s.type?.toLowerCase() === "smart Ai")
+  //     : chats?.filter((s) => s.type?.toLowerCase() === "chat")
+  // ).filter((chat) =>
+  //   chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  // );
 
   return (
     <Box
@@ -2815,7 +2307,7 @@ const ChatUI = () => {
       >
         {/* logo */}
         <img src={Words2} height={85} width={146} />
-     
+
         <FormControl
           fullWidth
           size="small"
@@ -2828,7 +2320,7 @@ const ChatUI = () => {
             mt: 0,
           }}
         >
-          {activeView === "chat" && (
+          {(activeView === "chat" || activeView === "smartAi") && (
             <Autocomplete
               value={
                 filteredChats.find((chat) => chat.id === selectedChatId) || null
@@ -2923,8 +2415,8 @@ const ChatUI = () => {
               }}
             >
               <MenuItem value="chatgpt-5-mini">ChatGPT 5-Mini</MenuItem>
-              <MenuItem value="deepseek">DeepSeek</MenuItem>
               <MenuItem value="grok">Grok 3-Mini</MenuItem>
+              <MenuItem value="claude-3-haiku">Claude-3</MenuItem>
             </Select>
           )}
 
@@ -2977,10 +2469,30 @@ const ChatUI = () => {
               )}
             </Select>
           )}
-          {activeView === "chat" && (
+
+          {(activeView === "chat" || activeView === "smartAi") && (
+            <Button
+              variant="contained"
+              size="small"
+              sx={{
+                ml: 1,
+                bgcolor: "#1976d2",
+                textTransform: "none",
+                borderRadius: "8px",
+              }}
+              onClick={() => {
+                setActiveView("smartAi");
+                setIsSmartAI(false);
+              }}
+              // onClick={() => setIsSmartAI(!isSmartAI)}
+            >
+              {/* {isSmartAI ? "Smart AI (On)" : "Smart AI"} */}
+              Wrds AI
+            </Button>
+          )}
+          {(activeView === "chat" || activeView === "smartAi") && (
             <Box onClick={createNewChat}>
               <AddIcon sx={{ alignItems: "center", mt: 0.3 }} />
-            
             </Box>
           )}
         </FormControl>
@@ -3004,7 +2516,10 @@ const ChatUI = () => {
               position: "relative", // needed for underline positioning
               pb: "0px",
             }}
-            onClick={() => setActiveView("chat")}
+            onClick={() => {
+              setActiveView("chat");
+              setIsSmartAI(false);
+            }}
           >
             <Typography
               variant="h6"
@@ -3174,7 +2689,7 @@ const ChatUI = () => {
           display: "flex",
           alignItems: "center",
           transition: "all 0.3s ease",
-          px: { xs: 2, sm: 3, md: 2 }, 
+          px: { xs: 2, sm: 3, md: 2 },
           mb: 0,
           pb: 0,
         }}
@@ -3190,7 +2705,7 @@ const ChatUI = () => {
                 transition: "all 0.3s ease",
                 width: "100%",
                 maxWidth: { xs: "100%", sm: "100%", md: "100%" },
-                px: { xs: 1, sm: 2, md: 11 }, 
+                px: { xs: 1, sm: 2, md: 11 },
                 mb: 0,
                 mt: "11px",
                 pb: 0,
@@ -3533,7 +3048,6 @@ const ChatUI = () => {
                               color: "text.primary",
                             }}
                           >
-                            {/* ✅ Logo */}
                             {/* <Logo /> */}
                             <Avatar
                               src={chat}
@@ -3571,11 +3085,957 @@ const ChatUI = () => {
                                 }}
                               >
                                 {/* {group.botName} */}
-                                {group.botName === "chatgpt-5-mini"
+
+                                {/* {group.botName === "chatgpt-5-mini"
                                   ? "ChatGPT 5-Mini"
                                   : group.botName === "grok"
                                   ? "Grok 3-Mini"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude-3"
+                                  : ""} */}
+
+                                {isSmartAI
+                                  ? "Wrds AI"
+                                  : group.botName === "chatgpt-5-mini"
+                                  ? "ChatGPT 5-Mini"
+                                  : group.botName === "grok"
+                                  ? "Grok 3-Mini"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude-3"
                                   : ""}
+                              </Typography>
+
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                display="block"
+                              >
+                                Wrds
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Paper
+                            sx={{
+                              // p: 1.5,
+                              p: { xs: 1, sm: 1.5 },
+                              bgcolor: "#f1f6fc",
+                              borderRadius: 3,
+                              // maxWidth: { xs: "80%", md: "70%" },
+                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                            }}
+                          >
+                            <Box sx={{ mb: 2 }}>
+                              {group.isTyping &&
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="body1"
+                                    sx={{
+                                      fontFamily: "Calibri, sans-serif",
+                                      fontWeight: 400,
+                                    }}
+                                  >
+                                    {group.responses[group.currentSlide]}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <div
+                                  style={{
+                                    fontSize: "17px",
+                                    fontFamily: "Calibri, sans-serif",
+                                    fontWeight: 400, // Regular weight
+                                  }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: group.responses[group.currentSlide],
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            <Divider sx={{ my: 1 }} />
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-end",
+                              }}
+                            >
+                              <Box>
+                                {/* Time on left */}
+                                <Typography
+                                  variant="caption"
+                                  sx={{ opacity: 0.6, mb: 0.5 }}
+                                >
+                                  {group.time}
+                                </Typography>
+                              </Box>
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                }}
+                              >
+                                {/* 🛑 Stop button beside token dropdown */}
+                                {/* {group.isBeingProcessed && ( */}
+                                {/* <IconButton
+                                    size="small"
+                                    onClick={stopGeneration}
+                                    sx={{
+                                      color: "#665c5cff",
+                                      p: 0.3,
+                                      display: "flex",
+                                      justifyContent: "flex-end",
+                                      "&:hover": {
+                                        bgcolor: "rgba(229, 57, 53, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <StopIcon fontSize="small" />
+                                  </IconButton> */}
+                                {/* )} */}
+
+                                {/* Icon on right */}
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleClick(e, idx)}
+                                >
+                                  <KeyboardArrowDownTwoToneIcon fontSize="small" />
+                                </IconButton>
+
+                                {/* Popover for usage token */}
+                                <Popover
+                                  open={
+                                    Boolean(anchorEl) && activeGroup === idx
+                                  }
+                                  anchorEl={anchorEl}
+                                  onClose={handleClose}
+                                  anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                  }}
+                                  transformOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                  }}
+                                  PaperProps={{
+                                    sx: {
+                                      p: 1,
+                                      borderRadius: 2,
+                                      boxShadow: 3,
+                                      minWidth: 140,
+                                    },
+                                  }}
+                                >
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 500 }}
+                                  >
+                                    Token Count
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "text.secondary",
+                                      display: "block",
+                                      mt: 0.5,
+                                    }}
+                                  >
+                                    {group.tokensUsed !== null &&
+                                    group.tokensUsed !== undefined
+                                      ? group.tokensUsed
+                                      : "N/A"}
+                                  </Typography>
+                                  {/* <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {usageTokens !== undefined && usageTokens !== null
+                              ? usageTokens
+                              : "N/A"}
+                          </Typography> */}
+                                </Popover>
+                              </Box>
+                            </Box>
+                          </Paper>
+                        </Box>
+                      </Box>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </Box>
+                )}
+              </Box>
+
+              {/* 👉 Footer (Always Common) */}
+              <Box
+                sx={{
+                  mb: 0,
+                  pb: "16px",
+                  display: "flex",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  width: "100%",
+                  // maxWidth: { xs: "100%", md: "940px" },
+                  // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
+                  flexDirection: "column",
+                }}
+              >
+                <Box
+                  sx={{
+                    minHeight: "60px",
+                    p: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid #e0e0e0",
+                    bgcolor: "#fafafa",
+                    // pb: 0.5,
+                    pb: "20px",
+                    position: "relative",
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
+                    // position: "relative",
+                  }}
+                >
+                  {/* File Attachment Button - Positioned absolutely inside the container */}
+                  {/* <IconButton
+                component="label"
+                sx={{
+                  color: "#2F67F6",
+                  position: "absolute",
+                  left: "15px",
+                  top: "52%",
+                  transform: "translateY(-50%)",
+                  zIndex: 2,
+                  backgroundColor: "white",
+                  borderRadius: "50%",
+                  width: "32px",
+                  height: "32px",
+                  // boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  
+                }}
+              >
+                <input
+                  type="file"
+                  hidden
+                  accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setSelectedFile(file);
+                      console.log("File selected:", file);
+                    }
+                  }}
+                />
+                <AttachFileIcon fontSize="small" />
+              </IconButton> */}
+                  <IconButton
+                    component="label"
+                    sx={{
+                      color: "#2F67F6",
+                      position: "absolute",
+                      left: "15px",
+                      bottom: "34px", // 👈 bottom ma fix karva
+                      zIndex: 2,
+                      // backgroundColor: "white",
+                      borderRadius: "50%",
+                      width: "32px",
+                      height: "40px",
+                    }}
+                  >
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                      // onChange={(e) => {
+                      //   const files = e.target.files;
+                      //   if (files && files.length > 0) {
+                      //     setSelectedFile(files); // 🔹 array of files સેટ કરો
+                      //     console.log("Files selected:", files);
+                      //   }
+                      // }}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files); // Convert FileList to Array
+                        // if (files.length > 0) {
+                        //   // setSelectedFiles(files);
+                        //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
+                        //   console.log("Files selected:", files);
+                        // }
+                        if (files.length > 0) {
+                          setSelectedFiles((prevFiles) => {
+                            // Limit to 5 files maximum (matches backend limit)
+                            const newFiles = [...prevFiles, ...files];
+                            return newFiles.slice(0, 5);
+                          });
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                    <AttachFileIcon fontSize="small" />
+                  </IconButton>
+
+                  {/* Main Input with extra left padding for file icon */}
+                  <TextField
+                    fullWidth
+                    placeholder="Ask me..."
+                    variant="outlined"
+                    size="small"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    disabled={isSending || isTypingResponse}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "25px",
+                        backgroundColor: "#fff",
+                        height: "auto",
+                        minHeight: "67px",
+                        padding:
+                          selectedFiles.length > 0
+                            ? "30px 14px 8.5px 37px !important"
+                            : "0px !important",
+                        paddingLeft: "37px !important", // Space for file icon
+                        paddingTop: selectedFiles.length > 0 ? "30px" : "0px", // Adjust top padding for files
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        padding: "8px",
+                        height: "auto",
+                        minHeight: "24px",
+                        marginTop: selectedFiles.length > 0 ? "24px" : "0px",
+                      },
+                      "& .Mui-disabled": {
+                        opacity: 0.5,
+                      },
+                      fontSize: { xs: "14px", sm: "16px" },
+                      minWidth: { xs: "100%", sm: "200px" },
+                      mb: { xs: 1, sm: 0 },
+                    }}
+                    multiline
+                    maxRows={selectedFiles.length > 0 ? 4 : 3}
+                    InputProps={{
+                      startAdornment: selectedFiles.length > 0 && ( // 🔹 selectedFiles.length તપાસો
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: "8px",
+                            left: "11px",
+                            display: "flex",
+                            alignItems: "center",
+                            flexWrap: "wrap", // 🔹 Multiple files માટે wrap કરો
+                            gap: 0.5, // 🔹 Files વચ્ચે gap
+                            // maxWidth: "200px", // 🔹 Maximum width
+                            maxWidth: "calc(100% - 50px)", // Prevent overflow
+                          }}
+                        >
+                          {/* File Name Display */}
+                          {selectedFiles.map((file, index) => (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                backgroundColor: "#f0f4ff",
+                                borderRadius: "12px",
+                                padding: "2px 8px",
+                                border: "1px solid #2F67F6",
+                                maxWidth: "120px",
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#2F67F6",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  fontSize: "11px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                {/* {file.name} */}
+                                {file.name.length > 15
+                                  ? file.name.substring(0, 12) + "..."
+                                  : file.name}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                // onClick={() => setSelectedFiles(null)}
+                                onClick={() => removeFile(index)} // 🔹 index પાસ કરો
+                                sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Box>
+                      ),
+
+                      endAdornment: (
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {/* 🎤 Voice Input Button */}
+                          <IconButton
+                            onClick={
+                              isListening ? stopListening : startListening
+                            }
+                            sx={{
+                              color: isListening ? "red" : "#10a37f",
+                              mr: 0.5,
+                            }}
+                            title={
+                              isListening
+                                ? "Stop recording"
+                                : "Start voice input"
+                            }
+                          >
+                            {isListening ? (
+                              <StopCircleIcon />
+                            ) : (
+                              <KeyboardVoiceIcon />
+                            )}
+                          </IconButton>
+
+                          {/* 🛑 Stop Generating Button (for chatbot response) */}
+                          {(isTypingResponse || isSending) && (
+                            <Tooltip title="Stop generating">
+                              <IconButton
+                                onClick={() => {
+                                  isStoppedRef.current = true;
+                                  handleStopResponse();
+                                }}
+                                color="error"
+                                sx={{ mr: 0.5 }}
+                              >
+                                <StopCircleIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      ),
+
+                      // endAdornment: (
+                      //   <IconButton
+                      //     onClick={isListening ? stopListening : startListening}
+                      //     sx={{
+                      //       color: isListening ? "red" : "#10a37f",
+                      //       mr: 1,
+                      //     }}
+                      //     title={
+                      //       isListening ? "Stop recording" : "Start voice input"
+                      //     }
+                      //   >
+                      //     {isListening ? <StopCircleIcon /> : <KeyboardVoiceIcon />}
+                      //   </IconButton>
+                      // ),
+                    }}
+                  />
+                  {console.log("selectedFiles length:", selectedFiles.length)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <TextField
+                      select
+                      size="small"
+                      value={responseLength}
+                      onChange={(e) => {
+                        setResponseLength(e.target.value);
+                        lastSelectedResponseLength.current = e.target.value; // ✅ store last selected
+                      }}
+                      sx={{
+                        width: { xs: "140px", sm: "179px" },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "10px",
+                          backgroundColor: "#fff",
+                          textAlign: "center",
+                        },
+                      }}
+                      SelectProps={{
+                        displayEmpty: true,
+                        MenuProps: {
+                          disablePortal: true,
+                          PaperProps: {
+                            style: { maxHeight: 200, borderRadius: "10px" },
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Response Length:
+                      </MenuItem>
+                      <MenuItem value="Short">Short (50-100 words)</MenuItem>
+                      <MenuItem value="Concise">
+                        Concise (150-250 words)
+                      </MenuItem>
+                      <MenuItem value="Long">Long (300-500 words)</MenuItem>
+                      <MenuItem value="NoOptimisation">
+                        No Optimisation
+                      </MenuItem>
+                    </TextField>
+
+                    <IconButton
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isSending || isTypingResponse}
+                      sx={{
+                        "&:disabled": {
+                          opacity: 0.5,
+                          cursor: "not-allowed",
+                        },
+                        ml: 1,
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+
+                    {/* 🔹 Stop icon appears when AI is typing a response */}
+                    {/* {isTypingResponse && (
+                        <IconButton
+                          onClick={() => handleStop()}
+                          color="error"
+                          title="Stop Response"
+                          sx={{
+                            ml: 1,
+                            bgcolor: "#ffe6e6",
+                            "&:hover": { bgcolor: "#ffcccc" },
+                          }}
+                        >
+                          <StopIcon />
+                        </IconButton>
+                      )} */}
+                  </Box>
+                </Box>
+
+                {/* 👉 Tagline (Always Common) */}
+                <Box textAlign="center">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: "14px" }}
+                  >
+                    How <strong>Wrds</strong> can help you today?
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </>
+        ) : activeView === "smartAi" ? (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "space-between",
+                transition: "all 0.3s ease",
+                width: "100%",
+                maxWidth: { xs: "100%", sm: "100%", md: "100%" },
+                px: { xs: 1, sm: 2, md: 11 },
+                mb: 0,
+                mt: "11px",
+                pb: 0,
+              }}
+            >
+              {/* 👉 Main Content (Conditional) */}
+              <Box
+                sx={{
+                  height: "70vh",
+                  // p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  flexGrow: 1,
+                  overflow: "auto",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  minHeight: 0, // 🔹 Important for flex scrolling
+                  /* 🔹 Scrollbar hide */
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                  scrollbarWidth: "none", // 🔹 Firefox
+                  "-ms-overflow-style": "none", // 🔹 IE 10+
+                }}
+              >
+                {historyLoading ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      py: 8,
+                      height: "48.5vh",
+                    }}
+                  >
+                    <Box sx={{ textAlign: "center" }}>
+                      <CircularProgress sx={{ mb: 2 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Loading chat history...
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : smartAIMessageGroups[0]?.length === 0 ? (
+                  // Welcome Screen
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      py: 8,
+                      color: "text.secondary",
+                    }}
+                  >
+                    {/* <leafatar
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: "auto",
+                        mb: 2,
+                        bgcolor: "#3dafe2",
+                        color: "#fff",
+                      }}
+                    > */}
+                    {/* <Logo /> */}
+                    {/* </leafatar> */}
+
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      Welcome to the <strong>Wrds</strong>
+                    </Typography>
+
+                    {/* <Typography variant="body2">
+                      Start a conversation by typing a message below.
+                    </Typography> */}
+                  </Box>
+                ) : (
+                  // Chat Messages
+                  <Box sx={{ spaceY: 6, width: "100%", minWidth: 0 }}>
+                    {(smartAIMessageGroups[0] || []).map((group, idx) => (
+                      <Box key={idx} mb={3}>
+                        <Box
+                          display="flex"
+                          justifyContent="flex-end"
+                          flexDirection={"column"}
+                          alignItems={"flex-end"}
+                          mb={1.5}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mr: 1,
+                              // fontSize:"19px",
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: "18px",
+                                fontFamily: "Calibri, sans-serif",
+                                fontWeight: 400, // Regular weight
+                              }}
+                            >
+                              You
+                            </Typography>
+                          </Box>
+                          {/* <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end", // Right side ma mukse
+                        alignItems:"flex-end",
+                        float:"right",
+                        mb: 1,
+                      }}
+                    > */}
+
+                          {group.files && group.files.length > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                backgroundColor: "#f0f4ff",
+                                borderRadius: "6px",
+                                padding: "2px 8px",
+                                border: "1px solid #2F67F6",
+                                maxWidth: "120px",
+                                mb: 0.5,
+                                // size: "20px",
+                              }}
+                            >
+                              <InsertDriveFile
+                                sx={{
+                                  fontSize: "14px",
+                                  color: "#2F67F6",
+                                  mr: 1,
+                                }}
+                              />
+
+                              {/* <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#2F67F6",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                            }}
+                          >
+                           
+                            {group.files.map((f) => f.name).join(", ")}
+                          </Typography> */}
+                              <Box sx={{ overflow: "hidden" }}>
+                                {group.files.map((f, idx) => (
+                                  <Typography
+                                    key={idx}
+                                    component="a"
+                                    href={f.cloudinaryUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      display: "block",
+                                      textDecoration: "none",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {/* {f.filename} ({f.wordCount}w / {f.tokenCount}t) */}
+                                    {/* Try these different properties */}
+                                    {f.name ||
+                                      f.filename ||
+                                      f.originalName ||
+                                      f.fileName}{" "}
+                                    {/* ({f.wordCount}w / {f.tokenCount}t) */}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+                          <Paper
+                            sx={{
+                              p: { xs: 1, sm: 1.5 },
+                              bgcolor: "#2F67F6",
+                              color: "#fff",
+                              borderRadius: 3,
+                              minWidth: "300px",
+                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                            }}
+                          >
+                            {editingId === group.id ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 1,
+                                }}
+                              >
+                                <TextField
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  multiline
+                                  minRows={2}
+                                  fullWidth
+                                  autoFocus
+                                  variant="outlined"
+                                  sx={{
+                                    bgcolor: "#fff",
+                                    borderRadius: 1,
+                                    "& .MuiInputBase-input": { color: "#000" },
+                                  }}
+                                />
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="inherit"
+                                    onClick={() => {
+                                      setEditingId(null);
+                                      setEditText("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    onClick={() => {
+                                      handleSend(editText, group.id);
+                                      setEditingId(null);
+                                      setEditText("");
+                                    }}
+                                  >
+                                    Save
+                                  </Button>
+                                </Box>
+                              </Box>
+                            ) : (
+                              <>
+                                <Typography
+                                  sx={{
+                                    fontSize: "17px",
+                                    fontFamily: "Calibri, sans-serif",
+                                    fontWeight: 400,
+                                  }}
+                                >
+                                  {group.prompt.charAt(0).toUpperCase() +
+                                    group.prompt.slice(1)}
+                                </Typography>
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  <Typography variant="caption">
+                                    {group.time}
+                                  </Typography>
+
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Tooltip
+                                      title={
+                                        copiedId === group.id
+                                          ? "Copied!"
+                                          : "Copy"
+                                      }
+                                      arrow
+                                    >
+                                      <IconButton
+                                        size="small"
+                                        sx={{
+                                          color:
+                                            copiedId === group.id
+                                              ? "#8cff8c"
+                                              : "#fff",
+                                          p: "2px",
+                                        }}
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            group.prompt
+                                          );
+                                          setCopiedId(group.id);
+                                          setTimeout(
+                                            () => setCopiedId(null),
+                                            1500
+                                          );
+                                        }}
+                                      >
+                                        <ContentCopyIcon fontSize="inherit" />
+                                      </IconButton>
+                                    </Tooltip>
+
+                                    <Tooltip title="Edit" arrow>
+                                      <IconButton
+                                        size="small"
+                                        sx={{ color: "#fff", p: "2px" }}
+                                        onClick={() => {
+                                          setEditingId(group.id);
+                                          setEditText(group.prompt);
+                                        }}
+                                      >
+                                        <EditIcon fontSize="inherit" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </Box>
+                              </>
+                            )}
+                          </Paper>
+                        </Box>
+
+                        {/* AI Response */}
+                        <Box>
+                          {/* 🔹 Selected model name upar */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              // p: 1,
+                              // borderBottom: "1px solid #e0e0e0",
+                              mb: 0.5,
+                              color: "text.primary",
+                            }}
+                          >
+                            {/* <Logo /> */}
+                            <Avatar
+                              src={chat}
+                              alt="chat"
+                              sx={{
+                                // border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
+                                bgcolor: "white",
+                                width: 40, // thodu mota rakho
+                                height: 40,
+                                p: "2px", // andar jagya
+                                cursor: "pointer",
+                                // pl: "1px",
+                              }}
+                              // onClick={() => setIsCollapsed(false)}
+                            />
+                            {console.log(
+                              group.botName,
+                              group.botName.charAt(0).toUpperCase() ===
+                                "chatgpt-5-mini"
+                                ? "ChatGPT 5-Mini"
+                                : group.botName.charAt(0).toUpperCase() +
+                                    group.botName.slice(1) ===
+                                  "grok"
+                                ? "Grok 3-Mini"
+                                : "",
+                              "group"
+                            )}
+                            {/* ✅ Bot name + AI Assistant */}
+                            <Box ml={1}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  textDecoration: "underline",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                {/* {group.botName} */}
+                                {/* {group.botName === "chatgpt-5-mini"
+                                  ? "ChatGPT 5-Mini"
+                                  : group.botName === "grok"
+                                  ? "Grok 3-Mini"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude-3"
+                                  : ""} */}
+                                Wrds AI
                               </Typography>
 
                               <Typography

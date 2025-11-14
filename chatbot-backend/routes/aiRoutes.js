@@ -5,6 +5,9 @@ import { getAllSessions } from "../controller/aiController.js";
 import { registerUser, loginUser } from "../controller/authController.js";
 import { savePartialResponse } from "../controller/aiController.js";
 import { translatetolanguage } from "../controller/aiController.js";
+import { getSmartAIResponse } from "../controller/smartAiController.js";
+import { getSmartAiHistory } from "../controller/smartAiController.js";
+import { getSmartAIAllSessions } from "../controller/smartAiController.js";
 
 const router = express.Router();
 
@@ -16,6 +19,10 @@ router.post("/ask", getAIResponse);
 router.post("/history", getChatHistory);
 router.post("/get_user_sessions", getAllSessions);
 router.post("/save_partial", savePartialResponse);
+router.post("/SmartAIask", getSmartAIResponse);
+router.post("/SmartAIhistory", getSmartAiHistory);
+router.post("/get_smartAi_sessions", getSmartAIAllSessions);
+
 // router.post("/translate", translatetolanguage);
 
 export default router;

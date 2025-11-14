@@ -52,6 +52,7 @@ const messageSchema = new mongoose.Schema(
     files: [fileSchema],
     hasFiles: Boolean,
     fileWordCount: Number,
+    type: { type: String, default: "chat" }, // ✅ Add type field
   },
   { _id: false }
 );
@@ -63,6 +64,7 @@ const chatSessionSchema = new mongoose.Schema(
     history: [messageSchema],
     grandTotalTokens: { type: Number, default: 0 }, // ✅ Add this line
     create_time: { type: Date, default: Date.now },
+    type: { type: String, default: "chat" }, // ✅ Add type field
   },
   { timestamps: true }
 );

@@ -381,6 +381,7 @@ export default function GrokSearchUI(props) {
                 wordBreak: "break-word",
                 alignItems: "center",
                 justifyContent: "center",
+              
               },
               "& .MuiInputBase-input::placeholder": {
                 top: "50%",

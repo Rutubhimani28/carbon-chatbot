@@ -89,21 +89,49 @@ export async function countTokens(text, modelName = "gpt-4o-mini") {
   try {
     if (!text) return 0;
 
-    let validModel = modelName;
+    let validModel = modelName.toLowerCase();;
 
-    // ✅ Map aliases
-    if (modelName === "chatgpt-5-mini") {
-      validModel = "gpt-4o-mini";
+      // ✅ Case 1: Claude models → call Anthropic token-count API
+    if (validModel.includes("claude")) {
+      try {
+        const response = await fetch("https://api.anthropic.com/v1/messages/count_tokens", {
+          method: "POST",
+          headers: {
+            "x-api-key": process.env.CLAUDE_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            model: modelName,
+            messages: [{ role: "user", content: text }],
+          }),
+        });
+
+        if (!response.ok) {
+          console.warn("Claude token API error:", await response.text());
+          throw new Error("Claude token API error");
+        }
+
+        const data = await response.json();
+        return data?.input_tokens || Math.round(text.trim().split(/\s+/).length * 1.3);
+      } catch (apiErr) {
+        console.warn("Claude token count failed, fallback to estimate:", apiErr);
+        const words = text.trim().split(/\s+/).length;
+        return Math.round(words * 1.3);
+      }
     }
 
-    // ✅ Case 1: Grok models → use Xenova tokenizer
-    if (validModel.toLowerCase().startsWith("grok")) {
+  // ✅ Case 2: Grok models → use Xenova tokenizer
+    if (validModel.startsWith("grok")) {
       const tokenizer = await getGrokTokenizer();
       const tokens = await tokenizer.encode(text);
       return tokens.length;
     }
 
-    // ✅ Case 2: OpenAI models → use tiktoken
+    // ✅ Case 3: OpenAI models → use tiktoken
+    if (modelName === "chatgpt-5-mini") {
+      validModel = "gpt-4o-mini";
+    }
     const enc = encoding_for_model(validModel);
     const tokenCount = enc.encode(text).length;
     enc.free();
