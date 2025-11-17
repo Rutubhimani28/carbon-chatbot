@@ -329,7 +329,6 @@ export default function GrokSearchUI(props) {
   };
 
   return (
-    // <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
     <Box sx={{ display: "block", width: "100%" }}>
       <Box sx={{ width: "100%", mb: 1 }}>
         {/* search and drop down */}
@@ -340,7 +339,7 @@ export default function GrokSearchUI(props) {
             bgcolor: "#fff",
             pt: 5,
             pb: 1,
-            mb: 2,
+            mb: 1,
             display: "flex",
             flexDirection: "row", // Ensure row layout
             width: { xs: "95%", sm: "90%", md: "67%", lg: "71%" }, // Responsive width
@@ -379,6 +378,8 @@ export default function GrokSearchUI(props) {
                 lineHeight: "1.5",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
+                fontFamily: "Calibri, sans-serif",
+                fontSize: "19px",
                 alignItems: "center",
                 justifyContent: "center",
               },
@@ -556,7 +557,7 @@ export default function GrokSearchUI(props) {
         {/* Main Content Area */}
         <Box
           sx={{
-            mt: 0,
+            mt: "-10px",
             width: { xs: "95%", sm: "90%", md: "70%", lg: "74%" }, // Responsive width
             textAlign: "left",
             mx: { xs: 1, sm: 2, md: 3, lg: 4 },
@@ -574,7 +575,8 @@ export default function GrokSearchUI(props) {
                     paddingLeft: "4px",
                     fontFamily: "Calibri, sans-serif",
                     fontWeight: "400",
-                    fontSize: { xs: "16px", sm: "17px", lg: "18px" },
+                    // fontSize: { xs: "16px", sm: "18px", lg: "18px" },
+                    fontSize: "19px",
                     color: "#1a1717ff",
                   }}
                 >
@@ -604,7 +606,7 @@ export default function GrokSearchUI(props) {
                         color: "#17202bff",
                         padding: "2px 8px",
                         borderRadius: "12px",
-                        fontSize: { xs: "14px", sm: "15px", lg: "16px" },
+                        fontSize: { xs: "14px", sm: "15px", lg: "17px" },
                         fontWeight: "500",
                         width: "fit-content",
                         mb: 0.5,
@@ -621,10 +623,11 @@ export default function GrokSearchUI(props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      fontSize: { xs: "14px", sm: "15px", lg: "16px" },
+                      // fontSize: { xs: "14px", sm: "15px", lg: "17px" },
                       color: "#006621",
                       cursor: "pointer",
                       fontFamily: "Calibri, sans-serif",
+                      fontSize: "17px",
                     }}
                   >
                     {item.link}
@@ -634,9 +637,10 @@ export default function GrokSearchUI(props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      fontSize: { xs: "15px", sm: "16px", lg: "17px" },
+                      // fontSize: { xs: "15px", sm: "16px", lg: "17px" },
                       color: "#1a0dab",
                       fontFamily: "Calibri, sans-serif",
+                      fontSize: "17px",
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
@@ -651,8 +655,9 @@ export default function GrokSearchUI(props) {
                       overflow: "hidden",
                       margin: "4px 0 0 0",
                       color: "#1a1717ff",
-                      fontSize: { xs: "14px", sm: "15px", lg: "16px" },
+                      // fontSize: { xs: "14px", sm: "15px", lg: "16px" },
                       fontFamily: "Calibri, sans-serif",
+                      fontSize: "17px",
                       fontWeight: 300,
                     }}
                   >

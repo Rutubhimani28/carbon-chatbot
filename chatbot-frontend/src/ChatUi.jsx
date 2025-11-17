@@ -59,7 +59,6 @@ import Words2 from "././assets/words2.png"; // path adjust karo
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
-// import MenuIcon from "@mui/icons-material/Menu";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -90,6 +89,8 @@ const ChatUI = () => {
   const [responseLength, setResponseLength] = useState("Short");
   const lastSelectedResponseLength = useRef(responseLength);
   const [mobileMenuAnchor, setMobileMenuAnchor] = useState(null);
+  // Add this with your other useState declarations
+  const [searchSessionResults, setSearchSessionResults] = useState([]);
 
   // 🔹 नवी state add करो
   // const [sessionRemainingTokens, setSessionRemainingTokens] = useState(0);
@@ -143,16 +144,22 @@ const ChatUI = () => {
   };
 
   // Inside your component
-  const theme = useTheme();
-  // const isMdScreen = useMediaQuery(theme.breakpoints.down("md"));
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
-  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
+  // const theme = useTheme();
+  // // const isMdScreen = useMediaQuery(theme.breakpoints.down("md"));
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
+  // const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
 
   const handleClose = () => {
     setAnchorEl(null);
     setActiveGroup(null);
   };
   const [anchorsEl, setAnchorsEl] = useState(null);
+
+  // Inside your component
+  const theme = useTheme();
+  // const isMdScreen = useMediaQuery(theme.breakpoints.down("md"));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
 
   const handleToggleMenu = (event) => {
     if (anchorsEl) {
@@ -2303,7 +2310,7 @@ const ChatUI = () => {
           display: "flex",
           flexDirection: isSmallScreen ? "column" : "row",
           alignItems: isSmallScreen ? "flex-start" : "center",
-          // width: "100%",
+          justifyContent: "space-between",
           ml: 0,
           px: { xs: 1, sm: 2, md: 2 },
           flexShrink: 0,
@@ -2319,319 +2326,58 @@ const ChatUI = () => {
           py: isSmallScreen ? 1 : 0,
         }}
       >
-        {/* First Row - Logo and Hamburger Menu (only on small screens) */}
+        {/* Mobile Layout */}
         {isSmallScreen && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              mb: 1,
-            }}
-          >
-            {/* Logo */}
-            <img src={Words2} height={50} width={100} alt="Logo" />
-
-            {/* Hamburger Menu */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                cursor: "pointer",
-              }}
-              onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
-            >
-              <Typography
-                variant="subtitle1"
-                sx={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: "#fff",
-                  display: { xs: "none", sm: "block" },
-                }}
-              >
-                {(username || email)?.split("@")[0]}
-              </Typography>
-              <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
-            </Box>
-          </Box>
-        )}
-
-        {/* Second Row - Dropdowns (only on small screens) */}
-        {isSmallScreen && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              width: "100%",
-              gap: 1,
-            }}
-          >
-            {/* For Chat/SmartAI View */}
-            {(activeView === "chat" || activeView === "smartAi") && (
-              <>
-                {/* Session Dropdown */}
-                <Autocomplete
-                  value={
-                    filteredChats.find((chat) => chat.id === selectedChatId) ||
-                    null
-                  }
-                  onChange={(event, newValue) => {
-                    if (newValue && newValue.id) {
-                      setSelectedChatId(newValue.id);
-                      localStorage.setItem("lastChatSessionId", newValue.id);
-                      loadChatHistory(newValue.sessionId);
-                    }
-                  }}
-                  getOptionLabel={(option) => option.name || ""}
-                  options={filteredChats || []}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  loading={sessionLoading}
-                  PopperComponent={StyledPopper}
-                  noOptionsText={
-                    sessionLoading ? (
-                      <Box sx={{ p: 2 }}>
-                        {[...Array(3)].map((_, i) => (
-                          <Skeleton key={i} sx={{ width: "100%", mb: 1 }} />
-                        ))}
-                      </Box>
-                    ) : (
-                      "No session found"
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Sessions"
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        bgcolor: "#fff",
-                        borderRadius: "5px",
-                        width: "100%",
-                        "& .MuiOutlinedInput-input": {
-                          fontSize: "13px",
-                        },
-                        "& .MuiOutlinedInput-root": {
-                          height: "32px",
-                        },
-                      }}
-                    />
-                  )}
-                  renderOption={(props, option) => (
-                    <li {...props} key={option.id}>
-                      <Box sx={{ display: "flex", flexDirection: "column" }}>
-                        <Typography
-                          sx={{
-                            fontSize: "14px",
-                            fontFamily: "Calibri, sans-serif",
-                          }}
-                        >
-                          {option.name.replace(/\b\w/g, (char) =>
-                            char.toUpperCase()
-                          )}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "gray",
-                            fontSize: "12px",
-                          }}
-                        >
-                          {formatChatTime(new Date(option.createTime))}
-                        </Typography>
-                      </Box>
-                    </li>
-                  )}
-                />
-
-                {/* Model Dropdown */}
-                {activeView === "chat" && (
-                  <Select
-                    labelId="bot-select-label"
-                    value={selectedBot}
-                    onChange={(e) => setSelectedBot(e.target.value)}
-                    sx={{
-                      bgcolor: "#fff",
-                      borderRadius: "5px",
-                      height: "32px",
-                      width: "28%",
-                      "& .MuiSelect-select": {
-                        fontSize: "13px",
-                        py: 0.5,
-                      },
-                    }}
-                  >
-                    <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
-                      ChatGPT 5-Mini
-                    </MenuItem>
-                    <MenuItem value="grok" sx={{ fontSize: "13px" }}>
-                      Grok 3-Mini
-                    </MenuItem>
-                    <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
-                      Claude-3
-                    </MenuItem>
-                  </Select>
-                )}
-              </>
-            )}
-
-            {/* For Browsing View - AI History Dropdown */}
-            {activeView === "search2" && (
-              <Select
-                value={grokcustomValue}
-                onChange={async (e) => {
-                  const selected = e.target.value;
-                  setGrokCustomValue(selected);
-                  setSelectedGrokQuery(selected);
-                  await handleSearch(selected);
-                }}
-                displayEmpty
-                IconComponent={() => null}
-                sx={{
-                  bgcolor: "#fff",
-                  borderRadius: "5px",
-                  width: "100%",
-                  height: "32px",
-                  "& .MuiSelect-select": {
-                    pl: 1.5,
-                    fontSize: "13px",
-                  },
-                }}
-              >
-                <MenuItem value="" disabled sx={{ fontSize: "13px" }}>
-                  AI History
-                </MenuItem>
-                {historyLoading ? (
-                  <MenuItem disabled sx={{ fontSize: "13px" }}>
-                    Loading...
-                  </MenuItem>
-                ) : grokhistoryList.length > 0 ? (
-                  grokhistoryList.map((query, idx) => (
-                    <MenuItem
-                      key={idx}
-                      value={query}
-                      sx={{
-                        fontSize: "13px",
-                        fontFamily: "Calibri, sans-serif",
-                        fontWeight: 400,
-                      }}
-                    >
-                      {query}
-                    </MenuItem>
-                  ))
-                ) : (
-                  <MenuItem disabled sx={{ fontSize: "13px" }}>
-                    No history found
-                  </MenuItem>
-                )}
-              </Select>
-            )}
-          </Box>
-        )}
-
-        {/* Desktop Layout - Hidden on small screens */}
-        {!isSmallScreen && (
           <>
-            {/* Logo */}
-            <img src={Words2} height={85} width={146} alt="Logo" />
+            {/* First Row - Logo and Hamburger Menu */}
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                mb: 1,
+              }}
+            >
+              {/* Logo */}
+              <img src={Words2} height={50} width={100} alt="Logo" />
 
-            {/* Navigation Container */}
+              {/* Hamburger Menu */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  cursor: "pointer",
+                }}
+                onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "14px",
+                    color: "#fff",
+                    display: { xs: "none", sm: "block" },
+                  }}
+                >
+                  {(username || email)?.split("@")[0]}
+                </Typography>
+                <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
+              </Box>
+            </Box>
+
+            {/* Second Row - Dropdowns based on active view */}
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                ml: { xs: 1, sm: 2, md: 3, lg: "58px" },
-                gap: { xs: 1, sm: 1.5, md: 2, lg: 2.5 },
-                flex: 1,
+                width: "100%",
+                gap: 1,
               }}
             >
-              {/* Session Dropdown */}
+              {/* For Chat/SmartAI View - Show Model Dropdown */}
               {(activeView === "chat" || activeView === "smartAi") && (
-                <Autocomplete
-                  value={
-                    filteredChats.find((chat) => chat.id === selectedChatId) ||
-                    null
-                  }
-                  onChange={(event, newValue) => {
-                    if (newValue && newValue.id) {
-                      setSelectedChatId(newValue.id);
-                      localStorage.setItem("lastChatSessionId", newValue.id);
-                      loadChatHistory(newValue.sessionId);
-                    }
-                  }}
-                  getOptionLabel={(option) => option.name || ""}
-                  options={filteredChats || []}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  loading={sessionLoading}
-                  PopperComponent={StyledPopper}
-                  noOptionsText={
-                    sessionLoading ? (
-                      <Box sx={{ p: 2 }}>
-                        {[...Array(3)].map((_, i) => (
-                          <Skeleton key={i} sx={{ width: "100%", mb: 1 }} />
-                        ))}
-                      </Box>
-                    ) : (
-                      "No session found"
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      placeholder="Sessions"
-                      variant="outlined"
-                      size="small"
-                      sx={{
-                        bgcolor: "#fff",
-                        borderRadius: "5px",
-                        width: "157px",
-                        maxWidth: "190px",
-                        "& .MuiOutlinedInput-input": {
-                          fontSize: "17px",
-                        },
-                        "& .MuiOutlinedInput-root": {
-                          height: "30px",
-                        },
-                      }}
-                    />
-                  )}
-                  renderOption={(props, option) => (
-                    <li {...props} key={option.id}>
-                      <Box sx={{ display: "flex", flexDirection: "column" }}>
-                        <Typography
-                          sx={{
-                            fontSize: "17px",
-                            fontFamily: "Calibri, sans-serif",
-                          }}
-                        >
-                          {option.name.replace(/\b\w/g, (char) =>
-                            char.toUpperCase()
-                          )}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "gray",
-                            fontSize: "14px",
-                          }}
-                        >
-                          {formatChatTime(new Date(option.createTime))}
-                        </Typography>
-                      </Box>
-                    </li>
-                  )}
-                />
-              )}
-
-              {/* Model Dropdown */}
-              {activeView === "chat" && (
                 <Select
                   labelId="bot-select-label"
                   value={selectedBot}
@@ -2639,28 +2385,27 @@ const ChatUI = () => {
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    height: "30px",
-                    width: "157px",
-                    maxWidth: "190px",
+                    height: "32px",
+                    width: "100%",
                     "& .MuiSelect-select": {
-                      fontSize: "16px",
-                      py: 1,
+                      fontSize: "13px",
+                      py: 0.5,
                     },
                   }}
                 >
-                  <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "16px" }}>
-                    ChatGPT 5-Mini
+                  <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
+                    ChatGPT
                   </MenuItem>
-                  <MenuItem value="grok" sx={{ fontSize: "16px" }}>
-                    Grok 3-Mini
+                  <MenuItem value="grok" sx={{ fontSize: "13px" }}>
+                    Grok
                   </MenuItem>
-                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "16px" }}>
-                    Claude-3
+                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
+                    Claude
                   </MenuItem>
                 </Select>
               )}
 
-              {/* AI Grok history */}
+              {/* For Browsing View - AI History Dropdown */}
               {activeView === "search2" && (
                 <Select
                   value={grokcustomValue}
@@ -2675,19 +2420,19 @@ const ChatUI = () => {
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    width: "180px",
-                    height: "34px",
+                    width: "100%",
+                    height: "32px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
-                      fontSize: "16px",
+                      fontSize: "13px",
                     },
                   }}
                 >
-                  <MenuItem value="" disabled sx={{ fontSize: "16px" }}>
+                  <MenuItem value="" disabled sx={{ fontSize: "13px" }}>
                     AI History
                   </MenuItem>
                   {historyLoading ? (
-                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                    <MenuItem disabled sx={{ fontSize: "13px" }}>
                       Loading...
                     </MenuItem>
                   ) : grokhistoryList.length > 0 ? (
@@ -2696,7 +2441,7 @@ const ChatUI = () => {
                         key={idx}
                         value={query}
                         sx={{
-                          fontSize: "17px",
+                          fontSize: "13px",
                           fontFamily: "Calibri, sans-serif",
                           fontWeight: 400,
                         }}
@@ -2705,58 +2450,26 @@ const ChatUI = () => {
                       </MenuItem>
                     ))
                   ) : (
-                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                    <MenuItem disabled sx={{ fontSize: "13px" }}>
                       No history found
                     </MenuItem>
                   )}
                 </Select>
               )}
+            </Box>
+          </>
+        )}
 
-              {/* Wrds AI Button and Add Button */}
-              {(activeView === "chat" || activeView === "smartAi") && (
-                <>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    sx={{
-                      bgcolor: "#1976d2",
-                      textTransform: "none",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      px: 2,
-                      height: "32px",
-                    }}
-                    onClick={() => {
-                      setActiveView("smartAi");
-                      setIsSmartAI(false);
-                    }}
-                  >
-                    Wrds AI
-                  </Button>
-                  <Box
-                    onClick={createNewChat}
-                    sx={{
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      ml: 1,
-                    }}
-                  >
-                    <AddIcon sx={{ color: "#fff", fontSize: 24 }} />
-                  </Box>
-                </>
-              )}
+        {/* Desktop Layout */}
+        {!isSmallScreen && (
+          <>
+            {/* Left Section - Logo and AI Components */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+              {/* Logo */}
+              <img src={Words2} height={85} width={146} alt="Logo" />
 
-              {/* Tabs */}
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  ml: 3,
-                  gap: 3.5,
-                  flex: 1,
-                }}
-              >
+              {/* Navigation Tabs - Show on md and lg screens
+              <Box sx={{ display: "flex", gap: 3, ml: 2 }}>
                 <Box
                   sx={{
                     cursor: "pointer",
@@ -2773,8 +2486,14 @@ const ChatUI = () => {
                     sx={{
                       fontSize: "17px",
                       fontWeight: activeView === "chat" ? 600 : 400,
-                      color: activeView === "chat" ? "#fff" : "inherit",
+                      color:
+                        activeView === "chat"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
                       transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
                     }}
                   >
                     Chat
@@ -2807,8 +2526,280 @@ const ChatUI = () => {
                     sx={{
                       fontSize: "17px",
                       fontWeight: activeView === "search2" ? 600 : 400,
-                      color: activeView === "search2" ? "#fff" : "inherit",
+                      color:
+                        activeView === "search2"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
                       transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    Browsing
+                  </Typography>
+                  {activeView === "search2" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -8,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box> */}
+
+              {/* Wrds AI Components - Only show for chat/smartAi views */}
+              {(activeView === "chat" || activeView === "smartAi") && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  {/* <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      bgcolor: "#1976d2",
+                      textTransform: "none",
+                      borderRadius: "8px",
+                      fontSize: "16px",
+                      px: 2,
+                      height: "36px",
+                      minWidth: "100px",
+                    }}
+                    onClick={() => {
+                      setActiveView("smartAi");
+                      setIsSmartAI(false);
+                    }}
+                  >
+                    WrdsAI
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      borderColor: "#fff",
+                      color: "#fff",
+                      textTransform: "none",
+                      borderRadius: "8px",
+                      fontSize: "16px",
+                      px: 2,
+                      height: "36px",
+                      minWidth: "120px",
+                      "&:hover": {
+                        borderColor: "#fff",
+                        bgcolor: "rgba(255,255,255,0.1)",
+                      },
+                    }}
+                  >
+                    WrdsAI Pro
+                  </Button> */}
+
+                  {/* Model Dropdown */}
+                  {activeView === "chat" && (
+                    <Select
+                      labelId="bot-select-label"
+                      value={selectedBot}
+                      onChange={(e) => setSelectedBot(e.target.value)}
+                      sx={{
+                        bgcolor: "#fff",
+                        borderRadius: "5px",
+                        height: "36px",
+                        width: "180px",
+                        "& .MuiSelect-select": {
+                          fontSize: "16px",
+                          py: 1,
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        value="chatgpt-5-mini"
+                        sx={{ fontSize: "16px" }}
+                      >
+                        ChatGPT
+                      </MenuItem>
+                      <MenuItem value="grok" sx={{ fontSize: "16px" }}>
+                        Grok
+                      </MenuItem>
+                      <MenuItem
+                        value="claude-3-haiku"
+                        sx={{ fontSize: "16px" }}
+                      >
+                        Claude
+                      </MenuItem>
+                    </Select>
+                  )}
+                </Box>
+              )}
+
+              {/* AI History for Browsing View */}
+              {activeView === "search2" && (
+                <Select
+                  value={grokcustomValue}
+                  onChange={async (e) => {
+                    const selected = e.target.value;
+                    setGrokCustomValue(selected);
+                    setSelectedGrokQuery(selected);
+                    await handleSearch(selected);
+                  }}
+                  displayEmpty
+                  IconComponent={() => null}
+                  sx={{
+                    bgcolor: "#fff",
+                    borderRadius: "5px",
+                    width: "200px",
+                    height: "36px",
+                    "& .MuiSelect-select": {
+                      pl: 1.5,
+                      fontSize: "16px",
+                    },
+                  }}
+                >
+                  <MenuItem value="" disabled sx={{ fontSize: "16px" }}>
+                    AI History
+                  </MenuItem>
+                  {historyLoading ? (
+                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                      Loading...
+                    </MenuItem>
+                  ) : grokhistoryList.length > 0 ? (
+                    grokhistoryList.map((query, idx) => (
+                      <MenuItem
+                        key={idx}
+                        value={query}
+                        sx={{
+                          fontSize: "16px",
+                          fontFamily: "Calibri, sans-serif",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {query}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled sx={{ fontSize: "16px" }}>
+                      No history found
+                    </MenuItem>
+                  )}
+                </Select>
+              )}
+            </Box>
+
+            {/* Right Section - User Menu */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+              {/* Navigation Tabs - Show on md and lg screens */}
+              <Box sx={{ display: "flex", marginLeft: "30px", gap: 3 }}>
+                {/* Wrds AI Button */}
+                <Button
+                  variant="contained"
+                  size="small"
+                  sx={{
+                    bgcolor: "#1976d2",
+                    textTransform: "none",
+                    borderRadius: "8px",
+                    fontSize: "18px",
+                    px: 2,
+                    height: "36px",
+                    minWidth: "100px",
+                  }}
+                  onClick={() => {
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  WrdsAI
+                </Button>
+
+                {/* Wrds AI Pro Button */}
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderColor: "#fff",
+                    color: "#fff",
+                    textTransform: "none",
+                    borderRadius: "8px",
+                    fontSize: "18px",
+                    px: 2,
+                    height: "36px",
+                    minWidth: "120px",
+                    "&:hover": {
+                      borderColor: "#fff",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                  }}
+                >
+                  WrdsAI Pro
+                </Button>
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("chat");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "18px",
+                      fontWeight: activeView === "chat" ? 600 : 400,
+                      color:
+                        activeView === "chat"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    Chat
+                  </Typography>
+                  {activeView === "chat" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -8,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => setActiveView("search2")}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "18px",
+                      fontWeight: activeView === "search2" ? 600 : 400,
+                      color:
+                        activeView === "search2"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
                     }}
                   >
                     Browsing
@@ -2828,128 +2819,211 @@ const ChatUI = () => {
                   )}
                 </Box>
               </Box>
-            </Box>
 
-            {/* User Info */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "flex-end",
-                gap: 1,
-                mr: "38px",
-                cursor: "pointer",
-              }}
-              onClick={(event) => setAnchorsEl(event.currentTarget)}
-            >
-              <Typography
-                variant="subtitle1"
+              {/* User Menu */}
+              <Box
                 sx={{
-                  fontWeight: "bold",
-                  fontSize: "17px",
-                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.3,
+                  cursor: "pointer",
                 }}
+                onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
               >
-                {(username || email)?.charAt(0).toUpperCase() +
-                  (username || email)?.slice(1)}
-              </Typography>
-              <PersonIcon sx={{ fontSize: 29, color: "#fff" }} />
+                {/* <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: "17px",
+                    color: "#fff",
+                  }}
+                >
+                  {(username || email)?.charAt(0).toUpperCase() +
+                    (username || email)?.slice(1)}
+                </Typography> */}
+                <PersonRoundedIcon
+                  sx={{
+                    fontSize: 29,
+                    color: "#fff",
+                  }}
+                />
+                <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
+              </Box>
             </Box>
           </>
         )}
 
-        {/* Mobile Menu with all options */}
+        {/* Mobile Menu with Searchable Session List - Removed Chat, Browsing and Wrds AI options */}
         <Menu
           anchorEl={mobileMenuAnchor}
           open={Boolean(mobileMenuAnchor)}
-          onClose={() => setMobileMenuAnchor(null)}
+          onClose={() => {
+            setMobileMenuAnchor(null);
+            setSearchSessionResults([]);
+          }}
           PaperProps={{
             sx: {
-              width: 280,
+              width: 320,
               borderRadius: 2,
               p: 1,
+              maxHeight: "80vh",
             },
           }}
         >
-          {/* Navigation Tabs in Mobile Menu */}
-          <MenuItem
-            onClick={() => {
-              setActiveView("chat");
-              setIsSmartAI(false);
-              setMobileMenuAnchor(null);
-            }}
-            sx={{
-              backgroundColor:
-                activeView === "chat" ? "#f0f0f0" : "transparent",
-              borderRadius: 1,
-              mb: 0.5,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "16px",
-                fontWeight: activeView === "chat" ? 600 : 400,
-              }}
-            >
-              Chat
-            </Typography>
-          </MenuItem>
-
-          <MenuItem
-            onClick={() => {
-              setActiveView("search2");
-              setMobileMenuAnchor(null);
-            }}
-            sx={{
-              backgroundColor:
-                activeView === "search2" ? "#f0f0f0" : "transparent",
-              borderRadius: 1,
-              mb: 0.5,
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "16px",
-                fontWeight: activeView === "search2" ? 600 : 400,
-              }}
-            >
-              Browsing
-            </Typography>
-          </MenuItem>
-
-          {/* Wrds AI in Mobile Menu */}
-          <MenuItem
-            onClick={() => {
-              setActiveView("smartAi");
-              setIsSmartAI(false);
-              setMobileMenuAnchor(null);
-            }}
-            sx={{ borderRadius: 1, mb: 0.5 }}
-          >
-            <Typography sx={{ fontSize: "16px" }}>Wrds AI</Typography>
-          </MenuItem>
-
-          {/* New Chat in Mobile Menu */}
+          {/* New Chat Button - At the top for all views */}
           <MenuItem
             onClick={() => {
               createNewChat();
               setMobileMenuAnchor(null);
+              setSearchSessionResults([]);
             }}
-            sx={{ borderRadius: 1, mb: 0.5 }}
+            sx={{
+              borderRadius: 1,
+              mb: 1,
+              backgroundColor: "#1976d2",
+              color: "white",
+              "&:hover": {
+                backgroundColor: "#1565c0",
+              },
+            }}
           >
-            <Typography sx={{ fontSize: "16px" }}>New Chat</Typography>
+            <AddIcon fontSize="small" sx={{ mr: 1 }} />
+            <Typography sx={{ fontSize: "16px", fontWeight: 600 }}>
+              New Chat
+            </Typography>
           </MenuItem>
 
-          <Divider sx={{ my: 1 }} />
+          {/* Session Search and List - Only show for chat/smartAi views */}
+          {(activeView === "chat" || activeView === "smartAi") && (
+            <>
+              <Box sx={{ p: 1, pb: 0, pt: 0 }}>
+                <TextField
+                  placeholder="Search sessions..."
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  onChange={(e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    if (searchTerm === "") {
+                      setSearchSessionResults([]);
+                    } else {
+                      // Filter sessions based on search term
+                      const filtered = filteredChats.filter((chat) =>
+                        chat.name.toLowerCase().includes(searchTerm)
+                      );
+                      setSearchSessionResults(filtered);
+                    }
+                  }}
+                  sx={{
+                    mb: 1,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1,
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ maxHeight: "200px", overflow: "auto", mb: 1 }}>
+                {sessionLoading ? (
+                  <Box sx={{ p: 2 }}>
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        sx={{ width: "100%", mb: 1, height: "40px" }}
+                      />
+                    ))}
+                  </Box>
+                ) : (searchSessionResults.length > 0
+                    ? searchSessionResults
+                    : filteredChats
+                  ).length > 0 ? (
+                  (searchSessionResults.length > 0
+                    ? searchSessionResults
+                    : filteredChats
+                  ).map((chat) => (
+                    <MenuItem
+                      key={chat.id}
+                      onClick={() => {
+                        if (chat && chat.id) {
+                          setSelectedChatId(chat.id);
+                          localStorage.setItem("lastChatSessionId", chat.id);
+                          loadChatHistory(chat.sessionId);
+                          setMobileMenuAnchor(null);
+                          setSearchSessionResults([]);
+                        }
+                      }}
+                      sx={{
+                        borderRadius: 1,
+                        mb: 0.5,
+                        backgroundColor:
+                          selectedChatId === chat.id
+                            ? "#f0f0f0"
+                            : "transparent",
+                        "&:hover": {
+                          backgroundColor: "#f5f5f5",
+                        },
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          width: "100%",
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: "14px",
+                            fontFamily: "Calibri, sans-serif",
+                            fontWeight: 500,
+                          }}
+                        >
+                          {chat.name.replace(/\b\w/g, (char) =>
+                            char.toUpperCase()
+                          )}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "gray",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {formatChatTime(new Date(chat.createTime))}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))
+                ) : (
+                  <Typography
+                    sx={{
+                      p: 2,
+                      textAlign: "center",
+                      color: "gray",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {searchSessionResults.length === 0 &&
+                    filteredChats.length === 0
+                      ? "No sessions available"
+                      : "No matching sessions found"}
+                  </Typography>
+                )}
+              </Box>
+              <Divider sx={{ my: 1 }} />
+            </>
+          )}
 
           {/* User Actions */}
           <MenuItem
             onClick={() => {
               setMobileMenuAnchor(null);
               setOpenProfile(true);
+              setSearchSessionResults([]);
             }}
           >
             <PersonRoundedIcon fontSize="small" sx={{ mr: 1 }} />
-            Profile
+            <Typography sx={{ fontSize: "14px" }}>Profile</Typography>
           </MenuItem>
 
           <MenuItem
@@ -2960,7 +3034,7 @@ const ChatUI = () => {
             }}
           >
             <LogoutTwoToneIcon fontSize="small" sx={{ mr: 1, color: "red" }} />
-            Logout
+            <Typography sx={{ fontSize: "14px" }}>Logout</Typography>
           </MenuItem>
         </Menu>
 
@@ -3008,6 +3082,7 @@ const ChatUI = () => {
         </Menu>
       </Box>
 
+      {/* Main Content Area */}
       <Box
         className="chat-header-box"
         sx={{
@@ -3024,7 +3099,7 @@ const ChatUI = () => {
           <>
             <Box
               sx={{
-                display: "flex",
+                // display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -3393,11 +3468,11 @@ const ChatUI = () => {
                               group.botName,
                               group.botName.charAt(0).toUpperCase() ===
                                 "chatgpt-5-mini"
-                                ? "ChatGPT 5-Mini"
+                                ? "ChatGPT"
                                 : group.botName.charAt(0).toUpperCase() +
                                     group.botName.slice(1) ===
                                   "grok"
-                                ? "Grok 3-Mini"
+                                ? "Grok"
                                 : "",
                               "group"
                             )}
@@ -3423,11 +3498,11 @@ const ChatUI = () => {
                                 {isSmartAI
                                   ? "Wrds AI"
                                   : group.botName === "chatgpt-5-mini"
-                                  ? "ChatGPT 5-Mini"
+                                  ? "ChatGPT"
                                   : group.botName === "grok"
-                                  ? "Grok 3-Mini"
+                                  ? "Grok"
                                   : group.botName === "claude-3-haiku"
-                                  ? "Claude-3"
+                                  ? "Claude"
                                   : ""}
                               </Typography>
 
@@ -3960,7 +4035,7 @@ const ChatUI = () => {
           <>
             <Box
               sx={{
-                display: "flex",
+                // display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -4329,11 +4404,11 @@ const ChatUI = () => {
                               group.botName,
                               group.botName.charAt(0).toUpperCase() ===
                                 "chatgpt-5-mini"
-                                ? "ChatGPT 5-Mini"
+                                ? "ChatGPT"
                                 : group.botName.charAt(0).toUpperCase() +
                                     group.botName.slice(1) ===
                                   "grok"
-                                ? "Grok 3-Mini"
+                                ? "Grok"
                                 : "",
                               "group"
                             )}
@@ -4354,7 +4429,7 @@ const ChatUI = () => {
                                   : group.botName === "claude-3-haiku"
                                   ? "Claude-3"
                                   : ""} */}
-                                Wrds AI
+                                WrdsAI
                               </Typography>
 
                               <Typography
@@ -4888,7 +4963,6 @@ const ChatUI = () => {
           />
         ) : null}
       </Box>
-      {/* </Box> */}
 
       <Dialog
         open={openProfile}
