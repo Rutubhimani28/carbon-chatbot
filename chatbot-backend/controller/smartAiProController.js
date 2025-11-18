@@ -34,8 +34,10 @@ export const handleTokens = async (sessions, session, payload) => {
     tokenizerModel = "gpt-4o-mini"; // valid model
   else if (payload.botName === "grok")
     tokenizerModel = "grok-3-mini"; // if supported
-  else if (payload.botName === "claude-3-haiku")
-    tokenizerModel = "claude-3-haiku-20240307";
+  else if (payload.botName === "claude-haiku-4.5")
+    tokenizerModel = "claude-haiku-4-5-20251001";
+  else if (payload.botName === "mistral")
+    tokenizerModel = "mistral-medium-2508"; // your selected model
 
   const promptTokens = await countTokens(payload.prompt, tokenizerModel);
 
@@ -663,7 +665,7 @@ const restrictions = {
 };
 
 function classifyEducationalQuery(query) {
-  const q = query.toLowerCase();
+  const q = (query || "").toLowerCase();
   // const matchCount = (arr) => arr.filter((kw) => q.includes(kw)).length;
 
   // ✅ Improved matchCount: matches WHOLE WORDS only (no substring confusion)
@@ -1367,67 +1369,6 @@ function classifyEducationalQuery(query) {
     "mouse",
     "monitor",
     "printer",
-     "javascript",
-    "js",
-    "typescript",
-    "ts",
-    "react",
-    "reactjs",
-    "nextjs",
-    "node",
-    "nodejs",
-    "express",
-    "django",
-    "flask",
-    "spring",
-    "c\\+\\+",
-    "cpp",
-    "c#",
-    "csharp",
-    "php",
-    "laravel",
-    "ruby",
-    "rails",
-    "go",
-    "golang",
-    "rust",
-    "swift",
-    "kotlin",
-    "android",
-    "ios",
-    "html",
-    "css",
-    "sass",
-    "less",
-    "sql",
-    "postgres",
-    "mysql",
-    "mongodb",
-    "graphql",
-    "docker",
-    "kubernetes",
-    "bash",
-    "shell",
-    "powershell",
-
-    // # Programming
-    "programming",
-    "code",
-    "coding",
-    "algorithm",
-    "flowchart",
-    "python",
-    "java",
-    "c++",
-    "scratch",
-    "loop",
-    "condition",
-    "if else",
-    "function",
-    "array",
-    "list",
-    "string",
-    "integer",
 
     // # Internet & Networks
     "internet",
@@ -1451,7 +1392,6 @@ function classifyEducationalQuery(query) {
     "powerpoint",
     "spreadsheet",
     "presentation",
-    "database",
   ];
 
   const commerce_keywords = [
@@ -1521,6 +1461,81 @@ function classifyEducationalQuery(query) {
     "kaal",
   ];
 
+  const codingKeywords = [
+    "script",
+    "class",
+    "javascript",
+    "node",
+    "nodejs",
+    "python",
+    "java",
+    "c++",
+    "c#",
+    "php",
+    "typescript",
+    "ts",
+    "error",
+    "bug fix",
+    "debug",
+    "compile",
+    "mongodb",
+    "mongoose",
+    "database",
+    "api",
+    "api code",
+
+    "js",
+    "react",
+    "reactjs",
+    "nextjs",
+    "express",
+    "django",
+    "flask",
+    "spring",
+    "c\\+\\+",
+    "cpp",
+    "csharp",
+    "laravel",
+    "ruby",
+    "rails",
+    "go",
+    "golang",
+    "rust",
+    "swift",
+    "kotlin",
+    "android",
+    "ios",
+    "html",
+    "css",
+    "sass",
+    "less",
+    "sql",
+    "postgres",
+    "mysql",
+    "graphql",
+    "docker",
+    "kubernetes",
+    "bash",
+    "shell",
+    "powershell",
+
+    // # Programming
+    "programming",
+    "code",
+    "coding",
+    "algorithm",
+    "flowchart",
+    "scratch",
+    "loop",
+    "condition",
+    "if else",
+    "function",
+    "array",
+    "list",
+    "string",
+    "integer",
+  ];
+
   const scores = {
     mathematics: matchCount(math_keywords),
     science: matchCount(science_keywords),
@@ -1530,6 +1545,7 @@ function classifyEducationalQuery(query) {
     commerce: matchCount(commerce_keywords),
     hindi: matchCount(hindi_keywords),
     sanskrit: matchCount(sanskrit_keywords),
+    coding: matchCount(codingKeywords),
   };
 
   // Find category with highest score
@@ -1544,19 +1560,21 @@ function getModelBySubject(subject) {
     case "mathematics":
     case "science":
     case "computer":
-      return "claude-3-haiku";
+      return "claude-haiku-4.5";
     case "social_studies":
       return "grok";
     case "language":
     case "commerce":
     case "hindi":
     case "sanskrit":
+    case "coding":
+      return "mistral";
     default:
       return "chatgpt-5-mini"; // GPT-4o-mini
   }
 }
 
-export const getSmartAIResponse = async (req, res) => {
+export const getSmartAIProResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
       "multipart/form-data"
@@ -1568,7 +1586,7 @@ export const getSmartAIResponse = async (req, res) => {
     let responseLength = "";
     let email = "";
     let files = [];
-    let type = "smart Ai";
+    let type = "wrds AiPro";
 
     // Handle multipart/form-data (file uploads)
     if (isMultipart) {
@@ -1582,7 +1600,7 @@ export const getSmartAIResponse = async (req, res) => {
       // botName = req.body.botName;
       responseLength = req.body.responseLength;
       email = req.body.email;
-      type = req.body.type || "smart Ai";
+      type = req.body.type || "wrds AiPro";
       files = req.files || [];
     } else {
       ({
@@ -1591,7 +1609,7 @@ export const getSmartAIResponse = async (req, res) => {
         // botName,
         responseLength,
         email,
-        type = "smart Ai",
+        type = "wrds AiPro",
       } = req.body);
     }
 
@@ -1661,8 +1679,10 @@ export const getSmartAIResponse = async (req, res) => {
           ? "gpt-4o-mini"
           : botName === "grok"
           ? "grok-3-mini"
-          : botName === "claude-3-haiku"
-          ? "claude-3-haiku-20240307"
+          : botName === "claude-haiku-4.5"
+          ? "claude-haiku-4-5-20251001"
+          : botName === "mistral"
+          ? "mistral-medium-2508"
           : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
@@ -1694,14 +1714,18 @@ export const getSmartAIResponse = async (req, res) => {
       apiUrl = "https://api.openai.com/v1/chat/completions";
       apiKey = process.env.OPENAI_API_KEY;
       modelName = "gpt-4o-mini";
-    } else if (botName === "claude-3-haiku") {
+    } else if (botName === "claude-haiku-4.5") {
       apiUrl = "https://api.anthropic.com/v1/messages";
       apiKey = process.env.CLAUDE_API_KEY;
-      modelName = "claude-3-haiku-20240307";
+      modelName = "claude-haiku-4-5-20251001";
     } else if (botName === "grok") {
       apiUrl = "https://api.x.ai/v1/chat/completions";
       apiKey = process.env.GROK_API_KEY;
       modelName = "grok-3-mini";
+    } else if (botName === "mistral") {
+      apiUrl = " https://api.mistral.ai/v1/chat/completions  ";
+      apiKey = process.env.MISTRAL_API_KEY;
+      modelName = "mistral-medium-2508";
     } else return res.status(400).json({ message: "Invalid botName" });
 
     if (!apiKey)
@@ -1737,7 +1761,7 @@ export const getSmartAIResponse = async (req, res) => {
       // };
 
       let payload;
-      if (botName === "claude-3-haiku") {
+      if (botName === "claude-haiku-4.5") {
         payload = {
           model: modelName,
           max_tokens: maxWords * 2,
@@ -1765,7 +1789,7 @@ export const getSmartAIResponse = async (req, res) => {
 
       let headers;
 
-      if (botName === "claude-3-haiku") {
+      if (botName === "claude-haiku-4.5") {
         headers = {
           "Content-Type": "application/json",
           "x-api-key": apiKey, // ✅ Anthropic uses this, not Bearer
@@ -1793,7 +1817,7 @@ export const getSmartAIResponse = async (req, res) => {
 
       // ✅ Handle different response formats
       let reply = "";
-      if (botName === "claude-3-haiku") {
+      if (botName === "claude-haiku-4.5") {
         reply = data?.content?.[0]?.text?.trim() || "";
       } else {
         reply = data?.choices?.[0]?.message?.content?.trim() || "";
@@ -1913,19 +1937,19 @@ export const getSmartAIResponse = async (req, res) => {
       session = await ChatSession.findOne({
         sessionId,
         email,
-        type: "smart Ai",
+        type: "wrds AiPro",
       });
     }
 
     if (!session) {
-      // If sessionId was not provided or not found, create new Smart AI session
+      // If sessionId was not provided or not found, create new wrds AiPro session
       const newSessionId = sessionId || uuidv4();
       session = new ChatSession({
         email,
         sessionId: newSessionId,
         history: [],
         create_time: new Date(),
-        type: "smart Ai",
+        type: "wrds AiPro",
       });
     }
 
@@ -1978,7 +2002,7 @@ export const getSmartAIResponse = async (req, res) => {
     const globalStats = await getGlobalTokenStats(email);
 
     res.json({
-      type: "smart Ai",
+      type: "wrds AiPro",
       sessionId: session.sessionId,
       allowed: true,
       response: finalReplyHTML,
@@ -2090,7 +2114,7 @@ export const savePartialResponse = async (req, res) => {
     const globalStats = await getGlobalTokenStats(email);
 
     res.status(200).json({
-      type: "smart Ai",
+      type: "wrds AiPro",
       success: true,
       message: "Partial response saved successfully.",
       response: partialResponse,
@@ -2107,7 +2131,7 @@ export const savePartialResponse = async (req, res) => {
   }
 };
 
-export const getSmartAiHistory = async (req, res) => {
+export const getSmartAiProHistory = async (req, res) => {
   try {
     const { sessionId, email } = req.body;
 
@@ -2122,18 +2146,20 @@ export const getSmartAiHistory = async (req, res) => {
       return res.status(404).json({ message: "Session not found" });
     }
 
-    // 🟢 Get ALL Smart AI sessions to calculate global totals
+    // 🟢 Get ALL wrds AiPro sessions to calculate global totals
     const allSessions = await ChatSession.find({ email });
 
-    // 🟢 Filter only Smart AI sessions (created via getSmartAIResponse)
-    // Smart AI chats are those where botName was auto-selected by Smart AI
+    // 🟢 Filter only wrds AiPro sessions (created via getSmartAIResponse)
+    // wrds AiPro chats are those where botName was auto-selected by wrds AiPro
     const smartAiSessions = allSessions.filter((s) =>
       s.history.some((e) =>
-        ["chatgpt-5-mini", "claude-3-haiku", "grok"].includes(e.botName)
+        ["chatgpt-5-mini", "claude-haiku-4.5", "grok", "mistral"].includes(
+          e.botName
+        )
       )
     );
 
-    // 🟢 Calculate total tokens across Smart AI sessions only
+    // 🟢 Calculate total tokens across wrds AiPro sessions only
     const grandTotalTokens = smartAiSessions.reduce((sum, s) => {
       return (
         sum +
@@ -2143,12 +2169,14 @@ export const getSmartAiHistory = async (req, res) => {
 
     const remainingTokens = parseFloat((50000 - grandTotalTokens).toFixed(3));
 
-    // 🟢 Filter Smart AI messages from the current session
+    // 🟢 Filter wrds AiPro messages from the current session
     const smartAiHistory = session.history.filter((entry) =>
-      ["chatgpt-5-mini", "claude-3-haiku", "grok"].includes(entry.botName)
+      ["chatgpt-5-mini", "claude-haiku-4.5", "grok", "mistral"].includes(
+        entry.botName
+      )
     );
 
-    // ✅ Deduplicate Smart AI responses
+    // ✅ Deduplicate wrds AiPro responses
     const seenKeys = new Set();
     const dedupedHistory = smartAiHistory.filter((entry) => {
       const key = `${entry.prompt}_${entry.tokensUsed}`;
@@ -2174,9 +2202,9 @@ export const getSmartAiHistory = async (req, res) => {
       };
     });
 
-    // ✅ Return Smart AI chat history only
+    // ✅ Return wrds AiPro chat history only
     res.json({
-      type: "smart Ai",
+      type: "wrds AiPro",
       response: formattedHistory,
       sessionId: session.sessionId,
       remainingTokens,
@@ -2191,24 +2219,26 @@ export const getSmartAiHistory = async (req, res) => {
   }
 };
 
-export const getSmartAIAllSessions = async (req, res) => {
+export const getSmartAIProAllSessions = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "email is required" });
 
     // 🟢 Fetch all chat sessions for this user
-    const sessions = await ChatSession.find({ email, type: "smart Ai" });
+    const sessions = await ChatSession.find({ email, type: "wrds AiPro" });
 
-    // 🟢 Filter sessions that contain Smart AI bots
+    // 🟢 Filter sessions that contain wrds AiPro bots
     const smartAiSessions = sessions.filter((session) =>
       session.history.some((entry) =>
-        ["chatgpt-5-mini", "claude-3-haiku", "grok"].includes(entry.botName)
+        ["chatgpt-5-mini", "claude-haiku-4.5", "grok", "mistral"].includes(
+          entry.botName
+        )
       )
     );
 
     let grandTotalTokens = 0;
 
-    // 🟢 Build stats for each Smart AI session
+    // 🟢 Build stats for each wrds AiPro session
     const sessionsWithStats = smartAiSessions.map((session) => {
       let totalPromptTokens = 0,
         totalResponseTokens = 0,
@@ -2222,14 +2252,21 @@ export const getSmartAIAllSessions = async (req, res) => {
       const partialMessages = session.history.filter(
         (msg) =>
           msg.isComplete === false &&
-          ["chatgpt-5-mini", "claude-3-haiku", "grok"].includes(msg.botName)
+          ["chatgpt-5-mini", "claude-haiku-4.5", "grok", "mistral"].includes(
+            msg.botName
+          )
       );
 
       const historyToShow =
         partialMessages.length > 0
           ? partialMessages
           : session.history.filter((msg) =>
-              ["chatgpt-5-mini", "claude-3-haiku", "grok"].includes(msg.botName)
+              [
+                "chatgpt-5-mini",
+                "claude-haiku-4.5",
+                "grok",
+                "mistral",
+              ].includes(msg.botName)
             );
 
       // 🧩 Remove duplicate partials
@@ -2252,7 +2289,7 @@ export const getSmartAIAllSessions = async (req, res) => {
           prompt: entry.prompt,
           response: displayResponse,
           tokensUsed: entry.tokensUsed || 0,
-          botName: entry.botName || "smart Ai",
+          botName: entry.botName || "wrds AiPro",
           createdAt: entry.createdAt,
           files: entry.files || [],
         };
@@ -2304,7 +2341,7 @@ export const getSmartAIAllSessions = async (req, res) => {
 
     // 🟢 Optionally store grand total
     await ChatSession.updateMany(
-      { email, type: "smart Ai" },
+      { email, type: "wrds AiPro" },
       { $set: { grandTotalTokens: grandTotalTokensFixed } }
     );
 
