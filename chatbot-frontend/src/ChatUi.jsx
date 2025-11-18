@@ -2799,7 +2799,7 @@ const ChatUI = () => {
                     Grok
                   </MenuItem>
                   <MenuItem value="mistral" sx={{ fontSize: "13px" }}>
-                    Mistral small
+                    Mistral
                   </MenuItem>
                 </Select>
               )}
@@ -3030,7 +3030,7 @@ const ChatUI = () => {
                         Grok
                       </MenuItem>
                       <MenuItem value="mistral" sx={{ fontSize: "16px" }}>
-                        Mistral small
+                        Mistral
                       </MenuItem>
                     </Select>
                   )}
@@ -3939,7 +3939,7 @@ const ChatUI = () => {
                                   : group.botName === "claude-3-haiku"
                                   ? "Claude"
                                   : group.botName === "mistral"
-                                  ? "Mistral small"
+                                  ? "Mistral"
                                   : ""}
                               </Typography>
 
