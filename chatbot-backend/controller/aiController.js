@@ -36,6 +36,7 @@ export const handleTokens = async (sessions, session, payload) => {
     tokenizerModel = "grok-3-mini"; // if supported
   else if (payload.botName === "claude-3-haiku")
     tokenizerModel = "claude-3-haiku-20240307";
+  else if (payload.botName === "mistral") tokenizerModel = "mistral-small-2506";
 
   const promptTokens = await countTokens(payload.prompt, tokenizerModel);
 
@@ -1105,6 +1106,8 @@ export const getAIResponse = async (req, res) => {
           ? "grok-3-mini"
           : botName === "claude-3-haiku"
           ? "claude-3-haiku-20240307"
+          : botName === "mistral"
+          ? "mistral-small-2506"
           : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
@@ -1144,6 +1147,10 @@ export const getAIResponse = async (req, res) => {
       apiUrl = "https://api.x.ai/v1/chat/completions";
       apiKey = process.env.GROK_API_KEY;
       modelName = "grok-3-mini";
+    } else if (botName === "mistral") {
+      apiUrl = " https://api.mistral.ai/v1/chat/completions  ";
+      apiKey = process.env.MISTRAL_API_KEY;
+      modelName = "mistral-small-2506";
     } else return res.status(400).json({ message: "Invalid botName" });
 
     if (!apiKey)

@@ -64,11 +64,13 @@ const ChatUI = () => {
   const [input, setInput] = useState("");
   const [chats, setChats] = useState([]);
   const [smartAISessions, setSmartAISessions] = useState([]);
+  const [smartAIProSessions, setSmartAIProSessions] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState("");
   const [sessionLoading, setSessionLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [messageGroups, setMessageGroups] = useState([]);
   const [smartAIMessageGroups, setSmartAIMessageGroups] = useState([[]]); // 🧠 separate Smart AI history
+  const [smartAIProMessageGroups, setSmartAIProMessageGroups] = useState([[]]); // 🧠 separate Smart AI history
   const [isSending, setIsSending] = useState(false);
   const [isTypingResponse, setIsTypingResponse] = useState(false);
   const messagesEndRef = useRef(null);
@@ -102,6 +104,7 @@ const ChatUI = () => {
   const [historyList, setHistoryList] = useState([]); // store user search history
   const [selectedGrokQuery, setSelectedGrokQuery] = useState("");
   const [isSmartAI, setIsSmartAI] = useState(false);
+  const [isSmartAIPro, setIsSmartAIPro] = useState(false);
   // const [error, setError] = useState("");
   // const [tokenCount, setTokenCount] = useState(0);
   const [linkCount, setLinkCount] = useState(3);
@@ -652,7 +655,8 @@ const ChatUI = () => {
   const fetchChatbotResponseWithFiles = async (
     formData,
     currentSessionId,
-    isSmartAI = false
+    isSmartAI = false,
+    isSmartAIPro = false
   ) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -668,9 +672,14 @@ const ChatUI = () => {
     try {
       // 👇 Dynamic endpoint
       const endpoint =
-        isSmartAI || activeView === "smartAi"
-          ? `${apiBaseUrl}/api/ai/SmartAIask`
-          : `${apiBaseUrl}/api/ai/ask`;
+        activeView === "chat"
+          ? `${apiBaseUrl}/api/ai/ask`
+          : activeView === "wrds AiPro" || isSmartAIPro
+          ? `${apiBaseUrl}/api/ai/SmartAIProask`
+          : `${apiBaseUrl}/api/ai/SmartAIask`;
+
+      // : activeView === "wrds AiPro" || isSmartAIPro
+      // ? `${apiBaseUrl}/api/ai/SmartAIProask`
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -746,7 +755,12 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+            isSmartAI || activeView === "smartAi"
+              ? "Wrds AI"
+              : isSmartAIPro || activeView === "wrds AiPro"
+              ? "Wrds AiPro"
+              : selectedBot,
+
           isError: true,
         };
       }
@@ -764,7 +778,12 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+            // isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+            isSmartAI || activeView === "smartAi"
+              ? "Wrds AI"
+              : isSmartAIPro || activeView === "wrds AiPro"
+              ? "Wrds AiPro"
+              : selectedBot,
           isError: true,
         };
       }
@@ -818,6 +837,8 @@ const ChatUI = () => {
         botName:
           isSmartAI || activeView === "smartAi"
             ? "Wrds AI"
+            : isSmartAIPro || activeView === "wrds AiPro"
+            ? "Wrds AiPro"
             : data.botName || selectedBot,
         files: data.files || [], // Include file info from backend
       };
@@ -864,7 +885,12 @@ const ChatUI = () => {
           sessionId: currentSessionId,
           // botName: selectedBot,
           botName:
-            isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+            // isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+            isSmartAI || activeView === "smartAi"
+              ? "Wrds AI"
+              : isSmartAIPro || activeView === "wrds AiPro"
+              ? "Wrds AiPro"
+              : selectedBot,
           isError: true,
         };
       }
@@ -874,7 +900,12 @@ const ChatUI = () => {
         sessionId: currentSessionId,
         // botName: selectedBot,
         botName:
-          isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+          // isSmartAI || activeView === "smartAi" ? "Wrds AI" : selectedBot,
+          isSmartAI || activeView === "smartAi"
+            ? "Wrds AI"
+            : isSmartAIPro || activeView === "wrds AiPro"
+            ? "Wrds AiPro"
+            : selectedBot,
         isError: true,
       };
     }
@@ -939,7 +970,12 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
 
-      const messageType = activeView === "smartAi" ? "smart Ai" : "chat";
+      const messageType =
+        activeView === "smartAi"
+          ? "smart Ai"
+          : activeView === "wrds AiPro"
+          ? "wrds AiPro"
+          : "chat";
 
       const res = await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
         method: "POST",
@@ -973,6 +1009,26 @@ const ChatUI = () => {
                 isComplete: false,
                 tokensUsed: data.tokensUsed,
                 type: "smart Ai",
+              };
+              updated[0] = messages;
+            }
+
+            return updated;
+          });
+        } else if (messageType === "wrds AiPro") {
+          // 🧠 Update Smart AI message group
+          setSmartAIProMessageGroups((prev) => {
+            const updated = [...prev];
+            const messages = updated[0] || [];
+            const lastMsgIndex = messages.length - 1;
+
+            if (lastMsgIndex >= 0) {
+              messages[lastMsgIndex] = {
+                ...messages[lastMsgIndex],
+                isTyping: false,
+                isComplete: false,
+                tokensUsed: data.tokensUsed,
+                type: "wrds AiPro",
               };
               updated[0] = messages;
             }
@@ -1033,6 +1089,8 @@ const ChatUI = () => {
         // ✅ Re-fetch only relevant sessions
         if (messageType === "smart Ai") {
           await fetchSmartAISessions(); // refresh smart Ai tab
+        } else if (messageType === "wrds AiPro") {
+          await fetchSmartAIProSessions(); // refresh smart Ai tab
         } else {
           await fetchChatSessions(); // refresh chat tab
         }
@@ -1046,11 +1104,19 @@ const ChatUI = () => {
   const getCurrentPartialResponse = () => {
     // 🧠 detect which view is active
     const messageType =
-      activeView === "smartAi" || isSmartAI ? "smart Ai" : "chat";
+      activeView === "smartAi" || isSmartAI
+        ? "smart Ai"
+        : activeView === "wrds AiPro" || isSmartAIPro
+        ? "wrds AiPro"
+        : "chat";
 
     // 🧩 choose the correct message source
     const currentGroups =
-      messageType === "smart Ai" ? smartAIMessageGroups : messageGroups;
+      messageType === "smart Ai"
+        ? smartAIMessageGroups
+        : messageType === "wrds AiPro"
+        ? smartAIProMessageGroups
+        : messageGroups;
 
     const lastMsgGroup = currentGroups?.[0] || [];
     const lastMsg = lastMsgGroup[lastMsgGroup.length - 1];
@@ -1279,7 +1345,7 @@ const ChatUI = () => {
 
       // ✅ Filter only type:"smart Ai"
       const filteredSessions = data.sessions?.filter(
-        (s) => s?.type?.toLowerCase() === "smart ai"
+        (s) => s?.type?.toLowerCase() === "wrds aipro"
       );
       // console.log("session--aya::::::", filteredSessions);
 
@@ -1304,7 +1370,7 @@ const ChatUI = () => {
               session.createTime ||
               new Date().toISOString(),
             totalTokensUsed: session.totalTokensUsed || 0,
-            type: "smart Ai", // ✅ always tag as Smart AI type
+            type: "wrds AiPro", // ✅ always tag as Smart AI type
           };
         });
       }
@@ -1329,6 +1395,90 @@ const ChatUI = () => {
         setSelectedChatId(lastSession.id);
         localStorage.setItem("lastSmartAISessionId", lastSession.id);
         loadSmartAIHistory(lastSession.sessionId);
+      }
+    } catch (err) {
+      console.error("Smart AI sessions error:", err);
+    } finally {
+      setSessionLoading(false);
+      setInitialLoad(false);
+    }
+  };
+  console.log("smartAISessions:::::::::", smartAISessions);
+
+  const fetchSmartAIProSessions = async () => {
+    setSessionLoading(true);
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email) return;
+
+      const response = await fetch(
+        `${apiBaseUrl}/api/ai/get_smartAi_Pro_sessions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        }
+      );
+
+      if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+      const data = await response.json();
+      console.log("SmartAI Pro Sessions response::::::", data);
+
+      let sessions = [];
+
+      // ✅ Filter only type:"smart Ai"
+      const filteredSessions = data.sessions?.filter(
+        (s) => s?.type?.toLowerCase() === "smart ai"
+      );
+      // console.log("session--aya::::::", filteredSessions);
+
+      // ✅ Process filtered smart AI sessions only
+      if (Array.isArray(filteredSessions) && filteredSessions.length > 0) {
+        sessions = filteredSessions.reverse().map((session) => {
+          // ✅ Save token count to localStorage if available
+          if (session?.history?.[0]?.totalTokensUsed !== undefined) {
+            localStorage.setItem(
+              `tokens_${session.sessionId}`,
+              session?.history?.[0]?.totalTokensUsed?.toString()
+            );
+          }
+
+          return {
+            id: session.sessionId,
+            name:
+              session.heading || `Wrds AI Pro ${session.sessionId.slice(0, 8)}`,
+            sessionId: session.sessionId,
+            createTime:
+              session.create_time ||
+              session.createTime ||
+              new Date().toISOString(),
+            totalTokensUsed: session.totalTokensUsed || 0,
+            type: "smart Ai", // ✅ always tag as Smart AI type
+          };
+        });
+      }
+
+      console.log("Smart AI sessions (filtered):", sessions);
+
+      // ✅ Store only Smart AI sessions
+      setSmartAIProSessions(sessions || []);
+      // console.log("smartAISessions:::::::::", smartAISessions);
+
+      // Auto-load first Smart AI chat
+      // if (sessions?.length && initialLoad && !selectedChatId) {
+      //   const firstSessionId = sessions[0].id;
+      //   setSelectedChatId(firstSessionId);
+      //   localStorage.setItem("lastSmartAISessionId", firstSessionId);
+      //   loadSmartAIHistory(sessions[0].sessionId);
+      // }
+
+      // ✅ Automatically open the LAST Smart AI session (latest)
+      if (sessions.length > 0) {
+        const lastSession = sessions[0]; // since reversed()
+        setSelectedChatId(lastSession.id);
+        localStorage.setItem("lastSmartAIProSessionId", lastSession.id);
+        loadSmartAIProHistory(lastSession.sessionId);
       }
     } catch (err) {
       console.error("Smart AI sessions error:", err);
@@ -1379,11 +1529,52 @@ const ChatUI = () => {
     }
   };
 
+  const getSmartAIProHistory = async (sessionId) => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      if (!user || !user.email) return [];
+
+      const response = await fetch(`${apiBaseUrl}/api/ai/SmartAIProhistory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, email: user.email }),
+      });
+
+      if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
+
+      const data = await response.json();
+      console.log("Smart AI Pro History:", data);
+
+      if (data.remainingTokens !== undefined)
+        setChatRemainingTokens(data.remainingTokens);
+
+      return Array.isArray(data.response)
+        ? data.response
+        : Array.isArray(data.messages)
+        ? data.messages
+        : [];
+
+      // ✅ Filter only type:"smart Ai"
+      const messages = (data.response || data.messages || []).filter(
+        (msg) => msg?.type?.toLowerCase() === "smart ai"
+      );
+
+      return messages;
+    } catch (err) {
+      console.error("Smart AI history error:", err);
+      return [];
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     // 🧠 choose which message list to scroll based on active view
     const currentGroups =
       activeView === "smartAi" || isSmartAI
         ? smartAIMessageGroups
+        : activeView === "wrds AiPro" || isSmartAIPro
+        ? smartAIProMessageGroups
         : messageGroups;
 
     if (!historyLoading && currentGroups.length > 0) {
@@ -1392,10 +1583,11 @@ const ChatUI = () => {
   }, [
     historyLoading,
     messageGroups,
-    ,
+    smartAIProMessageGroups,
     smartAIMessageGroups,
     activeView,
     isSmartAI,
+    isSmartAIPro,
     scrollToBottom,
   ]);
 
@@ -1456,11 +1648,14 @@ const ChatUI = () => {
     if (isSmartAI || activeView === "smartAi") {
       console.log("🧠 Loading Smart AI sessions...");
       fetchSmartAISessions();
+    } else if (isSmartAIPro || activeView === "wrds AiPro") {
+      console.log("🧠 Loading Smart AI Pro sessions...");
+      fetchSmartAIProSessions();
     } else {
       console.log("💬 Loading normal chat sessions...");
       fetchChatSessions();
     }
-  }, [activeView, isSmartAI]);
+  }, [activeView, isSmartAI, isSmartAIPro]);
 
   useEffect(() => {
     if (!selectedChatId) return;
@@ -1468,7 +1663,11 @@ const ChatUI = () => {
     // const selectedChat = chats.find((chat) => chat.id === selectedChatId);
     // 🧠 Choose correct session list
     const currentSessions =
-      activeView === "smartAi" || isSmartAI ? smartAISessions : chats;
+      activeView === "smartAi" || isSmartAI
+        ? smartAISessions
+        : activeView === "wrds AiPro" || isSmartAIPro
+        ? smartAIProSessions
+        : chats;
 
     const selectedChat = currentSessions.find(
       (chat) => chat.id === selectedChatId
@@ -1495,6 +1694,18 @@ const ChatUI = () => {
           setRemainingTokens(Number(savedTokens));
           console.log("Smart AI tokens:", savedTokens);
         }
+      } else if (activeView === "wrds AiPro") {
+        // 🧠 Smart AI tab
+        loadSmartAIProHistory(selectedChat.sessionId);
+
+        // 🔹 Load latest token count for Smart AI
+        const savedTokens = localStorage.getItem(
+          `tokens_${selectedChat.sessionId}_wrdsAiPro`
+        );
+        if (savedTokens) {
+          setRemainingTokens(Number(savedTokens));
+          console.log("Smart AIPro tokens:", savedTokens);
+        }
       } else {
         // 💬 Chat tab
         loadChatHistory(selectedChat.sessionId);
@@ -1512,6 +1723,8 @@ const ChatUI = () => {
       // 🧹 Reset UI if no session
       if (activeView === "smartAi") {
         setSmartAIMessageGroups([[]]);
+      } else if (activeView === "wrds AiPro") {
+        setSmartAIProMessageGroups([[]]);
       } else {
         setMessageGroups([[]]);
       }
@@ -1521,8 +1734,10 @@ const ChatUI = () => {
     skipHistoryLoad,
     activeView,
     isSmartAI,
+    isSmartAIPro,
     chats,
     smartAISessions,
+    smartAIProSessions,
   ]);
 
   const loadChatHistory = async (sessionId) => {
@@ -1792,6 +2007,128 @@ const ChatUI = () => {
       setTimeout(() => scrollToBottom(), 200);
     }
   };
+  const loadSmartAIProHistory = async (sessionId) => {
+    console.log("🧠 Fetching Smart AI history for sessionId:", sessionId);
+    if (!sessionId) {
+      setSmartAIProMessageGroups([[]]); // ✅ clear Smart AI messages
+      return;
+    }
+
+    setHistoryLoading(true);
+
+    try {
+      // 1️⃣ Fetch Smart AI history data
+      const rawHistory = await getSmartAIProHistory(sessionId);
+
+      // 2️⃣ Process Smart AI messages
+      const processedGroups = [];
+
+      for (let i = 0; i < rawHistory.length; i++) {
+        const message = rawHistory[i];
+
+        if (message.prompt) {
+          processedGroups.push({
+            id: message.id || `smartMsg_${i}`,
+            prompt: message.prompt,
+            responses: [
+              message.response
+                ? message.response.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed: message.tokensUsed || null,
+            botName: message.botName || "Wrds AIPro",
+            files: message.files || [],
+          });
+        } else if (message.role === "user") {
+          // legacy structure (user + model)
+          let modelResponse = null;
+          let tokensUsed = null;
+          let botName = "Wrds AIPro";
+          let j = i + 1;
+
+          while (j < rawHistory.length && rawHistory[j].role !== "user") {
+            if (rawHistory[j].role === "model") {
+              modelResponse = rawHistory[j];
+              tokensUsed = modelResponse.tokensUsed || null;
+              botName = modelResponse.botName || "Wrds AIPro";
+              break;
+            }
+            j++;
+          }
+
+          processedGroups.push({
+            id: message.id || `smartMsg_${i}`,
+            prompt: message.content,
+            responses: [
+              modelResponse
+                ? modelResponse.content.replace(/\n\n/g, "<br/>")
+                : "No response available",
+            ],
+            time: new Date(
+              message.timestamp || message.create_time || Date.now()
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            currentSlide: 0,
+            isTyping: false,
+            isComplete: true,
+            tokensUsed,
+            botName,
+            files: message.files || [],
+          });
+        }
+      }
+
+      // 3️⃣ Handle fallback case
+      if (processedGroups.length === 0 && rawHistory.length > 0) {
+        rawHistory.forEach((message, index) => {
+          if (message.content) {
+            processedGroups.push({
+              id: `smartMsg_${index}`,
+              prompt:
+                message.role === "user" ? message.content : "System message",
+              responses: [
+                message.role === "model"
+                  ? message.content.replace(/\n\n/g, "<br/>")
+                  : "Waiting for response...",
+              ],
+              time: new Date(
+                message.timestamp || message.create_time || Date.now()
+              ).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              currentSlide: 0,
+              isTyping: false,
+              isComplete: true,
+              tokensUsed: message.tokensUsed || null,
+              botName: message.botName || "Wrds AIPro",
+              files: message.files || [],
+            });
+          }
+        });
+      }
+
+      // 4️⃣ Save Smart AI messages to a separate state
+      setSmartAIProMessageGroups([processedGroups]); // ✅ separate from chat
+    } catch (error) {
+      console.error("❌ Error loading Smart AI history:", error);
+      setSmartAIProMessageGroups([[]]);
+    } finally {
+      setHistoryLoading(false);
+      setTimeout(() => scrollToBottom(), 200);
+    }
+  };
 
   const fetchChatbotResponse = async (text, currentSessionId) => {
     if (abortControllerRef.current) {
@@ -1947,6 +2284,14 @@ const ChatUI = () => {
         existing?.sessionId ||
         localStorage.getItem("lastSmartAISessionId") ||
         "";
+    } else if (activeView === "wrds AiPro" || isSmartAIPro) {
+      const existing = smartAIProSessions.find(
+        (s) => s.id === selectedChatId || s.sessionId === selectedChatId
+      );
+      currentSessionId =
+        existing?.sessionId ||
+        localStorage.getItem("lastSmartAIProSessionId") ||
+        "";
     } else {
       // 💬 Normal chat tab
       const existing = chats.find(
@@ -1957,11 +2302,19 @@ const ChatUI = () => {
     }
 
     const messageType =
-      activeView === "smartAi" || isSmartAI ? "smart Ai" : "chat";
+      activeView === "wrds AiPro" || isSmartAIPro
+        ? "wrds AiPro"
+        : activeView === "smartAi" || isSmartAI
+        ? "smart Ai"
+        : "chat";
 
     // 🧠 choose correct state setter
     const setMessagesFn =
-      messageType === "smart Ai" ? setSmartAIMessageGroups : setMessageGroups;
+      messageType === "wrds AiPro"
+        ? setSmartAIProMessageGroups
+        : messageType === "smart Ai"
+        ? setSmartAIMessageGroups
+        : setMessageGroups;
 
     setMessagesFn((prev) => {
       const updated = [...prev];
@@ -1978,7 +2331,12 @@ const ChatUI = () => {
         isComplete: false,
         tokensUsed: null,
         // botName: selectedBot,
-        botName: messageType === "smart Ai" ? "Smart AI" : selectedBot,
+        botName:
+          messageType === "smart Ai"
+            ? "Wrds AI"
+            : messageType === "wrds AiPro"
+            ? "Wrds AiPro"
+            : selectedBot,
         files: selectedFiles.map((f) => ({ name: f.name })),
       };
 
@@ -2003,7 +2361,7 @@ const ChatUI = () => {
       formData.append("prompt", prompt);
       formData.append("email", user.email);
       // formData.append("botName", selectedBot);
-      if (!isSmartAI && activeView !== "smartAi")
+      if (messageType !== "smart Ai" && messageType !== "wrds AiPro")
         formData.append("botName", selectedBot);
       // formData.append("responseLength", responseLength || "Short");
       // ✅ Always use last selected option unless user changes it
@@ -2021,7 +2379,10 @@ const ChatUI = () => {
       const result = await fetchChatbotResponseWithFiles(
         formData,
         currentSessionId,
-        messageType === "smart Ai" || isSmartAI
+        messageType === "smart Ai" ||
+          isSmartAI ||
+          messageType === "wrds AiPro" ||
+          isSmartAIPro
       );
 
       if (!result || isStoppedRef.current) return;
@@ -2050,7 +2411,12 @@ const ChatUI = () => {
                   partialResponse: allText + lineText,
                   // botName: selectedBot,
                   botName:
-                    messageType === "smart Ai" ? "smart Ai" : selectedBot,
+                    // messageType === "smart Ai" ? "smart Ai" : selectedBot,
+                    messageType === "smart Ai"
+                      ? "Wrds AI"
+                      : messageType === "wrds AiPro"
+                      ? "Wrds AiPro"
+                      : selectedBot,
                 }),
               });
             } catch (err) {
@@ -2083,7 +2449,9 @@ const ChatUI = () => {
                   // botName: result.botName || selectedBot,
                   botName:
                     messageType === "smart Ai"
-                      ? "Smart AI"
+                      ? "Wrds AI"
+                      : messageType === "wrds AiPro"
+                      ? "Wrds AiPro"
                       : result.botName || selectedBot,
                 };
                 updated[0] = messages;
@@ -2117,7 +2485,9 @@ const ChatUI = () => {
                 // botName: result.botName || selectedBot,
                 botName:
                   messageType === "smart Ai"
-                    ? "Smart AI"
+                    ? "Wrds AI"
+                    : messageType === "wrds AiPro"
+                    ? "Wrds AiPro"
                     : result.botName || selectedBot,
               };
               updated[0] = messages;
@@ -2192,6 +2562,8 @@ const ChatUI = () => {
             // ✅ Refresh sessions based on current type
             if (activeView === "smartAi" || isSmartAI) {
               await fetchSmartAISessions(); // 🧠 Smart AI tab
+            } else if (activeView === "wrds AiPro" || isSmartAIPro) {
+              await fetchSmartAIProSessions();
             } else {
               await fetchChatSessions(); // 💬 Chat tab
             }
@@ -2211,6 +2583,8 @@ const ChatUI = () => {
       name:
         activeView === "smartAi" || isSmartAI
           ? `Smart AI ${smartAISessions?.length + 1 || 1}`
+          : activeView === "wrds AiPro" || isSmartAIPro
+          ? `Wrds AI Pro ${smartAIProSessions?.length + 1 || 1}`
           : `Chat ${chats.length + 1}`,
       // sessionId: "", // blank session ID
       sessionId: newSessionId,
@@ -2224,6 +2598,13 @@ const ChatUI = () => {
       setSelectedChatId(newChat.id);
       localStorage.setItem("lastSmartAISessionId", newChat.id);
       setSmartAIMessageGroups([[]]); // Reset Smart AI message history
+    } else if (activeView === "wrds AiPro" || isSmartAIPro) {
+      // 🧠 Smart AI Chat
+      setSmartAIProSessions((prev) => [newChat, ...prev]); // Add to Smart AI session list
+      setSkipHistoryLoad(true);
+      setSelectedChatId(newChat.id);
+      localStorage.setItem("lastSmartAIProSessionId", newChat.id);
+      setSmartAIProMessageGroups([[]]); // Reset Smart AI message history
     } else {
       // 💬 Normal Chat
       setChats((prev) => [newChat, ...prev]); // Add to chat list
@@ -2278,10 +2659,15 @@ const ChatUI = () => {
   }
 
   const filteredChats = (
-    activeView === "smartAi" || isSmartAI ? smartAISessions : chats
+    activeView === "smartAi" || isSmartAI
+      ? smartAISessions
+      : activeView === "wrds AiPro" || isSmartAIPro
+      ? smartAIProSessions
+      : chats
   ).filter((chat) =>
     chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   console.log("Filtered Chats::::::::::", chats);
   console.log("Filtered smart Ai::::::::::", smartAISessions);
 
@@ -2396,11 +2782,14 @@ const ChatUI = () => {
                   <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
                     ChatGPT
                   </MenuItem>
+                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
+                    Claude
+                  </MenuItem>
                   <MenuItem value="grok" sx={{ fontSize: "13px" }}>
                     Grok
                   </MenuItem>
-                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
-                    Claude
+                  <MenuItem value="mistral" sx={{ fontSize: "13px" }}>
+                    Mistral small
                   </MenuItem>
                 </Select>
               )}
@@ -2621,14 +3010,17 @@ const ChatUI = () => {
                       >
                         ChatGPT
                       </MenuItem>
-                      <MenuItem value="grok" sx={{ fontSize: "16px" }}>
-                        Grok
-                      </MenuItem>
                       <MenuItem
                         value="claude-3-haiku"
                         sx={{ fontSize: "16px" }}
                       >
                         Claude
+                      </MenuItem>
+                      <MenuItem value="grok" sx={{ fontSize: "16px" }}>
+                        Grok
+                      </MenuItem>
+                      <MenuItem value="mistral" sx={{ fontSize: "16px" }}>
+                        Mistral small
                       </MenuItem>
                     </Select>
                   )}
@@ -2730,6 +3122,10 @@ const ChatUI = () => {
                       borderColor: "#fff",
                       bgcolor: "rgba(255,255,255,0.1)",
                     },
+                  }}
+                  onClick={() => {
+                    setActiveView("wrds AiPro");
+                    setIsSmartAIPro(false);
                   }}
                 >
                   WrdsAI Pro
@@ -2894,7 +3290,9 @@ const ChatUI = () => {
           </MenuItem>
 
           {/* Session Search and List - Only show for chat/smartAi views */}
-          {(activeView === "chat" || activeView === "smartAi") && (
+          {(activeView === "chat" ||
+            activeView === "smartAi" ||
+            activeView === "wrds AiPro") && (
             <>
               <Box sx={{ p: 1, pb: 0, pt: 0 }}>
                 <TextField
@@ -2946,8 +3344,35 @@ const ChatUI = () => {
                       onClick={() => {
                         if (chat && chat.id) {
                           setSelectedChatId(chat.id);
-                          localStorage.setItem("lastChatSessionId", chat.id);
-                          loadChatHistory(chat.sessionId);
+                          // localStorage.setItem("lastChatSessionId", chat.id);
+                          // loadChatHistory(chat.sessionId);
+                          // --- CHAT VIEW ---
+                          if (activeView === "chat") {
+                            localStorage.setItem("lastChatSessionId", chat.id);
+                            loadChatHistory(chat.sessionId);
+                          }
+
+                          // --- SMART AI VIEW ---
+                          else if (activeView === "smartAi" || isSmartAI) {
+                            localStorage.setItem(
+                              "lastSmartAISessionId",
+                              chat.id
+                            );
+                            loadSmartAIHistory(chat.sessionId);
+                          }
+
+                          // --- SMART AI PRO VIEW ---
+                          else if (
+                            activeView === "wrds AiPro" ||
+                            isSmartAIPro
+                          ) {
+                            localStorage.setItem(
+                              "lastSmartAIProSessionId",
+                              chat.id
+                            );
+                            loadSmartAIProHistory(chat.sessionId);
+                          }
+
                           setMobileMenuAnchor(null);
                           setSearchSessionResults([]);
                         }
@@ -3106,7 +3531,7 @@ const ChatUI = () => {
                 transition: "all 0.3s ease",
                 width: "100%",
                 maxWidth: { xs: "100%", sm: "100%", md: "100%" },
-                px: { xs: 1, sm: 2, md: 11 },
+                px: { xs: 1, sm: 2, md: 8 },
                 mb: 0,
                 mt: "11px",
                 pb: 0,
@@ -3295,7 +3720,7 @@ const ChatUI = () => {
                               color: "#fff",
                               borderRadius: 3,
                               minWidth: "300px",
-                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                              maxWidth: { xs: "88%", sm: "90%", md: "89%" },
                             }}
                           >
                             {editingId === group.id ? (
@@ -3503,16 +3928,18 @@ const ChatUI = () => {
                                   ? "Grok"
                                   : group.botName === "claude-3-haiku"
                                   ? "Claude"
+                                  : group.botName === "mistral"
+                                  ? "Mistral small"
                                   : ""}
                               </Typography>
 
-                              <Typography
+                              {/* <Typography
                                 variant="caption"
                                 color="text.secondary"
                                 display="block"
                               >
                                 Wrds
-                              </Typography>
+                              </Typography> */}
                             </Box>
                           </Box>
 
@@ -3523,7 +3950,7 @@ const ChatUI = () => {
                               bgcolor: "#f1f6fc",
                               borderRadius: 3,
                               // maxWidth: { xs: "80%", md: "70%" },
-                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                              maxWidth: { xs: "87%", sm: "90%", md: "89%" },
                             }}
                           >
                             <Box sx={{ mb: 2 }}>
@@ -4042,7 +4469,7 @@ const ChatUI = () => {
                 transition: "all 0.3s ease",
                 width: "100%",
                 maxWidth: { xs: "100%", sm: "100%", md: "100%" },
-                px: { xs: 1, sm: 2, md: 11 },
+                px: { xs: 1, sm: 2, md: 8 },
                 mb: 0,
                 mt: "11px",
                 pb: 0,
@@ -4231,7 +4658,7 @@ const ChatUI = () => {
                               color: "#fff",
                               borderRadius: 3,
                               minWidth: "300px",
-                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                              maxWidth: { xs: "88%", sm: "90%", md: "89%" },
                             }}
                           >
                             {editingId === group.id ? (
@@ -4432,13 +4859,13 @@ const ChatUI = () => {
                                 WrdsAI
                               </Typography>
 
-                              <Typography
+                              {/* <Typography
                                 variant="caption"
                                 color="text.secondary"
                                 display="block"
                               >
                                 Wrds
-                              </Typography>
+                              </Typography> */}
                             </Box>
                           </Box>
 
@@ -4449,7 +4876,931 @@ const ChatUI = () => {
                               bgcolor: "#f1f6fc",
                               borderRadius: 3,
                               // maxWidth: { xs: "80%", md: "70%" },
-                              maxWidth: { xs: "95%", sm: "90%", md: "80%" },
+                              maxWidth: { xs: "87%", sm: "90%", md: "89%" },
+                            }}
+                          >
+                            <Box sx={{ mb: 2 }}>
+                              {group.isTyping &&
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="body1"
+                                    sx={{
+                                      fontFamily: "Calibri, sans-serif",
+                                      fontWeight: 400,
+                                    }}
+                                  >
+                                    {group.responses[group.currentSlide]}
+                                  </Typography>
+                                </Box>
+                              ) : (
+                                <div
+                                  style={{
+                                    fontSize: "17px",
+                                    fontFamily: "Calibri, sans-serif",
+                                    fontWeight: 400, // Regular weight
+                                  }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: group.responses[group.currentSlide],
+                                  }}
+                                />
+                              )}
+                            </Box>
+                            <Divider sx={{ my: 1 }} />
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-end",
+                              }}
+                            >
+                              <Box>
+                                {/* Time on left */}
+                                <Typography
+                                  variant="caption"
+                                  sx={{ opacity: 0.6, mb: 0.5 }}
+                                >
+                                  {group.time}
+                                </Typography>
+                              </Box>
+
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                }}
+                              >
+                                {/* 🛑 Stop button beside token dropdown */}
+                                {/* {group.isBeingProcessed && ( */}
+                                {/* <IconButton
+                                    size="small"
+                                    onClick={stopGeneration}
+                                    sx={{
+                                      color: "#665c5cff",
+                                      p: 0.3,
+                                      display: "flex",
+                                      justifyContent: "flex-end",
+                                      "&:hover": {
+                                        bgcolor: "rgba(229, 57, 53, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <StopIcon fontSize="small" />
+                                  </IconButton> */}
+                                {/* )} */}
+
+                                {/* Icon on right */}
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleClick(e, idx)}
+                                >
+                                  <KeyboardArrowDownTwoToneIcon fontSize="small" />
+                                </IconButton>
+
+                                {/* Popover for usage token */}
+                                <Popover
+                                  open={
+                                    Boolean(anchorEl) && activeGroup === idx
+                                  }
+                                  anchorEl={anchorEl}
+                                  onClose={handleClose}
+                                  anchorOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                  }}
+                                  transformOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
+                                  }}
+                                  PaperProps={{
+                                    sx: {
+                                      p: 1,
+                                      borderRadius: 2,
+                                      boxShadow: 3,
+                                      minWidth: 140,
+                                    },
+                                  }}
+                                >
+                                  <Typography
+                                    variant="body2"
+                                    sx={{ fontWeight: 500 }}
+                                  >
+                                    Token Count
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "text.secondary",
+                                      display: "block",
+                                      mt: 0.5,
+                                    }}
+                                  >
+                                    {group.tokensUsed !== null &&
+                                    group.tokensUsed !== undefined
+                                      ? group.tokensUsed
+                                      : "N/A"}
+                                  </Typography>
+                                  {/* <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            {usageTokens !== undefined && usageTokens !== null
+                              ? usageTokens
+                              : "N/A"}
+                          </Typography> */}
+                                </Popover>
+                              </Box>
+                            </Box>
+                          </Paper>
+                        </Box>
+                      </Box>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </Box>
+                )}
+              </Box>
+
+              {/* 👉 Footer (Always Common) */}
+              <Box
+                sx={{
+                  mb: 0,
+                  pb: "16px",
+                  display: "flex",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  width: "100%",
+                  // maxWidth: { xs: "100%", md: "940px" },
+                  // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
+                  flexDirection: "column",
+                }}
+              >
+                <Box
+                  sx={{
+                    minHeight: "60px",
+                    p: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid #e0e0e0",
+                    bgcolor: "#fafafa",
+                    // pb: 0.5,
+                    pb: "20px",
+                    position: "relative",
+                    flexWrap: { xs: "wrap", sm: "nowrap" },
+                    // position: "relative",
+                  }}
+                >
+                  {/* <IconButton
+                    component="label"
+                    sx={{
+                      color: "#2F67F6",
+                      position: "absolute",
+                      left: "15px",
+                      bottom: "34px", // 👈 bottom ma fix karva
+                      zIndex: 2,
+                      // backgroundColor: "white",
+                      borderRadius: "50%",
+                      width: "32px",
+                      height: "40px",
+                    }}
+                  >
+                    <input
+                      type="file"
+                      hidden
+                      multiple
+                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                      // onChange={(e) => {
+                      //   const files = e.target.files;
+                      //   if (files && files.length > 0) {
+                      //     setSelectedFile(files); // 🔹 array of files સેટ કરો
+                      //     console.log("Files selected:", files);
+                      //   }
+                      // }}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files); // Convert FileList to Array
+                        // if (files.length > 0) {
+                        //   // setSelectedFiles(files);
+                        //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
+                        //   console.log("Files selected:", files);
+                        // }
+                        if (files.length > 0) {
+                          setSelectedFiles((prevFiles) => {
+                            // Limit to 5 files maximum (matches backend limit)
+                            const newFiles = [...prevFiles, ...files];
+                            return newFiles.slice(0, 5);
+                          });
+                        }
+                        e.target.value = "";
+                      }}
+                    />
+                    <AttachFileIcon fontSize="small" />
+                  </IconButton> */}
+
+                  {/* Main Input with extra left padding for file icon */}
+                  <TextField
+                    fullWidth
+                    placeholder="Ask me..."
+                    variant="outlined"
+                    size="small"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    disabled={isSending || isTypingResponse}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "25px",
+                        backgroundColor: "#fff",
+                        height: "auto",
+                        minHeight: "67px",
+                        padding:
+                          selectedFiles.length > 0
+                            ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
+                            : "12px 14px 12px 50px !important", // Added padding for file icon
+                        paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
+                      },
+                      "& .MuiOutlinedInput-input": {
+                        padding: "8px 0", // Remove left/right padding since we have container padding
+                        height: "auto",
+                        minHeight: "24px",
+                        marginTop: selectedFiles.length > 0 ? "24px" : "0px",
+                      },
+                      "& .Mui-disabled": {
+                        opacity: 0.5,
+                      },
+                      fontSize: { xs: "14px", sm: "16px" },
+                      minWidth: { xs: "100%", sm: "200px" },
+                      mb: { xs: 1, sm: 0 },
+                    }}
+                    multiline
+                    maxRows={selectedFiles.length > 0 ? 4 : 3}
+                    InputProps={{
+                      startAdornment: (
+                        <>
+                          {/* Attach File Icon - Always visible inside TextField */}
+                          <IconButton
+                            component="label"
+                            sx={{
+                              color: "#2F67F6",
+                              position: "absolute",
+                              left: "12px",
+                              bottom:
+                                selectedFiles.length > 0 ? "34px" : "18px",
+                              zIndex: 2,
+                              borderRadius: "50%",
+                              width: "32px",
+                              height: "32px",
+                              "&:hover": {
+                                backgroundColor: "rgba(47, 103, 246, 0.1)",
+                              },
+                            }}
+                          >
+                            <input
+                              type="file"
+                              hidden
+                              multiple
+                              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                              onChange={(e) => {
+                                const files = Array.from(e.target.files);
+                                if (files.length > 0) {
+                                  setSelectedFiles((prevFiles) => {
+                                    const newFiles = [...prevFiles, ...files];
+                                    return newFiles.slice(0, 5);
+                                  });
+                                }
+                                e.target.value = "";
+                              }}
+                            />
+                            <AttachFileIcon fontSize="small" />
+                          </IconButton>
+
+                          {/* File Name Display - When files are selected */}
+                          {selectedFiles.length > 0 && (
+                            <Box
+                              sx={{
+                                position: "absolute",
+                                top: "8px",
+                                left: "50px", // Adjusted to align with increased padding
+                                display: "flex",
+                                alignItems: "center",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                                maxWidth: "calc(100% - 100px)",
+                              }}
+                            >
+                              {selectedFiles.map((file, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    backgroundColor: "#f0f4ff",
+                                    borderRadius: "12px",
+                                    padding: "2px 8px",
+                                    border: "1px solid #2F67F6",
+                                    maxWidth: "120px",
+                                    mb: 0.5,
+                                  }}
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {file.name.length > 15
+                                      ? file.name.substring(0, 12) + "..."
+                                      : file.name}
+                                  </Typography>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => removeFile(index)}
+                                    sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
+                                  >
+                                    <CloseIcon fontSize="small" />
+                                  </IconButton>
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </>
+                      ),
+
+                      endAdornment: (
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          {/* 🎤 Voice Input Button */}
+                          <IconButton
+                            onClick={
+                              isListening ? stopListening : startListening
+                            }
+                            sx={{
+                              color: isListening ? "red" : "#10a37f",
+                              mr: 0.5,
+                            }}
+                            title={
+                              isListening
+                                ? "Stop recording"
+                                : "Start voice input"
+                            }
+                          >
+                            {isListening ? (
+                              <StopCircleIcon />
+                            ) : (
+                              <KeyboardVoiceIcon />
+                            )}
+                          </IconButton>
+
+                          {/* 🛑 Stop Generating Button (for chatbot response) */}
+                          {(isTypingResponse || isSending) && (
+                            <Tooltip title="Stop generating">
+                              <IconButton
+                                onClick={() => {
+                                  isStoppedRef.current = true;
+                                  handleStopResponse();
+                                }}
+                                color="error"
+                                sx={{ mr: 0.5 }}
+                              >
+                                <StopCircleIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      ),
+                    }}
+                  />
+                  {console.log("selectedFiles length:", selectedFiles.length)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      ml: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <TextField
+                      select
+                      size="small"
+                      value={responseLength}
+                      onChange={(e) => {
+                        setResponseLength(e.target.value);
+                        lastSelectedResponseLength.current = e.target.value; // ✅ store last selected
+                      }}
+                      sx={{
+                        width: { xs: "140px", sm: "179px" },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "10px",
+                          backgroundColor: "#fff",
+                          textAlign: "center",
+                        },
+                      }}
+                      SelectProps={{
+                        displayEmpty: true,
+                        MenuProps: {
+                          disablePortal: true,
+                          PaperProps: {
+                            style: { maxHeight: 200, borderRadius: "10px" },
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem value="" disabled>
+                        Response Length:
+                      </MenuItem>
+                      <MenuItem value="Short">Short (50-100 words)</MenuItem>
+                      <MenuItem value="Concise">
+                        Concise (150-250 words)
+                      </MenuItem>
+                      <MenuItem value="Long">Long (300-500 words)</MenuItem>
+                      <MenuItem value="NoOptimisation">
+                        No Optimisation
+                      </MenuItem>
+                    </TextField>
+
+                    <IconButton
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isSending || isTypingResponse}
+                      sx={{
+                        "&:disabled": {
+                          opacity: 0.5,
+                          cursor: "not-allowed",
+                        },
+                        ml: 1,
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+
+                    {/* 🔹 Stop icon appears when AI is typing a response */}
+                    {/* {isTypingResponse && (
+                        <IconButton
+                          onClick={() => handleStop()}
+                          color="error"
+                          title="Stop Response"
+                          sx={{
+                            ml: 1,
+                            bgcolor: "#ffe6e6",
+                            "&:hover": { bgcolor: "#ffcccc" },
+                          }}
+                        >
+                          <StopIcon />
+                        </IconButton>
+                      )} */}
+                  </Box>
+                </Box>
+
+                {/* 👉 Tagline (Always Common) */}
+                <Box textAlign="center">
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: "14px" }}
+                  >
+                    How <strong>Wrds</strong> can help you today?
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </>
+        ) : activeView === "wrds AiPro" ? (
+          <>
+            <Box
+              sx={{
+                // display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "space-between",
+                transition: "all 0.3s ease",
+                width: "100%",
+                maxWidth: { xs: "100%", sm: "100%", md: "100%" },
+                px: { xs: 1, sm: 2, md: 8 },
+                mb: 0,
+                mt: "11px",
+                pb: 0,
+              }}
+            >
+              {/* 👉 Main Content (Conditional) */}
+              <Box
+                sx={{
+                  height: "70vh",
+                  // p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  flexGrow: 1,
+                  overflow: "auto",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  minHeight: 0, // 🔹 Important for flex scrolling
+                  /* 🔹 Scrollbar hide */
+                  "&::-webkit-scrollbar": {
+                    display: "none",
+                  },
+                  scrollbarWidth: "none", // 🔹 Firefox
+                  "-ms-overflow-style": "none", // 🔹 IE 10+
+                }}
+              >
+                {historyLoading ? (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      py: 8,
+                      height: "48.5vh",
+                    }}
+                  >
+                    <Box sx={{ textAlign: "center" }}>
+                      <CircularProgress sx={{ mb: 2 }} />
+                      <Typography variant="body2" color="text.secondary">
+                        Loading Wrds AiPro history...
+                      </Typography>
+                    </Box>
+                  </Box>
+                ) : smartAIProMessageGroups[0]?.length === 0 ? (
+                  // Welcome Screen
+                  <Box
+                    sx={{
+                      textAlign: "center",
+                      py: 8,
+                      color: "text.secondary",
+                    }}
+                  >
+                    {/* <leafatar
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: "auto",
+                        mb: 2,
+                        bgcolor: "#3dafe2",
+                        color: "#fff",
+                      }}
+                    > */}
+                    {/* <Logo /> */}
+                    {/* </leafatar> */}
+
+                    <Typography variant="h6" sx={{ mb: 1 }}>
+                      Welcome to the <strong>Wrds Pro</strong>
+                    </Typography>
+
+                    {/* <Typography variant="body2">
+                      Start a conversation by typing a message below.
+                    </Typography> */}
+                  </Box>
+                ) : (
+                  // Chat Messages
+                  <Box sx={{ spaceY: 6, width: "100%", minWidth: 0 }}>
+                    {(smartAIProMessageGroups[0] || []).map((group, idx) => (
+                      <Box key={idx} mb={3}>
+                        <Box
+                          display="flex"
+                          justifyContent="flex-end"
+                          flexDirection={"column"}
+                          alignItems={"flex-end"}
+                          mb={1.5}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mr: 1,
+                              // fontSize:"19px",
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: "18px",
+                                fontFamily: "Calibri, sans-serif",
+                                fontWeight: 400, // Regular weight
+                              }}
+                            >
+                              You
+                            </Typography>
+                          </Box>
+                          {/* <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end", // Right side ma mukse
+                        alignItems:"flex-end",
+                        float:"right",
+                        mb: 1,
+                      }}
+                    > */}
+
+                          {group.files && group.files.length > 0 && (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                backgroundColor: "#f0f4ff",
+                                borderRadius: "6px",
+                                padding: "2px 8px",
+                                border: "1px solid #2F67F6",
+                                maxWidth: "120px",
+                                mb: 0.5,
+                                // size: "20px",
+                              }}
+                            >
+                              <InsertDriveFile
+                                sx={{
+                                  fontSize: "14px",
+                                  color: "#2F67F6",
+                                  mr: 1,
+                                }}
+                              />
+
+                              {/* <Typography
+                            variant="caption"
+                            sx={{
+                              color: "#2F67F6",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              fontSize: "11px",
+                              fontWeight: "500",
+                            }}
+                          >
+                           
+                            {group.files.map((f) => f.name).join(", ")}
+                          </Typography> */}
+                              <Box sx={{ overflow: "hidden" }}>
+                                {group.files.map((f, idx) => (
+                                  <Typography
+                                    key={idx}
+                                    component="a"
+                                    href={f.cloudinaryUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    variant="caption"
+                                    sx={{
+                                      color: "#2F67F6",
+                                      display: "block",
+                                      textDecoration: "none",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      whiteSpace: "nowrap",
+                                      fontSize: "11px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    {/* {f.filename} ({f.wordCount}w / {f.tokenCount}t) */}
+                                    {/* Try these different properties */}
+                                    {f.name ||
+                                      f.filename ||
+                                      f.originalName ||
+                                      f.fileName}{" "}
+                                    {/* ({f.wordCount}w / {f.tokenCount}t) */}
+                                  </Typography>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+                          <Paper
+                            sx={{
+                              p: { xs: 1, sm: 1.5 },
+                              bgcolor: "#2F67F6",
+                              color: "#fff",
+                              borderRadius: 3,
+                              minWidth: "300px",
+                              maxWidth: { xs: "88%", sm: "90%", md: "89%" },
+                            }}
+                          >
+                            {editingId === group.id ? (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: 1,
+                                }}
+                              >
+                                <TextField
+                                  value={editText}
+                                  onChange={(e) => setEditText(e.target.value)}
+                                  multiline
+                                  minRows={2}
+                                  fullWidth
+                                  autoFocus
+                                  variant="outlined"
+                                  sx={{
+                                    bgcolor: "#fff",
+                                    borderRadius: 1,
+                                    "& .MuiInputBase-input": { color: "#000" },
+                                  }}
+                                />
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    justifyContent: "flex-end",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="inherit"
+                                    onClick={() => {
+                                      setEditingId(null);
+                                      setEditText("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    color="success"
+                                    onClick={() => {
+                                      handleSend(editText, group.id);
+                                      setEditingId(null);
+                                      setEditText("");
+                                    }}
+                                  >
+                                    Save
+                                  </Button>
+                                </Box>
+                              </Box>
+                            ) : (
+                              <>
+                                <Typography
+                                  sx={{
+                                    fontSize: "17px",
+                                    fontFamily: "Calibri, sans-serif",
+                                    fontWeight: 400,
+                                  }}
+                                >
+                                  {group.prompt.charAt(0).toUpperCase() +
+                                    group.prompt.slice(1)}
+                                </Typography>
+
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  <Typography variant="caption">
+                                    {group.time}
+                                  </Typography>
+
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Tooltip
+                                      title={
+                                        copiedId === group.id
+                                          ? "Copied!"
+                                          : "Copy"
+                                      }
+                                      arrow
+                                    >
+                                      <IconButton
+                                        size="small"
+                                        sx={{
+                                          color:
+                                            copiedId === group.id
+                                              ? "#8cff8c"
+                                              : "#fff",
+                                          p: "2px",
+                                        }}
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(
+                                            group.prompt
+                                          );
+                                          setCopiedId(group.id);
+                                          setTimeout(
+                                            () => setCopiedId(null),
+                                            1500
+                                          );
+                                        }}
+                                      >
+                                        <ContentCopyIcon fontSize="inherit" />
+                                      </IconButton>
+                                    </Tooltip>
+
+                                    <Tooltip title="Edit" arrow>
+                                      <IconButton
+                                        size="small"
+                                        sx={{ color: "#fff", p: "2px" }}
+                                        onClick={() => {
+                                          setEditingId(group.id);
+                                          setEditText(group.prompt);
+                                        }}
+                                      >
+                                        <EditIcon fontSize="inherit" />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </Box>
+                                </Box>
+                              </>
+                            )}
+                          </Paper>
+                        </Box>
+
+                        {/* AI Response */}
+                        <Box>
+                          {/* 🔹 Selected model name upar */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              // p: 1,
+                              // borderBottom: "1px solid #e0e0e0",
+                              mb: 0.5,
+                              color: "text.primary",
+                            }}
+                          >
+                            {/* <Logo /> */}
+                            <Avatar
+                              src={chat}
+                              alt="chat"
+                              sx={{
+                                // border: "2px solid #4d4646ff", // lighter black (#aaa / #bbb / grey[500])
+                                bgcolor: "white",
+                                width: 40, // thodu mota rakho
+                                height: 40,
+                                p: "2px", // andar jagya
+                                cursor: "pointer",
+                                // pl: "1px",
+                              }}
+                              // onClick={() => setIsCollapsed(false)}
+                            />
+                            {console.log(
+                              group.botName,
+                              group.botName.charAt(0).toUpperCase() ===
+                                "chatgpt-5-mini"
+                                ? "ChatGPT"
+                                : group.botName.charAt(0).toUpperCase() +
+                                    group.botName.slice(1) ===
+                                  "grok"
+                                ? "Grok"
+                                : "",
+                              "group"
+                            )}
+                            {/* ✅ Bot name + AI Assistant */}
+                            <Box ml={1}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  textDecoration: "underline",
+                                  fontSize: "16px",
+                                }}
+                              >
+                                {/* {group.botName} */}
+                                {/* {group.botName === "chatgpt-5-mini"
+                                  ? "ChatGPT 5-Mini"
+                                  : group.botName === "grok"
+                                  ? "Grok 3-Mini"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude-3"
+                                  : ""} */}
+                                WrdsAI Pro
+                              </Typography>
+
+                              {/* <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                display="block"
+                              >
+                                Wrds
+                              </Typography> */}
+                            </Box>
+                          </Box>
+
+                          <Paper
+                            sx={{
+                              // p: 1.5,
+                              p: { xs: 1, sm: 1.5 },
+                              bgcolor: "#f1f6fc",
+                              borderRadius: 3,
+                              // maxWidth: { xs: "80%", md: "70%" },
+                              maxWidth: { xs: "87%", sm: "90%", md: "89%" },
                             }}
                           >
                             <Box sx={{ mb: 2 }}>

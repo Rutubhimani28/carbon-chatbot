@@ -8,6 +8,9 @@ import { translatetolanguage } from "../controller/aiController.js";
 import { getSmartAIResponse } from "../controller/smartAiController.js";
 import { getSmartAiHistory } from "../controller/smartAiController.js";
 import { getSmartAIAllSessions } from "../controller/smartAiController.js";
+import { getSmartAIProResponse } from "../controller/smartAiProController.js";
+import { getSmartAiProHistory } from "../controller/smartAiProController.js";
+import { getSmartAIProAllSessions } from "../controller/smartAiProController.js";
 
 const router = express.Router();
 
@@ -22,6 +25,9 @@ router.post("/save_partial", savePartialResponse);
 router.post("/SmartAIask", getSmartAIResponse);
 router.post("/SmartAIhistory", getSmartAiHistory);
 router.post("/get_smartAi_sessions", getSmartAIAllSessions);
+router.post("/SmartAIProask", getSmartAIProResponse);
+router.post("/SmartAIProhistory", getSmartAiProHistory);
+router.post("/get_smartAi_Pro_sessions", getSmartAIProAllSessions);
 
 // router.post("/translate", translatetolanguage);
 
