@@ -214,6 +214,42 @@ const ChatUI = () => {
   }, []);
 
   useEffect(() => {
+    if (activeView === "smartAi") {
+      const lastSmartId = localStorage.getItem("lastSmartAISessionId");
+
+      if (lastSmartId) {
+        setSelectedChatId(lastSmartId);
+
+        const savedTokens = localStorage.getItem(`tokens_${lastSmartId}`);
+        if (savedTokens) {
+          console.log("Restored Smart AI tokens:", savedTokens);
+          setRemainingTokens(Number(savedTokens));
+        }
+
+        loadSmartAIHistory(lastSmartId);
+      }
+    }
+  }, [activeView]);
+
+  useEffect(() => {
+    if (activeView === "wrds AiPro") {
+      const lastProId = localStorage.getItem("lastSmartAIProSessionId");
+
+      if (lastProId) {
+        setSelectedChatId(lastProId);
+
+        const savedTokens = localStorage.getItem(`tokens_${lastProId}`);
+        if (savedTokens) {
+          console.log("Restored Smart AI Pro tokens:", savedTokens);
+          setRemainingTokens(Number(savedTokens));
+        }
+
+        loadSmartAIProHistory(lastProId);
+      }
+    }
+  }, [activeView]);
+
+  useEffect(() => {
     // Whenever user changes dropdown, keep latest value saved
     lastSelectedResponseLength.current = responseLength;
   }, [responseLength]);
@@ -1345,7 +1381,7 @@ const ChatUI = () => {
 
       // ✅ Filter only type:"smart Ai"
       const filteredSessions = data.sessions?.filter(
-        (s) => s?.type?.toLowerCase() === "wrds aipro"
+        (s) => s?.type?.toLowerCase() === "smart ai"
       );
       // console.log("session--aya::::::", filteredSessions);
 
@@ -1370,7 +1406,7 @@ const ChatUI = () => {
               session.createTime ||
               new Date().toISOString(),
             totalTokensUsed: session.totalTokensUsed || 0,
-            type: "wrds AiPro", // ✅ always tag as Smart AI type
+            type: "smart Ai", // ✅ always tag as Smart AI type
           };
         });
       }
@@ -1379,23 +1415,23 @@ const ChatUI = () => {
 
       // ✅ Store only Smart AI sessions
       setSmartAISessions(sessions || []);
-      // console.log("smartAISessions:::::::::", smartAISessions);
+      console.log("smartAISessions:::::::::", smartAISessions);
 
       // Auto-load first Smart AI chat
-      // if (sessions?.length && initialLoad && !selectedChatId) {
-      //   const firstSessionId = sessions[0].id;
-      //   setSelectedChatId(firstSessionId);
-      //   localStorage.setItem("lastSmartAISessionId", firstSessionId);
-      //   loadSmartAIHistory(sessions[0].sessionId);
-      // }
+      if (sessions?.length && initialLoad && !selectedChatId) {
+        const firstSessionId = sessions[0].id;
+        setSelectedChatId(firstSessionId);
+        localStorage.setItem("lastSmartAISessionId", firstSessionId);
+        loadSmartAIHistory(sessions[0].sessionId);
+      }
 
       // ✅ Automatically open the LAST Smart AI session (latest)
-      if (sessions.length > 0) {
-        const lastSession = sessions[0]; // since reversed()
-        setSelectedChatId(lastSession.id);
-        localStorage.setItem("lastSmartAISessionId", lastSession.id);
-        loadSmartAIHistory(lastSession.sessionId);
-      }
+      // if (sessions.length > 0) {
+      //   const lastSession = sessions[0]; // since reversed()
+      //   setSelectedChatId(lastSession.id);
+      //   localStorage.setItem("lastSmartAISessionId", lastSession.id);
+      //   loadSmartAIHistory(lastSession.sessionId);
+      // }
     } catch (err) {
       console.error("Smart AI sessions error:", err);
     } finally {
@@ -1423,13 +1459,13 @@ const ChatUI = () => {
       if (!response.ok) throw new Error(`HTTP error! ${response.status}`);
 
       const data = await response.json();
-      console.log("SmartAI Pro Sessions response::::::", data);
+      console.log("wrdsAI Pro Sessions response::::::", data);
 
       let sessions = [];
 
       // ✅ Filter only type:"smart Ai"
       const filteredSessions = data.sessions?.filter(
-        (s) => s?.type?.toLowerCase() === "smart ai"
+        (s) => s?.type?.toLowerCase() === "wrds aipro"
       );
       // console.log("session--aya::::::", filteredSessions);
 
@@ -1454,40 +1490,40 @@ const ChatUI = () => {
               session.createTime ||
               new Date().toISOString(),
             totalTokensUsed: session.totalTokensUsed || 0,
-            type: "smart Ai", // ✅ always tag as Smart AI type
+            type: "wrds AiPro", // ✅ always tag as Smart AI type
           };
         });
       }
 
-      console.log("Smart AI sessions (filtered):", sessions);
+      console.log("wrds AIpro sessions (filtered):", sessions);
 
       // ✅ Store only Smart AI sessions
       setSmartAIProSessions(sessions || []);
       // console.log("smartAISessions:::::::::", smartAISessions);
 
       // Auto-load first Smart AI chat
-      // if (sessions?.length && initialLoad && !selectedChatId) {
-      //   const firstSessionId = sessions[0].id;
-      //   setSelectedChatId(firstSessionId);
-      //   localStorage.setItem("lastSmartAISessionId", firstSessionId);
-      //   loadSmartAIHistory(sessions[0].sessionId);
-      // }
+      if (sessions?.length && initialLoad && !selectedChatId) {
+        const firstSessionId = sessions[0].id;
+        setSelectedChatId(firstSessionId);
+        localStorage.setItem("lastSmartAIProSessionId", firstSessionId);
+        loadSmartAIProHistory(sessions[0].sessionId);
+      }
 
       // ✅ Automatically open the LAST Smart AI session (latest)
-      if (sessions.length > 0) {
-        const lastSession = sessions[0]; // since reversed()
-        setSelectedChatId(lastSession.id);
-        localStorage.setItem("lastSmartAIProSessionId", lastSession.id);
-        loadSmartAIProHistory(lastSession.sessionId);
-      }
+      // if (sessions.length > 0) {
+      //   const lastSession = sessions[0]; // since reversed()
+      //   setSelectedChatId(lastSession.id);
+      //   localStorage.setItem("lastSmartAIProSessionId", lastSession.id);
+      //   loadSmartAIProHistory(lastSession.sessionId);
+      // }
     } catch (err) {
-      console.error("Smart AI sessions error:", err);
+      console.error("wrds AI pro sessions error:", err);
     } finally {
       setSessionLoading(false);
       setInitialLoad(false);
     }
   };
-  console.log("smartAISessions:::::::::", smartAISessions);
+  console.log("smartAISessions:::::::::", smartAIProSessions);
 
   // 🧠 Fetch Smart AI chat history
   const getSmartAIHistory = async (sessionId) => {
@@ -1657,88 +1693,88 @@ const ChatUI = () => {
     }
   }, [activeView, isSmartAI, isSmartAIPro]);
 
-  useEffect(() => {
-    if (!selectedChatId) return;
+  // useEffect(() => {
+  //   if (!selectedChatId) return;
 
-    // const selectedChat = chats.find((chat) => chat.id === selectedChatId);
-    // 🧠 Choose correct session list
-    const currentSessions =
-      activeView === "smartAi" || isSmartAI
-        ? smartAISessions
-        : activeView === "wrds AiPro" || isSmartAIPro
-        ? smartAIProSessions
-        : chats;
+  //   // const selectedChat = chats.find((chat) => chat.id === selectedChatId);
+  //   // 🧠 Choose correct session list
+  //   const currentSessions =
+  //     activeView === "smartAi" || isSmartAI
+  //       ? smartAISessions
+  //       : activeView === "wrds AiPro" || isSmartAIPro
+  //       ? smartAIProSessions
+  //       : chats;
 
-    const selectedChat = currentSessions.find(
-      (chat) => chat.id === selectedChatId
-    );
+  //   const selectedChat = currentSessions.find(
+  //     (chat) => chat.id === selectedChatId
+  //   );
 
-    if (!selectedChat) return;
-    if (skipHistoryLoad) {
-      setSkipHistoryLoad(false);
-      return;
-    }
+  //   if (!selectedChat) return;
+  //   if (skipHistoryLoad) {
+  //     setSkipHistoryLoad(false);
+  //     return;
+  //   }
 
-    console.log("Loading chat history for session:", selectedChat.sessionId); // Debug log
+  //   console.log("Loading chat history for session:", selectedChat.sessionId); // Debug log
 
-    if (selectedChat.sessionId) {
-      if (activeView === "smartAi") {
-        // 🧠 Smart AI tab
-        loadSmartAIHistory(selectedChat.sessionId);
+  //   if (selectedChat.sessionId) {
+  //     if (activeView === "smartAi") {
+  //       // 🧠 Smart AI tab
+  //       loadSmartAIHistory(selectedChat.sessionId);
 
-        // 🔹 Load latest token count for Smart AI
-        const savedTokens = localStorage.getItem(
-          `tokens_${selectedChat.sessionId}_smartAi`
-        );
-        if (savedTokens) {
-          setRemainingTokens(Number(savedTokens));
-          console.log("Smart AI tokens:", savedTokens);
-        }
-      } else if (activeView === "wrds AiPro") {
-        // 🧠 Smart AI tab
-        loadSmartAIProHistory(selectedChat.sessionId);
+  //       // 🔹 Load latest token count for Smart AI
+  //       const savedTokens = localStorage.getItem(
+  //         `tokens_${selectedChat.sessionId}_smartAi`
+  //       );
+  //       if (savedTokens) {
+  //         setRemainingTokens(Number(savedTokens));
+  //         console.log("Smart AI tokens:", savedTokens);
+  //       }
+  //     } else if (activeView === "wrds AiPro") {
+  //       // 🧠 Smart AI tab
+  //       loadSmartAIProHistory(selectedChat.sessionId);
 
-        // 🔹 Load latest token count for Smart AI
-        const savedTokens = localStorage.getItem(
-          `tokens_${selectedChat.sessionId}_wrdsAiPro`
-        );
-        if (savedTokens) {
-          setRemainingTokens(Number(savedTokens));
-          console.log("Smart AIPro tokens:", savedTokens);
-        }
-      } else {
-        // 💬 Chat tab
-        loadChatHistory(selectedChat.sessionId);
+  //       // 🔹 Load latest token count for Smart AI
+  //       const savedTokens = localStorage.getItem(
+  //         `tokens_${selectedChat.sessionId}_wrdsAiPro`
+  //       );
+  //       if (savedTokens) {
+  //         setRemainingTokens(Number(savedTokens));
+  //         console.log("Smart AIPro tokens:", savedTokens);
+  //       }
+  //     } else {
+  //       // 💬 Chat tab
+  //       loadChatHistory(selectedChat.sessionId);
 
-        // 🔹 Load latest token count for Chat
-        const savedTokens = localStorage.getItem(
-          `tokens_${selectedChat.sessionId}_chat`
-        );
-        if (savedTokens) {
-          setRemainingTokens(Number(savedTokens));
-          console.log("Chat tokens:", savedTokens);
-        }
-      }
-    } else {
-      // 🧹 Reset UI if no session
-      if (activeView === "smartAi") {
-        setSmartAIMessageGroups([[]]);
-      } else if (activeView === "wrds AiPro") {
-        setSmartAIProMessageGroups([[]]);
-      } else {
-        setMessageGroups([[]]);
-      }
-    }
-  }, [
-    selectedChatId,
-    skipHistoryLoad,
-    activeView,
-    isSmartAI,
-    isSmartAIPro,
-    chats,
-    smartAISessions,
-    smartAIProSessions,
-  ]);
+  //       // 🔹 Load latest token count for Chat
+  //       const savedTokens = localStorage.getItem(
+  //         `tokens_${selectedChat.sessionId}_chat`
+  //       );
+  //       if (savedTokens) {
+  //         setRemainingTokens(Number(savedTokens));
+  //         console.log("Chat tokens:", savedTokens);
+  //       }
+  //     }
+  //   } else {
+  //     // 🧹 Reset UI if no session
+  //     if (activeView === "smartAi") {
+  //       setSmartAIMessageGroups([[]]);
+  //     } else if (activeView === "wrds AiPro") {
+  //       setSmartAIProMessageGroups([[]]);
+  //     } else {
+  //       setMessageGroups([[]]);
+  //     }
+  //   }
+  // }, [
+  //   selectedChatId,
+  //   skipHistoryLoad,
+  //   activeView,
+  //   isSmartAI,
+  //   isSmartAIPro,
+  //   chats,
+  //   smartAISessions,
+  //   smartAIProSessions,
+  // ]);
 
   const loadChatHistory = async (sessionId) => {
     console.log("Fetching history for sessionId:::::::::::::", loadChatHistory); // Debug log
@@ -1752,6 +1788,7 @@ const ChatUI = () => {
     try {
       // Fetch from API
       const rawHistory = await getChatHistory(sessionId);
+      console.log("Raw chat history fetched::::::", rawHistory); // Debug log
 
       // Process the history into message groups
       const processedGroups = [];
@@ -1897,6 +1934,7 @@ const ChatUI = () => {
     try {
       // 1️⃣ Fetch Smart AI history data
       const rawHistory = await getSmartAIHistory(sessionId);
+      console.log("Raw smartAi history fetched::::::", rawHistory);
 
       // 2️⃣ Process Smart AI messages
       const processedGroups = [];
@@ -2000,7 +2038,7 @@ const ChatUI = () => {
       // 4️⃣ Save Smart AI messages to a separate state
       setSmartAIMessageGroups([processedGroups]); // ✅ separate from chat
     } catch (error) {
-      console.error("❌ Error loading Smart AI history:", error);
+      console.error("❌ Error loading WrdsAI history:", error);
       setSmartAIMessageGroups([[]]);
     } finally {
       setHistoryLoading(false);
@@ -2008,7 +2046,7 @@ const ChatUI = () => {
     }
   };
   const loadSmartAIProHistory = async (sessionId) => {
-    console.log("🧠 Fetching Smart AI history for sessionId:", sessionId);
+    console.log("🧠 Fetching WrdsAI Pro history for sessionId:", sessionId);
     if (!sessionId) {
       setSmartAIProMessageGroups([[]]); // ✅ clear Smart AI messages
       return;
@@ -2122,7 +2160,7 @@ const ChatUI = () => {
       // 4️⃣ Save Smart AI messages to a separate state
       setSmartAIProMessageGroups([processedGroups]); // ✅ separate from chat
     } catch (error) {
-      console.error("❌ Error loading Smart AI history:", error);
+      console.error("❌ Error loading WrdsAI Pro history:", error);
       setSmartAIProMessageGroups([[]]);
     } finally {
       setHistoryLoading(false);
@@ -3596,7 +3634,7 @@ const ChatUI = () => {
                     {/* </leafatar> */}
 
                     <Typography variant="h6" sx={{ mb: 1 }}>
-                      Welcome to the <strong>Wrds</strong>
+                      Welcome to <strong>Wrds</strong>
                     </Typography>
 
                     {/* <Typography variant="body2">
@@ -4507,7 +4545,7 @@ const ChatUI = () => {
                     <Box sx={{ textAlign: "center" }}>
                       <CircularProgress sx={{ mb: 2 }} />
                       <Typography variant="body2" color="text.secondary">
-                        Loading chat history...
+                        Loading WrdsPro history...
                       </Typography>
                     </Box>
                   </Box>
@@ -4534,7 +4572,7 @@ const ChatUI = () => {
                     {/* </leafatar> */}
 
                     <Typography variant="h6" sx={{ mb: 1 }}>
-                      Welcome to the <strong>Wrds</strong>
+                      Welcome to <strong>WrdsAI</strong>
                     </Typography>
 
                     {/* <Typography variant="body2">
@@ -5376,7 +5414,7 @@ const ChatUI = () => {
                     color="text.secondary"
                     sx={{ fontSize: "14px" }}
                   >
-                    How <strong>Wrds</strong> can help you today?
+                    How <strong>WrdsAI</strong> can help you today?
                   </Typography>
                 </Box>
               </Box>
@@ -5431,7 +5469,7 @@ const ChatUI = () => {
                     <Box sx={{ textAlign: "center" }}>
                       <CircularProgress sx={{ mb: 2 }} />
                       <Typography variant="body2" color="text.secondary">
-                        Loading Wrds AiPro history...
+                        Loading WrdsAI Pro history...
                       </Typography>
                     </Box>
                   </Box>
@@ -5458,7 +5496,7 @@ const ChatUI = () => {
                     {/* </leafatar> */}
 
                     <Typography variant="h6" sx={{ mb: 1 }}>
-                      Welcome to the <strong>Wrds Pro</strong>
+                      Welcome to <strong>WrdsAI Pro</strong>
                     </Typography>
 
                     {/* <Typography variant="body2">
@@ -6300,7 +6338,7 @@ const ChatUI = () => {
                     color="text.secondary"
                     sx={{ fontSize: "14px" }}
                   >
-                    How <strong>Wrds</strong> can help you today?
+                    How <strong>WrdsAI Pro</strong> can help you today?
                   </Typography>
                 </Box>
               </Box>
