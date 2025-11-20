@@ -1277,8 +1277,74 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         body: JSON.stringify(payload),
       });
 
+      // if (!response.ok) {
+      //   const errorText = await response.text();
+      //   throw new Error(errorText);
+      // }
+
+      // --------------- FALLBACK LOGIC ---------------
       if (!response.ok) {
         const errorText = await response.text();
+
+        let errJson = {};
+        try {
+          errJson = JSON.parse(errorText);
+        } catch {}
+
+        const apiError = errJson?.error || errJson;
+
+        // MISTRAL → CLAUDE FALLBACK
+        if (
+          botName === "mistral" &&
+          (apiError?.code === "3505" ||
+            apiError?.type === "service_tier_capacity_exceeded" ||
+            apiError?.message?.includes("capacity"))
+        ) {
+          console.log(
+            "⚠️ Mistral overloaded → Switching to Claude-3-Haiku fallback"
+          );
+
+          // switch bot
+          botName = "claude-3-haiku";
+          apiUrl = "https://api.anthropic.com/v1/messages";
+          apiKey = process.env.CLAUDE_API_KEY;
+          modelName = "claude-3-haiku-20240307";
+
+          const claudeHeaders = {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+          };
+
+          const claudePayload = {
+            model: modelName,
+            max_tokens: maxWords * 2,
+            system: messages[0].content,
+            messages: [{ role: "user", content: combinedPrompt }],
+          };
+
+          const claudeRes = await fetch(apiUrl, {
+            method: "POST",
+            headers: claudeHeaders,
+            body: JSON.stringify(claudePayload),
+          });
+
+          if (!claudeRes.ok) {
+            const txt = await claudeRes.text();
+            throw new Error("Fallback Claude Error: " + txt);
+          }
+
+          const claudeJson = await claudeRes.json();
+          const fallbackReply = claudeJson?.content?.[0]?.text?.trim() || "";
+
+          if (!fallbackReply) {
+            throw new Error("Fallback Claude returned empty response");
+          }
+
+          return fallbackReply;
+        }
+
+        // other errors → return original error
         throw new Error(errorText);
       }
 
@@ -1407,7 +1473,6 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       return paragraphs
         .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`)
         .join("\n");
-     
     };
 
     const finalReplyHTML = formatResponseToHTML(finalReply);
@@ -2898,7 +2963,7 @@ export const savePartialResponse = async (req, res) => {
     }
 
     const sessions = await ChatSession.find({ email });
-    let session = await ChatSession.findOne({ sessionId, email,type: "chat" });
+    let session = await ChatSession.findOne({ sessionId, email, type: "chat" });
     if (!session) {
       session = new ChatSession({
         email,
@@ -2978,7 +3043,7 @@ export const savePartialResponse = async (req, res) => {
 
     res.status(200).json({
       // type: "chat",
-       type: req.body.type || "chat",
+      type: req.body.type || "chat",
       success: true,
       message: "Partial response saved successfully.",
       response: partialResponse,
@@ -3116,7 +3181,11 @@ export const getChatHistory = async (req, res) => {
         .json({ message: "sessionId and email are required" });
     }
 
-    const session = await ChatSession.findOne({ sessionId, email ,type: "chat"});
+    const session = await ChatSession.findOne({
+      sessionId,
+      email,
+      type: "chat",
+    });
     if (!session) {
       return res.status(404).json({ message: "Session not found" });
     }
