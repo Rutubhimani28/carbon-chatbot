@@ -18,7 +18,7 @@
 // }
 
 // tokenCounter.js
-import { encoding_for_model } from "tiktoken";
+import { encoding_for_model, get_encoding } from "tiktoken";
 import { AutoTokenizer } from "@xenova/transformers";
 // import { MistralTokenizer } from "@mistralai/tokenizers";
 
@@ -36,21 +36,21 @@ async function getGrokTokenizer() {
   return grokTokenizer;
 }
 
-async function getMistralTokenizer() {
-  if (tokenizerCache.has('mistral')) {
-    return tokenizerCache.get('mistral');
-  }
-  
-  const tokenizer = await AutoTokenizer.from_pretrained('Xenova/mistral-small-2506');
-  tokenizerCache.set('mistral', tokenizer);
-  return tokenizer;
-}
+// async function getMistralTokenizer() {
+//   if (tokenizerCache.has('mistral')) {
+//     return tokenizerCache.get('mistral');
+//   }
+
+//   const tokenizer = await AutoTokenizer.from_pretrained('Xenova/mistral-small-2506');
+//   tokenizerCache.set('mistral', tokenizer);
+//   return tokenizer;
+// }
 
 // Lazy-load Mistral tokenizer
 // async function getMistralTokenizer() {
 //   if (!mistralTokenizer) {
 //     mistralTokenizer = await AutoTokenizer.from_pretrained(
-//       "Xenova/Mistral-7B-Instruct-v0.3"
+//       "Xenova/mistral-small-2506"
 //     );
 //   }
 //   return mistralTokenizer;
@@ -109,18 +109,33 @@ export async function countTokens(text, modelName = "gpt-4o-mini") {
     }
 
     // ✅ Case 3: Mistral Models → official tokenizer
-    if (validModel.includes("mistral")) {
-      const tokenizer = await getMistralTokenizer();
-      const tokens = await tokenizer.encode(text);
-      return tokens.length;
-    }
-    
+    // if (validModel.includes("mistral")) {
+    //   const tokenizer = await getMistralTokenizer();
+    //   const tokens = await tokenizer.encode(text);
+    //   return tokens.length;
+    // }
+
     // ✅ Case 3: Mistral Models → official tokenizer
     // if (validModel.includes("mistral")) {
     //   const tokenizer = await getMistralTokenizer();
     //   const tokens = await tokenizer.encode(text);
     //   return tokens.length;
     // }
+
+    // ✅ Case 3: Mistral Models → official tokenizer
+    if (validModel.includes("mistral") || modelName === "mistral") {
+      // 🔥 Tamari requirement pramane direct mapping
+      validModel = "mistral-small-2506";
+
+      // ⚠ tiktoken does NOT support mistral officially
+      // एतले apde generic encoder use करीये
+      const enc = get_encoding("cl100k_base"); // safest fallback
+
+      const tokenCount = enc.encode(text).length;
+      enc.free();
+
+      return tokenCount;
+    }
 
     // ✅ Case 4: OpenAI models → use tiktoken
     if (modelName === "chatgpt-5-mini") {
@@ -138,7 +153,6 @@ export async function countTokens(text, modelName = "gpt-4o-mini") {
     return text.trim().split(/\s+/).length;
   }
 }
-
 
 export function countWords(text) {
   if (!text || typeof text !== "string") return 0;
