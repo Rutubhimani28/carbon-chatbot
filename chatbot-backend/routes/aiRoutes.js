@@ -11,6 +11,8 @@ import { getSmartAIAllSessions } from "../controller/smartAiController.js";
 import { getSmartAIProResponse } from "../controller/smartAiProController.js";
 import { getSmartAiProHistory } from "../controller/smartAiProController.js";
 import { getSmartAIProAllSessions } from "../controller/smartAiProController.js";
+import { saveSmartAIPartialResponse } from "../controller/smartAiController.js";
+import { saveSmartAIProPartialResponse } from "../controller/smartAiProController.js";
 
 const router = express.Router();
 
@@ -24,8 +26,10 @@ router.post("/get_user_sessions", getAllSessions);
 router.post("/save_partial", savePartialResponse);
 router.post("/SmartAIask", getSmartAIResponse);
 router.post("/SmartAIhistory", getSmartAiHistory);
+router.post("/save_smartAi_partial", saveSmartAIPartialResponse);
 router.post("/get_smartAi_sessions", getSmartAIAllSessions);
 router.post("/SmartAIProask", getSmartAIProResponse);
+router.post("/save_smartAi_Pro_partial", saveSmartAIProPartialResponse);
 router.post("/SmartAIProhistory", getSmartAiProHistory);
 router.post("/get_smartAi_Pro_sessions", getSmartAIProAllSessions);
 

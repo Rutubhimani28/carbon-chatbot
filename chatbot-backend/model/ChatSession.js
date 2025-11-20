@@ -42,7 +42,7 @@ const messageSchema = new mongoose.Schema(
   {
     prompt: String,
     response: String,
-    //  partialResponse: String, 
+    //  partialResponse: String,
     wordCount: Number,
     tokensUsed: Number,
     totalTokensUsed: Number,
@@ -52,7 +52,7 @@ const messageSchema = new mongoose.Schema(
     files: [fileSchema],
     hasFiles: Boolean,
     fileWordCount: Number,
-    type: { type: String, default: "chat" }, // ✅ Add type field
+    type: { type: String }, // ✅ Add type field
   },
   { _id: false }
 );

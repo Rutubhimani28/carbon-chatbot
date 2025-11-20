@@ -2898,7 +2898,7 @@ export const savePartialResponse = async (req, res) => {
     }
 
     const sessions = await ChatSession.find({ email });
-    let session = await ChatSession.findOne({ sessionId, email });
+    let session = await ChatSession.findOne({ sessionId, email,type: "chat" });
     if (!session) {
       session = new ChatSession({
         email,
@@ -2977,7 +2977,8 @@ export const savePartialResponse = async (req, res) => {
     const globalStats = await getGlobalTokenStats(email);
 
     res.status(200).json({
-      type: "chat",
+      // type: "chat",
+       type: req.body.type || "chat",
       success: true,
       message: "Partial response saved successfully.",
       response: partialResponse,
@@ -3115,7 +3116,7 @@ export const getChatHistory = async (req, res) => {
         .json({ message: "sessionId and email are required" });
     }
 
-    const session = await ChatSession.findOne({ sessionId, email });
+    const session = await ChatSession.findOne({ sessionId, email ,type: "chat"});
     if (!session) {
       return res.status(404).json({ message: "Session not found" });
     }

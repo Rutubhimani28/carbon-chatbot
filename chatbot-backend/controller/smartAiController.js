@@ -1884,7 +1884,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
 
       let html = text;
 
-       // ⭐ NEW: Inline backtick code → escape < >
+      // ⭐ NEW: Inline backtick code → escape < >
       html = html.replace(/`([^`]+)`/g, (match, code) => {
         return `<code>${code
           .replace(/</g, "&lt;")
@@ -2074,7 +2074,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
   }
 };
 
-export const savePartialResponse = async (req, res) => {
+export const saveSmartAIPartialResponse = async (req, res) => {
   try {
     const { email, sessionId, prompt, partialResponse, botName } = req.body;
 
@@ -2086,17 +2086,21 @@ export const savePartialResponse = async (req, res) => {
     }
 
     const sessions = await ChatSession.find({ email });
-    let session = await ChatSession.findOne({ sessionId, email });
+    let session = await ChatSession.findOne({
+      sessionId,
+      email,
+      type: "smart Ai",
+    });
     if (!session) {
       session = new ChatSession({
         email,
         sessionId,
         history: [],
         create_time: new Date(),
+        type: "smart Ai",
       });
     }
 
-    // 🧠 Find the **latest** message (by index) that matches the same prompt
     // This ensures only the most recent identical prompt gets updated
     let targetIndex = -1;
     for (let i = session.history.length - 1; i >= 0; i--) {
@@ -2107,7 +2111,7 @@ export const savePartialResponse = async (req, res) => {
     }
 
     // 🧮 Use same token calculation logic as full response
-    const counts = await handleTokens(sessions, session, {
+    const counts = await handleTokens([], session, {
       prompt,
       response: partialResponse,
       botName,
@@ -2135,23 +2139,32 @@ export const savePartialResponse = async (req, res) => {
       tokensUsed: counts.tokensUsed,
       wordCount: countWords(partialResponse),
       createdAt: new Date(),
+      type: "smart Ai",
     };
     console.log("messageEntry:::::::", messageEntry.tokensUsed);
     // Save to DB
     // session.history.push(messageEntry);
 
+    // if (targetIndex !== -1) {
+    //   // 🩵 Update only the most recent same-prompt message
+    //   session.history[targetIndex] = {
+    //     ...session.history[targetIndex],
+    //     ...messageEntry,
+    //   };
+    // } else {
+    //   // 🆕 If not found, add as new
+    //   session.history.push({
+    //     ...messageEntry,
+    //     createdAt: new Date(),
+    //   });
+    // }
+
+    // ✅ If previous message existed, ALWAYS REPLACE it.
+    // (Even if previous was full response)
     if (targetIndex !== -1) {
-      // 🩵 Update only the most recent same-prompt message
-      session.history[targetIndex] = {
-        ...session.history[targetIndex],
-        ...messageEntry,
-      };
+      session.history[targetIndex] = messageEntry;
     } else {
-      // 🆕 If not found, add as new
-      session.history.push({
-        ...messageEntry,
-        createdAt: new Date(),
-      });
+      session.history.push(messageEntry);
     }
 
     await session.save();
@@ -2163,7 +2176,8 @@ export const savePartialResponse = async (req, res) => {
     const globalStats = await getGlobalTokenStats(email);
 
     res.status(200).json({
-      type: "smart Ai",
+      // type: "smart Ai",
+      type: req.body.type || "chat",
       success: true,
       message: "Partial response saved successfully.",
       response: partialResponse,
@@ -2190,7 +2204,11 @@ export const getSmartAiHistory = async (req, res) => {
         .json({ message: "sessionId and email are required" });
     }
 
-    const session = await ChatSession.findOne({ sessionId, email });
+    const session = await ChatSession.findOne({
+      sessionId,
+      email,
+      type: "smart Ai",
+    });
     if (!session) {
       return res.status(404).json({ message: "Session not found" });
     }
@@ -2298,22 +2316,36 @@ export const getSmartAIAllSessions = async (req, res) => {
         sessionTotalTokensUsed = 0;
 
       // Show partials if exist, else full history
-      const partialMessages = session.history.filter(
-        (msg) =>
-          msg.isComplete === false &&
-          ["chatgpt-5-mini", "claude-3-haiku", "grok", "mistral"].includes(
-            msg.botName
-          )
+      // const partialMessages = session.history.filter(
+      //   (msg) =>
+      //     msg.isComplete === false &&
+      //     ["chatgpt-5-mini", "claude-3-haiku", "grok", "mistral"].includes(
+      //       msg.botName
+      //     )
+      // );
+      const messages = session.history.filter((msg) =>
+        ["chatgpt-5-mini", "claude-3-haiku", "grok", "mistral"].includes(
+          msg.botName
+        )
       );
 
-      const historyToShow =
-        partialMessages.length > 0
-          ? partialMessages
-          : session.history.filter((msg) =>
-              ["chatgpt-5-mini", "claude-3-haiku", "grok", "mistral"].includes(
-                msg.botName
-              )
-            );
+      const partial = messages.find((msg) => msg.isPartial === true);
+
+      let historyToShow;
+
+      if (partial) {
+        historyToShow = [partial]; // show ONLY partial
+      } else {
+        historyToShow = messages.filter((m) => !m.isPartial); // show full messages
+      }
+      // const historyToShow =
+      //   partialMessages.length > 0
+      //     ? partialMessages
+      //     : session.history.filter((msg) =>
+      //         ["chatgpt-5-mini", "claude-3-haiku", "grok", "mistral"].includes(
+      //           msg.botName
+      //         )
+      //       );
 
       // 🧩 Remove duplicate partials
       const seenCombos = new Set();
@@ -2404,3 +2436,4 @@ export const getSmartAIAllSessions = async (req, res) => {
     });
   }
 };
+

@@ -947,47 +947,154 @@ const ChatUI = () => {
     }
   };
 
-  // Add this function
   // const handleStopResponse = async () => {
   //   if (abortControllerRef.current) {
   //     console.log("⛔ User clicked Stop");
-  //     abortControllerRef.current.abort(); // cancel fetch
+  //     abortControllerRef.current.abort();
   //     abortControllerRef.current = null;
-  //     // isStoppedRef.current = true;
   //   }
-  //   isStoppedRef.current = true;
 
+  //   isStoppedRef.current = true;
   //   setIsTypingResponse(false);
 
-  //   const user = JSON.parse(localStorage.getItem("user"));
-  //   const email = user?.email;
+  //   const partialResponse = getCurrentPartialResponse();
+  //   if (!partialResponse || !selectedChatId) return;
 
-  //   // 🧩 Get partial response text from the currently displayed message
-  //   const partialResponse = getCurrentPartialResponse(); // <-- define below
+  //   try {
+  //     const user = JSON.parse(localStorage.getItem("user"));
+  //     const email = user?.email;
 
-  //   // Save partial response to backend
+  //     const messageType =
+  //       activeView === "smartAi"
+  //         ? "smart Ai"
+  //         : activeView === "wrds AiPro"
+  //         ? "wrds AiPro"
+  //         : "chat";
 
-  //   // if (partialResponseRef.current && selectedChatId) {
-  //   if (partialResponse && selectedChatId) {
-  //     try {
-  //       await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({
-  //           email,
-  //           sessionId: selectedChatId,
-  //           prompt: currentPromptRef.current,
-  //           partialResponse,
-  //           // partialResponse: partialResponseRef.current,
-  //           botName: selectedBot,
-  //         }),
-  //       });
-  //       console.log("✅ Partial response saved");
-  //     } catch (err) {
-  //       console.error("Failed to save partial response:", err);
+  //     const res = await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({
+  //         email,
+  //         sessionId: selectedChatId,
+  //         prompt: currentPromptRef.current,
+  //         partialResponse,
+  //         botName: selectedBot,
+  //         type: messageType, // ✅ add type
+  //       }),
+  //     });
+
+  //     const data = await res.json();
+  //     console.log("✅ Partial response saved:", data);
+
+  //     if (data.success) {
+  //       // ✅ Update tokens + UI instantly based on type
+  //       if (messageType === "smart Ai") {
+  //         // 🧠 Update Smart AI message group
+  //         setSmartAIMessageGroups((prev) => {
+  //           const updated = [...prev];
+  //           const messages = updated[0] || [];
+  //           const lastMsgIndex = messages.length - 1;
+
+  //           if (lastMsgIndex >= 0) {
+  //             messages[lastMsgIndex] = {
+  //               ...messages[lastMsgIndex],
+  //               isTyping: false,
+  //               isComplete: false,
+  //               tokensUsed: data.tokensUsed,
+  //               type: "smart Ai",
+  //             };
+  //             updated[0] = messages;
+  //           }
+
+  //           return updated;
+  //         });
+  //       } else if (messageType === "wrds AiPro") {
+  //         // 🧠 Update Smart AI message group
+  //         setSmartAIProMessageGroups((prev) => {
+  //           const updated = [...prev];
+  //           const messages = updated[0] || [];
+  //           const lastMsgIndex = messages.length - 1;
+
+  //           if (lastMsgIndex >= 0) {
+  //             messages[lastMsgIndex] = {
+  //               ...messages[lastMsgIndex],
+  //               isTyping: false,
+  //               isComplete: false,
+  //               tokensUsed: data.tokensUsed,
+  //               type: "wrds AiPro",
+  //             };
+  //             updated[0] = messages;
+  //           }
+
+  //           return updated;
+  //         });
+  //       } else {
+  //         // 💬 Update Chat message group
+  //         setMessageGroups((prev) => {
+  //           const updated = [...prev];
+  //           const messages = updated[0] || [];
+  //           const lastMsgIndex = messages.length - 1;
+
+  //           if (lastMsgIndex >= 0) {
+  //             messages[lastMsgIndex] = {
+  //               ...messages[lastMsgIndex],
+  //               isTyping: false,
+  //               isComplete: false,
+  //               tokensUsed: data.tokensUsed,
+  //               type: "chat",
+  //             };
+  //             updated[0] = messages;
+  //           }
+
+  //           return updated;
+  //         });
+  //       }
+
+  //       // ✅ userTokenStats (AFTER save_partial)
+  //       try {
+  //         const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify({ email }),
+  //         });
+
+  //         if (statsRes.ok) {
+  //           const stats = await statsRes.json();
+  //           if (typeof stats.totalTokensUsed === "number")
+  //             setTotalTokensUsed(stats.totalTokensUsed);
+  //           if (typeof stats.remainingTokens === "number") {
+  //             setSessionRemainingTokens(stats.remainingTokens);
+  //             localStorage.setItem(
+  //               "globalRemainingTokens",
+  //               stats.remainingTokens
+  //             );
+  //           }
+  //         }
+  //       } catch (err) {
+  //         console.warn(
+  //           "⚠️ Failed to refresh stats after partial save:",
+  //           err.message
+  //         );
+  //       }
+
+  //       // re-fetch chat session so DB stays synced
+  //       // await fetchChatSessions();
+  //       // ✅ Re-fetch only relevant sessions
+  //       if (messageType === "smart Ai") {
+  //         await fetchSmartAISessions(); // refresh smart Ai tab
+  //       } else if (messageType === "wrds AiPro") {
+  //         await fetchSmartAIProSessions(); // refresh smart Ai tab
+  //       } else {
+  //         await fetchChatSessions(); // refresh chat tab
+  //       }
   //     }
+  //   } catch (err) {
+  //     console.error("❌ Failed to save partial response:", err);
   //   }
   // };
+
+  // Helper function
 
   const handleStopResponse = async () => {
     if (abortControllerRef.current) {
@@ -1006,13 +1113,6 @@ const ChatUI = () => {
       const user = JSON.parse(localStorage.getItem("user"));
       const email = user?.email;
 
-      const messageType =
-        activeView === "smartAi"
-          ? "smart Ai"
-          : activeView === "wrds AiPro"
-          ? "wrds AiPro"
-          : "chat";
-
       const res = await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1022,7 +1122,7 @@ const ChatUI = () => {
           prompt: currentPromptRef.current,
           partialResponse,
           botName: selectedBot,
-          type: messageType, // ✅ add type
+          type: "chat",
         }),
       });
 
@@ -1030,68 +1130,24 @@ const ChatUI = () => {
       console.log("✅ Partial response saved:", data);
 
       if (data.success) {
-        // ✅ Update tokens + UI instantly based on type
-        if (messageType === "smart Ai") {
-          // 🧠 Update Smart AI message group
-          setSmartAIMessageGroups((prev) => {
-            const updated = [...prev];
-            const messages = updated[0] || [];
-            const lastMsgIndex = messages.length - 1;
+        // ⬇️ Update token count box instantly
+        setMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+          const lastMsgIndex = messages.length - 1;
 
-            if (lastMsgIndex >= 0) {
-              messages[lastMsgIndex] = {
-                ...messages[lastMsgIndex],
-                isTyping: false,
-                isComplete: false,
-                tokensUsed: data.tokensUsed,
-                type: "smart Ai",
-              };
-              updated[0] = messages;
-            }
-
-            return updated;
-          });
-        } else if (messageType === "wrds AiPro") {
-          // 🧠 Update Smart AI message group
-          setSmartAIProMessageGroups((prev) => {
-            const updated = [...prev];
-            const messages = updated[0] || [];
-            const lastMsgIndex = messages.length - 1;
-
-            if (lastMsgIndex >= 0) {
-              messages[lastMsgIndex] = {
-                ...messages[lastMsgIndex],
-                isTyping: false,
-                isComplete: false,
-                tokensUsed: data.tokensUsed,
-                type: "wrds AiPro",
-              };
-              updated[0] = messages;
-            }
-
-            return updated;
-          });
-        } else {
-          // 💬 Update Chat message group
-          setMessageGroups((prev) => {
-            const updated = [...prev];
-            const messages = updated[0] || [];
-            const lastMsgIndex = messages.length - 1;
-
-            if (lastMsgIndex >= 0) {
-              messages[lastMsgIndex] = {
-                ...messages[lastMsgIndex],
-                isTyping: false,
-                isComplete: false,
-                tokensUsed: data.tokensUsed,
-                type: "chat",
-              };
-              updated[0] = messages;
-            }
-
-            return updated;
-          });
-        }
+          if (lastMsgIndex >= 0) {
+            messages[lastMsgIndex] = {
+              ...messages[lastMsgIndex],
+              isTyping: false,
+              isComplete: false,
+              tokensUsed: data.tokensUsed, // ✅ Show partial token count
+              type: "chat",
+            };
+            updated[0] = messages;
+          }
+          return updated;
+        });
 
         // ✅ userTokenStats (AFTER save_partial)
         try {
@@ -1121,22 +1177,189 @@ const ChatUI = () => {
         }
 
         // re-fetch chat session so DB stays synced
-        // await fetchChatSessions();
-        // ✅ Re-fetch only relevant sessions
-        if (messageType === "smart Ai") {
-          await fetchSmartAISessions(); // refresh smart Ai tab
-        } else if (messageType === "wrds AiPro") {
-          await fetchSmartAIProSessions(); // refresh smart Ai tab
-        } else {
-          await fetchChatSessions(); // refresh chat tab
-        }
+        await fetchChatSessions();
       }
     } catch (err) {
       console.error("❌ Failed to save partial response:", err);
     }
   };
 
-  // Helper function
+  const handleStopSmartAIResponse = async () => {
+    if (abortControllerRef.current) {
+      console.log("⛔ User clicked Stop");
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    isStoppedRef.current = true;
+    setIsTypingResponse(false);
+
+    const partialResponse = getCurrentPartialResponse();
+    if (!partialResponse || !selectedChatId) return;
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
+
+      const res = await fetch(`${apiBaseUrl}/api/ai/save_smartAi_partial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          sessionId: selectedChatId,
+          prompt: currentPromptRef.current,
+          partialResponse,
+          botName: selectedBot,
+          type: "smart Ai",
+        }),
+      });
+
+      const data = await res.json();
+      console.log("✅ Partial response saved:", data);
+
+      if (data.success) {
+        // ⬇️ Update token count box instantly
+        setSmartAIMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+          const lastMsgIndex = messages.length - 1;
+
+          if (lastMsgIndex >= 0) {
+            messages[lastMsgIndex] = {
+              ...messages[lastMsgIndex],
+              isTyping: false,
+              isComplete: false,
+              tokensUsed: data.tokensUsed, // ✅ Show partial token count
+              type: "smart Ai",
+            };
+            updated[0] = messages;
+          }
+          return updated;
+        });
+
+        // ✅ userTokenStats (AFTER save_partial)
+        try {
+          const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            if (typeof stats.totalTokensUsed === "number")
+              setTotalTokensUsed(stats.totalTokensUsed);
+            if (typeof stats.remainingTokens === "number") {
+              setSessionRemainingTokens(stats.remainingTokens);
+              localStorage.setItem(
+                "globalRemainingTokens",
+                stats.remainingTokens
+              );
+            }
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ Failed to refresh stats after partial save:",
+            err.message
+          );
+        }
+
+        // re-fetch chat session so DB stays synced
+        await fetchSmartAISessions();
+      }
+    } catch (err) {
+      console.error("❌ Failed to save partial response:", err);
+    }
+  };
+
+  const handleStopSmartAIProResponse = async () => {
+    if (abortControllerRef.current) {
+      console.log("⛔ User clicked Stop");
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    isStoppedRef.current = true;
+    setIsTypingResponse(false);
+
+    const partialResponse = getCurrentPartialResponse();
+    if (!partialResponse || !selectedChatId) return;
+
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const email = user?.email;
+
+      const res = await fetch(`${apiBaseUrl}/api/ai/save_smartAi_Pro_partial`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          sessionId: selectedChatId,
+          prompt: currentPromptRef.current,
+          partialResponse,
+          botName: selectedBot,
+          type: "wrds AiPro",
+        }),
+      });
+
+      const data = await res.json();
+      console.log("✅ Partial response saved:", data);
+
+      if (data.success) {
+        // ⬇️ Update token count box instantly
+        setSmartAIProMessageGroups((prev) => {
+          const updated = [...prev];
+          const messages = updated[0] || [];
+          const lastMsgIndex = messages.length - 1;
+
+          if (lastMsgIndex >= 0) {
+            messages[lastMsgIndex] = {
+              ...messages[lastMsgIndex],
+              isTyping: false,
+              isComplete: false,
+              tokensUsed: data.tokensUsed, // ✅ Show partial token count
+              type: "wrds AiPro",
+            };
+            updated[0] = messages;
+          }
+          return updated;
+        });
+
+        // ✅ userTokenStats (AFTER save_partial)
+        try {
+          const statsRes = await fetch(`${apiBaseUrl}/userTokenStats`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          });
+
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            if (typeof stats.totalTokensUsed === "number")
+              setTotalTokensUsed(stats.totalTokensUsed);
+            if (typeof stats.remainingTokens === "number") {
+              setSessionRemainingTokens(stats.remainingTokens);
+              localStorage.setItem(
+                "globalRemainingTokens",
+                stats.remainingTokens
+              );
+            }
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ Failed to refresh stats after partial save:",
+            err.message
+          );
+        }
+
+        // re-fetch chat session so DB stays synced
+        await fetchSmartAIProSessions();
+      }
+    } catch (err) {
+      console.error("❌ Failed to save partial response:", err);
+    }
+  };
+
   const getCurrentPartialResponse = () => {
     // 🧠 detect which view is active
     const messageType =
@@ -2438,8 +2661,18 @@ const ChatUI = () => {
           // if (isStoppedRef.current) break;
           if (isStoppedRef.current) {
             // ⛔ Stop pressed → save partial response
+            let saveEndpoint = "";
+
+            if (activeView === "chat") {
+              saveEndpoint = `${apiBaseUrl}/api/ai/save_partial`;
+            } else if (activeView === "smartAi" || isSmartAI) {
+              saveEndpoint = `${apiBaseUrl}/api/ai/save_smartAi_partial`;
+            } else if (activeView === "wrds AiPro" || isSmartAIPro) {
+              saveEndpoint = `${apiBaseUrl}/api/ai/save_smartAi_Pro_partial`;
+            }
+
             try {
-              await fetch(`${apiBaseUrl}/api/ai/save_partial`, {
+              await fetch(saveEndpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -5314,7 +5547,8 @@ const ChatUI = () => {
                               <IconButton
                                 onClick={() => {
                                   isStoppedRef.current = true;
-                                  handleStopResponse();
+                                  // handleStopResponse();
+                                  handleStopSmartAIResponse();
                                 }}
                                 color="error"
                                 sx={{ mr: 0.5 }}
@@ -6238,7 +6472,8 @@ const ChatUI = () => {
                               <IconButton
                                 onClick={() => {
                                   isStoppedRef.current = true;
-                                  handleStopResponse();
+                                  // handleStopResponse();
+                                  handleStopSmartAIProResponse();
                                 }}
                                 color="error"
                                 sx={{ mr: 0.5 }}

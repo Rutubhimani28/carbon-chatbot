@@ -6,16 +6,16 @@ export const getGlobalTokenStats = async (email, limit = 50000) => {
   // Chat tokens: sum of tokensUsed across all session messages
   const chatSessions = await ChatSession.find({ email });
   const chatTokensUsed = chatSessions.reduce((sum, session) => {
-    // return (
-    //   sum + session.history.reduce((inner, msg) => inner + (msg.tokensUsed || 0), 0)
-    // );
     return (
-      sum +
-      session.history.reduce(
-        (inner, msg) => inner + (msg.isPartial ? 0 : msg.tokensUsed || 0),
-        0
-      )
+      sum + session.history.reduce((inner, msg) => inner + (msg.tokensUsed || 0), 0)
     );
+    // return (
+    //   sum +
+    //   session.history.reduce(
+    //     (inner, msg) => inner + (msg.isPartial ? 0 : msg.tokensUsed || 0),
+    //     0
+    //   )
+    // );
   }, 0);
 
   // Search tokens: sum of summaryTokenCount across user search history
