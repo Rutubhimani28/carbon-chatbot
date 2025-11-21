@@ -3134,8 +3134,42 @@ const ChatUI = () => {
                   display: "flex",
                   marginLeft: "30px",
                   gap: { xs: 1, sm: 3 },
+                  alignItems: "center",
                 }}
               >
+                <Box
+                  onClick={() => {
+                    createNewChat();
+                    setMobileMenuAnchor(null);
+                    // setSearchSessionResults([]);
+                    // setShowSessionPanel(false);
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: "#1565c0",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "#1976d2",
+                    },
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    // width: "129px",
+                    width: { xs: "63px", sm: "129px" },
+                    height: { xs: "28px", sm: "33px" },
+                  }}
+                >
+                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "10px", sm: "14px" },
+                      fontWeight: 600,
+                    }}
+                  >
+                    New Chat
+                  </Typography>
+                </Box>
+
                 {/* Wrds AI Button */}
                 <Button
                   variant="contained"
@@ -3217,7 +3251,7 @@ const ChatUI = () => {
                     <Box
                       sx={{
                         position: "absolute",
-                        bottom: { xs: -3, sm: 0 },
+                        bottom: { xs: -5, sm: -4 },
                         left: 0,
                         width: "100%",
                         height: "3px",
@@ -3507,7 +3541,42 @@ const ChatUI = () => {
             {/* Right Section - User Menu */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
               {/* Navigation Tabs - Show on md and lg screens */}
-              <Box sx={{ display: "flex", marginLeft: "30px", gap: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  marginLeft: "30px",
+                  gap: 2.5,
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  onClick={() => {
+                    createNewChat();
+                    setMobileMenuAnchor(null);
+                    // setSearchSessionResults([]);
+                    // setShowSessionPanel(false);
+                  }}
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: "#1565c0",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "#1976d2",
+                    },
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    // width: "129px",
+                    width: { md: "117px", lg: "129px" },
+                    height: "37px",
+                  }}
+                >
+                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
+                  <Typography sx={{ fontSize: "16px", fontWeight: 600 }}>
+                    New Chat
+                  </Typography>
+                </Box>
+
                 {/* Wrds AI Button */}
                 <Button
                   variant="contained"
@@ -3538,7 +3607,7 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: { md: "15px", lg: "18px" },
                     px: 2,
                     height: "36px",
                     minWidth: "120px",
@@ -3587,7 +3656,7 @@ const ChatUI = () => {
                     <Box
                       sx={{
                         position: "absolute",
-                        bottom: -8,
+                        bottom: -10,
                         left: 0,
                         width: "100%",
                         height: "3px",
@@ -3628,7 +3697,7 @@ const ChatUI = () => {
                     <Box
                       sx={{
                         position: "absolute",
-                        bottom: -8,
+                        bottom: -10,
                         left: 0,
                         width: "100%",
                         height: "3px",
@@ -3692,7 +3761,7 @@ const ChatUI = () => {
           }}
         >
           {/* New Chat Button - At the top for all views */}
-          <MenuItem
+          {/* <MenuItem
             onClick={() => {
               createNewChat();
               setMobileMenuAnchor(null);
@@ -3713,7 +3782,7 @@ const ChatUI = () => {
             <Typography sx={{ fontSize: "16px", fontWeight: 600 }}>
               New Chat
             </Typography>
-          </MenuItem>
+          </MenuItem> */}
 
           {/* CHATS TITLE (toggle button) */}
           <MenuItem

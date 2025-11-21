@@ -427,7 +427,15 @@ export const getAISearchResults = async (req, res) => {
     };
 
     const summary = await summarizeAsk(query, formattedResults.organic);
-    const tokenCount = await countTokens(summary, "grok-1");
+    // const tokenCount = await countTokens(summary, "grok-1");
+    // Token count with safe fallback
+    let tokenCount;
+    try {
+      tokenCount = await countTokens(summary, "grok-1");   // primary
+    } catch (err) {
+      console.warn("⚠ Grok token count failed → using mistral fallback");
+      tokenCount = await countTokens(summary, "mistral-small-2506");
+    }
     const wordCount = countWords(summary);
 
     // ✅ Global shared token limit check (AI + Search combined)
