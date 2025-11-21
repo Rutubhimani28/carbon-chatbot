@@ -33,7 +33,7 @@ export const handleTokens = async (sessions, session, payload) => {
   if (payload.botName === "chatgpt-5-mini")
     tokenizerModel = "gpt-4o-mini"; // valid model
   else if (payload.botName === "grok")
-    tokenizerModel = "grok-3-mini"; // if supported
+    tokenizerModel = "grok-4-1-fast-non-reasoning"; // if supported
   else if (payload.botName === "claude-3-haiku")
     tokenizerModel = "claude-3-haiku-20240307";
   else if (payload.botName === "mistral") tokenizerModel = "mistral-small-2506";
@@ -1573,6 +1573,17 @@ function getModelBySubject(subject) {
   }
 }
 
+export const fallbackModels = {
+  "chatgpt-5-mini": "grok", // ChatGPT → Grok
+  grok: "chatgpt-5-mini", // Grok → ChatGPT
+  "claude-3-haiku": "mistral", // Claude → Mistral
+  mistral: "claude-3-haiku", // Mistral → Claude
+};
+
+function getFallbackModel(model) {
+  return fallbackModels[model] || null;
+}
+
 export const getSmartAIResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
@@ -1677,7 +1688,7 @@ export const getSmartAIResponse = async (req, res) => {
         botName === "chatgpt-5-mini"
           ? "gpt-4o-mini"
           : botName === "grok"
-          ? "grok-3-mini"
+          ? "grok-4-1-fast-non-reasoning"
           : botName === "claude-3-haiku"
           ? "claude-3-haiku-20240307"
           : botName === "mistral"
@@ -1720,7 +1731,7 @@ export const getSmartAIResponse = async (req, res) => {
     } else if (botName === "grok") {
       apiUrl = "https://api.x.ai/v1/chat/completions";
       apiKey = process.env.GROK_API_KEY;
-      modelName = "grok-3-mini";
+      modelName = "grok-4-1-fast-non-reasoning";
     } else if (botName === "mistral") {
       apiUrl = " https://api.mistral.ai/v1/chat/completions  ";
       apiKey = process.env.MISTRAL_API_KEY;
@@ -1837,6 +1848,72 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       // }
 
       // --------------- FALLBACK LOGIC ---------------
+      // if (!response.ok) {
+      //   const errorText = await response.text();
+
+      //   let errJson = {};
+      //   try {
+      //     errJson = JSON.parse(errorText);
+      //   } catch {}
+
+      //   const apiError = errJson?.error || errJson;
+
+      //   // MISTRAL → CLAUDE FALLBACK
+      //   if (
+      //     botName === "mistral" &&
+      //     (apiError?.code === "3505" ||
+      //       apiError?.type === "service_tier_capacity_exceeded" ||
+      //       apiError?.message?.includes("capacity"))
+      //   ) {
+      //     console.log(
+      //       "⚠️ Mistral overloaded → Switching to Claude-3-Haiku fallback"
+      //     );
+
+      //     // switch bot
+      //     botName = "claude-3-haiku";
+      //     apiUrl = "https://api.anthropic.com/v1/messages";
+      //     apiKey = process.env.CLAUDE_API_KEY;
+      //     modelName = "claude-3-haiku-20240307";
+
+      //     const claudeHeaders = {
+      //       "Content-Type": "application/json",
+      //       "x-api-key": apiKey,
+      //       "anthropic-version": "2023-06-01",
+      //     };
+
+      //     const claudePayload = {
+      //       model: modelName,
+      //       max_tokens: maxWords * 2,
+      //       system: messages[0].content,
+      //       messages: [{ role: "user", content: combinedPrompt }],
+      //     };
+
+      //     const claudeRes = await fetch(apiUrl, {
+      //       method: "POST",
+      //       headers: claudeHeaders,
+      //       body: JSON.stringify(claudePayload),
+      //     });
+
+      //     if (!claudeRes.ok) {
+      //       const txt = await claudeRes.text();
+      //       throw new Error("Fallback Claude Error: " + txt);
+      //     }
+
+      //     const claudeJson = await claudeRes.json();
+      //     const fallbackReply = claudeJson?.content?.[0]?.text?.trim() || "";
+
+      //     if (!fallbackReply) {
+      //       throw new Error("Fallback Claude returned empty response");
+      //     }
+
+      //     return fallbackReply;
+      //   }
+
+      //   // other errors → return original error
+      //   throw new Error(errorText);
+      // }
+
+      // ----------- UNIVERSAL FALLBACK LOGIC -----------
       if (!response.ok) {
         const errorText = await response.text();
 
@@ -1847,59 +1924,79 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
 
         const apiError = errJson?.error || errJson;
 
-        // MISTRAL → CLAUDE FALLBACK
-        if (
-          botName === "mistral" &&
-          (apiError?.code === "3505" ||
-            apiError?.type === "service_tier_capacity_exceeded" ||
-            apiError?.message?.includes("capacity"))
-        ) {
-          console.log(
-            "⚠️ Mistral overloaded → Switching to Claude-3-Haiku fallback"
-          );
+        console.log("Primary model failed:", apiError);
 
-          // switch bot
-          botName = "claude-3-haiku";
+        // Get fallback model
+        const fallback = getFallbackModel(botName);
+        if (!fallback) throw new Error(errorText);
+
+        console.log(`⚠️ Switching to fallback model: ${fallback}`);
+
+        // Assign new bot/model configs
+        botName = fallback;
+
+        if (fallback === "chatgpt-5-mini") {
+          apiUrl = "https://api.openai.com/v1/chat/completions";
+          apiKey = process.env.OPENAI_API_KEY;
+          modelName = "gpt-4o-mini";
+        } else if (fallback === "grok") {
+          apiUrl = "https://api.x.ai/v1/chat/completions";
+          apiKey = process.env.GROK_API_KEY;
+          modelName = "grok-4-1-fast-non-reasoning";
+        } else if (fallback === "claude-3-haiku") {
           apiUrl = "https://api.anthropic.com/v1/messages";
           apiKey = process.env.CLAUDE_API_KEY;
           modelName = "claude-3-haiku-20240307";
-
-          const claudeHeaders = {
-            "Content-Type": "application/json",
-            "x-api-key": apiKey,
-            "anthropic-version": "2023-06-01",
-          };
-
-          const claudePayload = {
-            model: modelName,
-            max_tokens: maxWords * 2,
-            system: messages[0].content,
-            messages: [{ role: "user", content: combinedPrompt }],
-          };
-
-          const claudeRes = await fetch(apiUrl, {
-            method: "POST",
-            headers: claudeHeaders,
-            body: JSON.stringify(claudePayload),
-          });
-
-          if (!claudeRes.ok) {
-            const txt = await claudeRes.text();
-            throw new Error("Fallback Claude Error: " + txt);
-          }
-
-          const claudeJson = await claudeRes.json();
-          const fallbackReply = claudeJson?.content?.[0]?.text?.trim() || "";
-
-          if (!fallbackReply) {
-            throw new Error("Fallback Claude returned empty response");
-          }
-
-          return fallbackReply;
+        } else if (fallback === "mistral") {
+          apiUrl = "https://api.mistral.ai/v1/chat/completions";
+          apiKey = process.env.MISTRAL_API_KEY;
+          modelName = "mistral-small-2506";
         }
 
-        // other errors → return original error
-        throw new Error(errorText);
+        // Build fallback payload
+        const fallbackPayload =
+          fallback === "claude-3-haiku"
+            ? {
+                model: modelName,
+                max_tokens: maxWords * 2,
+                system: messages[0].content,
+                messages: [{ role: "user", content: combinedPrompt }],
+              }
+            : {
+                model: modelName,
+                messages,
+                temperature: 0.7,
+                max_tokens: maxWords * 2,
+              };
+
+        // Build fallback headers
+        const fallbackHeaders =
+          fallback === "claude-3-haiku"
+            ? {
+                "Content-Type": "application/json",
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
+              }
+            : {
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              };
+
+        // Retry with fallback model
+        const fbRes = await fetch(apiUrl, {
+          method: "POST",
+          headers: fallbackHeaders,
+          body: JSON.stringify(fallbackPayload),
+        });
+
+        if (!fbRes.ok) {
+          throw new Error("Fallback failed: " + (await fbRes.text()));
+        }
+
+        const fbJson = await fbRes.json();
+        return fallback === "claude-3-haiku"
+          ? fbJson?.content?.[0]?.text?.trim()
+          : fbJson?.choices?.[0]?.message?.content?.trim();
       }
 
       const data = await response.json();
