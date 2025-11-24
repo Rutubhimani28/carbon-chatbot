@@ -2972,12 +2972,12 @@ const ChatUI = () => {
           alignItems: isSmallScreen ? "flex-start" : "center",
           justifyContent: "space-between",
           ml: 0,
-          px: { xs: 1, sm: 2, md: 2 ,lg:2},
+          px: { xs: 1, sm: 2, md: 2, lg: 2 },
           flexShrink: 0,
           bgcolor: "#1268fb",
           zIndex: 100,
           // width: isXS ? "100%" : "100%",
-          width:{xs:"97%", sm:"97%",md:"99%" , lg:"99%"},
+          width: { xs: "97%", sm: "97%", md: "99%", lg: "99%" },
           // pr:2,
           position: "fixed",
           // position: isXS ? "fixed" : "sticky",
@@ -3227,12 +3227,12 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontFamily: "Calibri, sans-serif",
                     wordWrap: "nowrap",
                     px: { xs: 1, sm: 2 },
                     height: { xs: "27px", sm: "33px" },
-                    minWidth: "80px",
+                    minWidth: "72px",
                     "&:hover": {
                       borderColor: "#fff",
                       bgcolor: "rgba(255,255,255,0.1)",
@@ -4465,7 +4465,7 @@ const ChatUI = () => {
           mb: 0,
           pb: 0,
           // pt: isXS ? "110px" : "76px",
-          pt: { xs: "110px", sm: "107px", md:  "80px" , lg:  "80px"},
+          pt: { xs: "110px", sm: "107px", md: "80px", lg: "80px" },
         }}
       >
         {activeView === "chat" ? (
@@ -4494,7 +4494,9 @@ const ChatUI = () => {
                   display: "flex",
                   flexDirection: "column",
                   flexGrow: 1,
-                  overflow: "auto",
+                  overflowY: "auto",
+                  overflowX: "hidden",
+                  vw: "100%",
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   minHeight: 0, // 🔹 Important for flex scrolling
                   /* 🔹 Scrollbar hide */
@@ -4668,7 +4670,11 @@ const ChatUI = () => {
                               bgcolor: "#2F67F6",
                               color: "#fff",
                               borderRadius: 3,
-                              minWidth: "300px",
+                              minWidth: {
+                                xs: "280px",
+                                sm: "280px",
+                                md: "300px",
+                              },
                               maxWidth: { xs: "88%", sm: "90%", md: "89%" },
                             }}
                           >
