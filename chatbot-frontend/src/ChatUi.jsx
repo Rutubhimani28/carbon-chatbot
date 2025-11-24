@@ -3185,7 +3185,7 @@ const ChatUI = () => {
                   />
                   <Typography
                     sx={{
-                      fontSize: { xs: "11px" },
+                      fontSize: { xs: "9px" },
                       fontWeight: 600,
                       fontFamily: "Calibri, sans-serif",
                     }}
@@ -3227,7 +3227,7 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "11px",
+                    fontSize: "9px",
                     fontFamily: "Calibri, sans-serif",
                     wordWrap: "nowrap",
                     px: { xs: 1, sm: 2 },
