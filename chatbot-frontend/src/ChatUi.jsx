@@ -3183,11 +3183,11 @@ const ChatUI = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     // width: "129px",
-                    width: { xs: "75px", sm: "129px" },
+                    width: { xs: "71px", sm: "129px" },
                     height: { xs: "28px", sm: "33px" },
                   }}
                 >
-                  <AddIcon fontSize="small" sx={{ mr: 0 }} />
+                  <AddIcon fontSize="small" sx={{ mr: 0 ,width:"15px", height:"18px"}} />
                   <Typography
                     sx={{
                       fontSize: { xs: "11px" },
