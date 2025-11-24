@@ -2972,13 +2972,15 @@ const ChatUI = () => {
           alignItems: isSmallScreen ? "flex-start" : "center",
           justifyContent: "space-between",
           ml: 0,
-          px: { xs: 1, sm: 2, md: 2 },
+          px: { xs: 1, sm: 2, md: 2 ,lg:2},
           flexShrink: 0,
           bgcolor: "#1268fb",
           zIndex: 100,
-          // width: "100%",
-          // position: "sticky",
-          position: isXS ? "fixed" : "sticky",
+          // width: isXS ? "100%" : "100%",
+          width:{xs:"97%", sm:"97%",md:"99%" , lg:"99%"},
+          // pr:2,
+          position: "fixed",
+          // position: isXS ? "fixed" : "sticky",
           top: 0,
           height: isSmallScreen
             ? "auto"
@@ -3173,11 +3175,14 @@ const ChatUI = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     // width: "129px",
-                    width: { xs: "71px", sm: "129px" },
+                    width: { xs: "65px", sm: "129px" },
                     height: { xs: "28px", sm: "33px" },
                   }}
                 >
-                  <AddIcon fontSize="small" sx={{ mr: 0 ,width:"15px", height:"18px"}} />
+                  <AddIcon
+                    fontSize="small"
+                    sx={{ mr: 0, width: "15px", height: "18px" }}
+                  />
                   <Typography
                     sx={{
                       fontSize: { xs: "11px" },
@@ -4459,7 +4464,8 @@ const ChatUI = () => {
           px: { xs: 2, sm: 3, md: 2 },
           mb: 0,
           pb: 0,
-          pt: isXS ? "110px" : "0px",
+          // pt: isXS ? "110px" : "76px",
+          pt: { xs: "110px", sm: "107px", md:  "80px" , lg:  "80px"},
         }}
       >
         {activeView === "chat" ? (
@@ -5055,11 +5061,12 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
-                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
-                  width: "100%",
+                  p: { xs: 2, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  // width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
+                  // px: { xs: 2, sm: 0, md: 0}
                 }}
               >
                 <Box
