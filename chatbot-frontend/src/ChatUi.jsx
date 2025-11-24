@@ -2976,7 +2976,9 @@ const ChatUI = () => {
           flexShrink: 0,
           bgcolor: "#1268fb",
           zIndex: 100,
-          position: "sticky",
+          // width: "100%",
+          // position: "sticky",
+          position: isXS ? "fixed" : "sticky",
           top: 0,
           height: isSmallScreen
             ? "auto"
@@ -3015,20 +3017,45 @@ const ChatUI = () => {
                       width: "100%",
                       "& .MuiSelect-select": {
                         fontSize: "13px",
+                        fontFamily: "Calibri, sans-serif",
                         py: 0.5,
                       },
                     }}
                   >
-                    <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
+                    <MenuItem
+                      value="chatgpt-5-mini"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
                       ChatGPT
                     </MenuItem>
-                    <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
+                    <MenuItem
+                      value="claude-3-haiku"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
                       Claude
                     </MenuItem>
-                    <MenuItem value="grok" sx={{ fontSize: "13px" }}>
+                    <MenuItem
+                      value="grok"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
                       Grok
                     </MenuItem>
-                    <MenuItem value="mistral" sx={{ fontSize: "13px" }}>
+                    <MenuItem
+                      value="mistral"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
                       Mistral
                     </MenuItem>
                   </Select>
@@ -3056,7 +3083,14 @@ const ChatUI = () => {
                       },
                     }}
                   >
-                    <MenuItem value="" disabled sx={{ fontSize: "13px" }}>
+                    <MenuItem
+                      value=""
+                      disabled
+                      sx={{
+                        fontSize: "13px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
                       AI History
                     </MenuItem>
 
@@ -3146,8 +3180,9 @@ const ChatUI = () => {
                   <AddIcon fontSize="small" sx={{ mr: 0 }} />
                   <Typography
                     sx={{
-                      fontSize: { xs: "10px", sm: "14px" },
+                      fontSize: { xs: "11px" },
                       fontWeight: 600,
+                      fontFamily: "Calibri, sans-serif",
                     }}
                   >
                     New Chat
@@ -3163,6 +3198,7 @@ const ChatUI = () => {
                     textTransform: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
+                    fontFamily: "Calibri, sans-serif",
                     px: { xs: 0, sm: 2 },
                     // height: "28px",
                     height: { xs: "28px", sm: "33px" },
@@ -3186,7 +3222,8 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "11px",
+                    fontSize: "12px",
+                    fontFamily: "Calibri, sans-serif",
                     wordWrap: "nowrap",
                     px: { xs: 1, sm: 2 },
                     height: { xs: "27px", sm: "33px" },
@@ -3218,7 +3255,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: { xs: "15px", sm: "16px" },
+                      fontSize: { xs: "15px" },
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "chat" ? 600 : 400,
                       color:
                         activeView === "chat"
@@ -3259,7 +3297,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: { xs: "15px", sm: "16px" },
+                      fontSize: { xs: "15px" },
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "search2" ? 600 : 400,
                       color:
                         activeView === "search2"
@@ -3307,7 +3346,7 @@ const ChatUI = () => {
               }}
             >
               {/* Logo */}
-              <img src={Words2} height={57} width={120} alt="Logo" />
+              <img src={Words2} height={60} width={124} alt="Logo" />
 
               {/* Hamburger Menu */}
               <Box
@@ -3364,21 +3403,34 @@ const ChatUI = () => {
                     width: { xs: "60%", sm: "100%" },
                     //  px: { xs: 1, sm: 2, md: 2 },
                     "& .MuiSelect-select": {
-                      fontSize: "13px",
+                      fontSize: "16px",
+                      fontFamily: "Calibri, sans-serif",
                       py: 0.5,
                     },
                   }}
                 >
-                  <MenuItem value="chatgpt-5-mini" sx={{ fontSize: "13px" }}>
+                  <MenuItem
+                    value="chatgpt-5-mini"
+                    sx={{ fontSize: "16px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     ChatGPT
                   </MenuItem>
-                  <MenuItem value="claude-3-haiku" sx={{ fontSize: "13px" }}>
+                  <MenuItem
+                    value="claude-3-haiku"
+                    sx={{ fontSize: "16px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     Claude
                   </MenuItem>
-                  <MenuItem value="grok" sx={{ fontSize: "13px" }}>
+                  <MenuItem
+                    value="grok"
+                    sx={{ fontSize: "16px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     Grok
                   </MenuItem>
-                  <MenuItem value="mistral" sx={{ fontSize: "13px" }}>
+                  <MenuItem
+                    value="mistral"
+                    sx={{ fontSize: "16px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     Mistral
                   </MenuItem>
                 </Select>
@@ -3408,7 +3460,11 @@ const ChatUI = () => {
                     },
                   }}
                 >
-                  <MenuItem value="" disabled sx={{ fontSize: "13px" }}>
+                  <MenuItem
+                    value=""
+                    disabled
+                    sx={{ fontSize: "13px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     AI History
                   </MenuItem>
                   {historyLoading ? (
@@ -3463,15 +3519,16 @@ const ChatUI = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     // width: "129px",
-                    width: { xs: "63px", sm: "129px" },
+                    width: { xs: "63px", sm: "126px" },
                     height: { xs: "28px", sm: "33px" },
                   }}
                 >
                   <AddIcon fontSize="small" sx={{ mr: 1 }} />
                   <Typography
                     sx={{
-                      fontSize: { xs: "10px", sm: "14px" },
+                      fontSize: { xs: "10px", sm: "17px" },
                       fontWeight: 600,
+                      fontFamily: "Calibri, sans-serif",
                     }}
                   >
                     New Chat
@@ -3486,7 +3543,8 @@ const ChatUI = () => {
                     bgcolor: "#1976d2",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "14px",
+                    fontSize: "18px",
+                    fontFamily: "Calibri, sans-serif",
                     px: { xs: 0, sm: 2 },
                     // height: "28px",
                     height: { xs: "28px", sm: "33px" },
@@ -3510,7 +3568,8 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "14px",
+                    fontSize: "17px",
+                    fontFamily: "Calibri, sans-serif",
                     px: { xs: 0, sm: 2 },
                     height: { xs: "28px", sm: "33px" },
                     minWidth: "120px",
@@ -3541,7 +3600,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: { xs: "15px", sm: "16px" },
+                      fontSize: { xs: "15px", sm: "17px" },
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "chat" ? 600 : 400,
                       color:
                         activeView === "chat"
@@ -3582,7 +3642,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: { xs: "15px", sm: "16px" },
+                      fontSize: { xs: "15px", sm: "17px" },
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "search2" ? 600 : 400,
                       color:
                         activeView === "search2"
@@ -3765,27 +3826,46 @@ const ChatUI = () => {
                         height: "36px",
                         width: "180px",
                         "& .MuiSelect-select": {
-                          fontSize: "16px",
+                          fontSize: "18px",
+                          fontFamily: "Calibri, sans-serif",
                           py: 1,
                         },
                       }}
                     >
                       <MenuItem
                         value="chatgpt-5-mini"
-                        sx={{ fontSize: "16px" }}
+                        sx={{
+                          fontSize: "18px",
+                          fontFamily: "Calibri, sans-serif",
+                        }}
                       >
                         ChatGPT
                       </MenuItem>
                       <MenuItem
                         value="claude-3-haiku"
-                        sx={{ fontSize: "16px" }}
+                        sx={{
+                          fontSize: "18px",
+                          fontFamily: "Calibri, sans-serif",
+                        }}
                       >
                         Claude
                       </MenuItem>
-                      <MenuItem value="grok" sx={{ fontSize: "16px" }}>
+                      <MenuItem
+                        value="grok"
+                        sx={{
+                          fontSize: "18px",
+                          fontFamily: "Calibri, sans-serif",
+                        }}
+                      >
                         Grok
                       </MenuItem>
-                      <MenuItem value="mistral" sx={{ fontSize: "16px" }}>
+                      <MenuItem
+                        value="mistral"
+                        sx={{
+                          fontSize: "18px",
+                          fontFamily: "Calibri, sans-serif",
+                        }}
+                      >
                         Mistral
                       </MenuItem>
                     </Select>
@@ -3816,7 +3896,11 @@ const ChatUI = () => {
                     },
                   }}
                 >
-                  <MenuItem value="" disabled sx={{ fontSize: "16px" }}>
+                  <MenuItem
+                    value=""
+                    disabled
+                    sx={{ fontSize: "16px", fontFamily: "Calibri, sans-serif" }}
+                  >
                     AI History
                   </MenuItem>
                   {historyLoading ? (
@@ -3880,7 +3964,13 @@ const ChatUI = () => {
                   }}
                 >
                   <AddIcon fontSize="small" sx={{ mr: 1 }} />
-                  <Typography sx={{ fontSize: "16px", fontWeight: 600 }}>
+                  <Typography
+                    sx={{
+                      fontSize: "18px",
+                      fontWeight: 600,
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
                     New Chat
                   </Typography>
                 </Box>
@@ -3893,10 +3983,11 @@ const ChatUI = () => {
                     bgcolor: "#1976d2",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: "18px",
+                    fontSize: "19px",
                     px: 2,
                     height: "36px",
                     minWidth: "100px",
+                    fontFamily: "Calibri, sans-serif",
                   }}
                   onClick={() => {
                     setActiveView("smartAi");
@@ -3915,7 +4006,8 @@ const ChatUI = () => {
                     color: "#fff",
                     textTransform: "none",
                     borderRadius: "8px",
-                    fontSize: { md: "15px", lg: "18px" },
+                    fontSize: { md: "15px", lg: "19px" },
+                    fontFamily: "Calibri, sans-serif",
                     px: 2,
                     height: "36px",
                     minWidth: "120px",
@@ -3946,7 +4038,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: "18px",
+                      fontSize: "19px",
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "chat" ? 600 : 400,
                       color:
                         activeView === "chat"
@@ -3987,7 +4080,8 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: "18px",
+                      fontSize: "19px",
+                      fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "search2" ? 600 : 400,
                       color:
                         activeView === "search2"
@@ -4105,7 +4199,13 @@ const ChatUI = () => {
               alignItems: "center",
             }}
           >
-            <Typography sx={{ fontSize: "15px", fontWeight: 600 }}>
+            <Typography
+              sx={{
+                fontSize: "18px",
+                fontWeight: 600,
+                fontFamily: "Calibri, sans-serif",
+              }}
+            >
               Session History
             </Typography>
             <KeyboardArrowDownIcon
@@ -4281,7 +4381,11 @@ const ChatUI = () => {
             }}
           >
             <PersonRoundedIcon fontSize="small" sx={{ mr: 1 }} />
-            <Typography sx={{ fontSize: "14px" }}>Profile</Typography>
+            <Typography
+              sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
+            >
+              Profile
+            </Typography>
           </MenuItem>
 
           <MenuItem
@@ -4292,7 +4396,11 @@ const ChatUI = () => {
             }}
           >
             <LogoutTwoToneIcon fontSize="small" sx={{ mr: 1, color: "red" }} />
-            <Typography sx={{ fontSize: "14px" }}>Logout</Typography>
+            <Typography
+              sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
+            >
+              Logout
+            </Typography>
           </MenuItem>
         </Menu>
 
@@ -4351,6 +4459,7 @@ const ChatUI = () => {
           px: { xs: 2, sm: 3, md: 2 },
           mb: 0,
           pb: 0,
+          pt: isXS ? "110px" : "0px",
         }}
       >
         {activeView === "chat" ? (
@@ -4374,7 +4483,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: isXS ? "60vh" : "64vh",
-                  height: { xs: "60vh", sm: "66vh", md: "66vh", lg: "64vh" },
+                  height: { xs: "63vh", sm: "66vh", md: "66vh", lg: "69vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -5279,7 +5388,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "60vh", sm: "66vh", md: "66vh", lg: "64vh" },
+                  height: { xs: "60vh", sm: "66vh", md: "66vh", lg: "69vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -6211,7 +6320,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "60vh", sm: "66vh", md: "66vh", lg: "64vh" },
+                  height: { xs: "60vh", sm: "66vh", md: "66vh", lg: "69vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
