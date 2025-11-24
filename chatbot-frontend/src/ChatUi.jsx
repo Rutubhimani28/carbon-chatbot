@@ -5067,8 +5067,8 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
-                  p: { xs: 2, sm: 1, md: 2 }, // 🔹 Reduced padding
-                  // width: "100%",
+                  p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
+                  width: { xs: "92%", sm: "100%", md: "100%" },
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
@@ -5961,8 +5961,10 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
+                  // p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
-                  width: "100%",
+                  width: { xs: "92%", sm: "100%", md: "100%" },
+                  // width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
@@ -6876,8 +6878,10 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
+                  // p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
-                  width: "100%",
+                  width: { xs: "92%", sm: "100%", md: "100%" },
+                  // width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
