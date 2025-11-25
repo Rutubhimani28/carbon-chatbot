@@ -56,6 +56,7 @@ import chat from "././assets/chat.webp";
 import Words1 from "././assets/words1.webp"; // path adjust karo
 // import Words2 from "././assets/words2.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
+import Msg_logo1 from "././assets/Msg_logo.png"; // path adjust karo
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
@@ -4148,6 +4149,8 @@ const ChatUI = () => {
             </Box>
           </>
         )}
+
+        {/* <img src={Msg_logo1} height={56} width={110} alt="Logo" /> */}
 
         {/* Mobile Menu with Searchable Session List - Removed Chat, Browsing and Wrds AI options */}
         <Menu

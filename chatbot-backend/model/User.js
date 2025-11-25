@@ -20,10 +20,18 @@ const userSchema = new mongoose.Schema(
     lastName: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     mobile: { type: String, required: true },
-    country: { type: String, required: true },
+    // country: { type: String, required: true },
     dateOfBirth: { type: Date, required: true },
-    username: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    ageGroup: { type: String, required: true },
+
+    parentName: { type: String, required: false },
+    parentEmail: { type: String, required: false },
+    parentMobile: { type: String, required: false },
+
+    subscriptionPlan: { type: String, required: true },
+    childPlan: { type: String, required: true },
+    subscriptionType: { type: String, required: true },
+    password: { type: String, required: false  },
     remainingTokens: { type: Number, default: 50000 },
   },
   { timestamps: true }
