@@ -629,6 +629,8 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Words2 from "././assets/words2.png"; // path adjust karo
+import { useTheme, useMediaQuery } from "@mui/material";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -671,6 +673,9 @@ const Register = () => {
   const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
   const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
   const subscriptionTypes = ["Monthly", "Yearly"];
+
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -792,232 +797,284 @@ const Register = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box
-        sx={{
-          marginTop: { xs: 1, sm: 4, md: 8 },
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: { xs: 1, sm: 2, md: 2 },
-          width: "100vw", // 🔹 Full width on mobile
-          maxWidth: "100%", // 🔹 Prevent overflow
-          // overflowX: "hidden",
-        }}
-      >
+      <>
+        {/* Header */}
         <Box
           sx={{
-            padding: { xs: "13px", sm: 3, md: 4 },
+            display: "flex",
+            flexDirection: isSmallScreen ? "column" : "row",
+            alignItems: isSmallScreen ? "flex-start" : "center",
+            justifyContent: "space-between",
+            px: { xs: 1, sm: 2, md: 2, lg: 2 },
+            bgcolor: "#1268fb",
+            zIndex: 100,
+            width: "100%",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            // height: isSmallScreen
+            //   ? "auto"
+            height: { xs: "80px", sm: "85px", lg: "102px" },
+            minHeight: isSmallScreen ? "75px" : "102px",
+            boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+            py: isSmallScreen ? 1 : 0,
+          }}
+        >
+          {/* HEADER CONTENT */}
+          <img src={Words2} height={90} width={180} alt="Logo" />
+        </Box>
+
+        {/* <Box
+          sx={{
+            marginTop: { xs: 1, sm: 4, md: 8 },
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            // width: "100%",
-            maxWidth: { xs: "77%", sm: 450, md: 500, lg: 500 },
-            border: "1px solid #ccc",
-            borderRadius: 4,
-            boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.35)",
+            padding: { xs: 1, sm: 2, md: 2 },
+            width: "100vw", // 🔹 Full width on mobile
+            maxWidth: "100%", // 🔹 Prevent overflow
+            height: "100vh", // full screen height
+              // overflowY: "auto", // content scroll only
+              // overflowX: "hidden",
+            pt: { xs: "90px", sm: "100px", md: "120px" },
+            // overflowX: "hidden",
+            // flexWrap: "wrap",
+          }}
+        > */}
+        <Box
+          sx={{
+            marginTop: { xs: 1, sm: 4, md: 3 },
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: { xs: 1, sm: 2, md: 2 },
+            width: "100vw",
+            maxWidth: "100%",
+            minHeight: "100vh",
+            // overflow: "visible",
+            pt: { xs: "90px", sm: "100px", md: "70px" }, // compensate header height
           }}
         >
-          <Typography
-            component="h1"
-            variant="h5"
-            sx={{ mb: { xs: 2, sm: 2, md: 2 } }}
+          <Box
+            sx={{
+              padding: { xs: "13px", sm: 3, md: 4 },
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              // width: "100%",
+              maxWidth: { xs: "77%", sm: 450, md: 500, lg: 500 },
+              border: "1px solid #ccc",
+              borderRadius: 4,
+              boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.35)",
+              // mt: { xs: "112px", sm: 12, md: "45px" },
+            }}
           >
-            Create Account
-          </Typography>
-
-          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-            {/* First Name & Last Name - In one row */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: 2,
-                mb: 2,
-              }}
+            <Typography
+              component="h1"
+              variant="h5"
+              sx={{ mb: { xs: 2, sm: 2, md: 2 } }}
             >
-              <Box sx={{ flex: 1 }}>
-                <InputLabel
-                  sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                    fontFamily: "Calibri, sans-serif",
-                  }}
-                >
-                  First Name *
-                </InputLabel>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    sx: {
-                      width: { xs: "230px", sm: "210px" },
-                      height: { xs: 30, sm: 42 },
-                      fontSize: { xs: "15px", sm: "17px" },
-                    },
-                  }}
-                />
-              </Box>
-              <Box sx={{ flex: 1 }}>
-                <InputLabel
-                  sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                    fontFamily: "Calibri, sans-serif",
-                  }}
-                >
-                  Last Name *
-                </InputLabel>
-                <TextField
-                  fullWidth
-                  size="small"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    sx: {
-                      width: { xs: "230px", sm: "210px" },
-                      height: { xs: 30, sm: 42 },
-                      fontSize: { xs: "15px", sm: "17px" },
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
+              Create Account
+            </Typography>
 
-            {/* Email */}
-            <Box sx={{ mb: 2 }}>
-              <InputLabel
+            <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+              {/* First Name & Last Name - In one row */}
+              <Box
                 sx={{
-                  fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                  fontFamily: "Calibri, sans-serif",
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: 2,
+                  mb: 2,
                 }}
               >
-                Email {formData.ageGroup === "<13" ? "(Optional)" : "*"}
-              </InputLabel>
-              <TextField
-                fullWidth
-                size="small"
-                type="email"
-                name="email"
-                value={formData.email}
-                disabled={formData.ageGroup === "<13"}
-                onChange={handleChange}
-                required={formData.ageGroup !== "<13"}
-                InputProps={{
-                  sx: {
-                    width: { xs: "230px", sm: "440px" },
-                    height: { xs: 30, sm: 42 },
-                    fontSize: { xs: "15px", sm: "17px" },
-                  },
-                }}
-              />
-            </Box>
+                <Box sx={{ flex: 1 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    First Name *
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "210px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Last Name *
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "210px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
 
-            {/* Mobile */}
-            <Box sx={{ mb: 2 }}>
-              <InputLabel
+              {/* Country & Date of Birth - In one row */}
+              <Box
                 sx={{
-                  fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                  fontFamily: "Calibri, sans-serif",
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: { xs: 1.5, sm: 2 },
+                  mb: { xs: 1.5, sm: 2 },
                 }}
               >
-                Mobile Number *
-              </InputLabel>
-              <TextField
-                fullWidth
-                size="small"
-                name="mobile"
-                value={formData.mobile}
-                onChange={handleChange}
-                placeholder="+1234567890"
-                required
-                InputProps={{
-                  sx: {
-                    width: { xs: "230px", sm: "440px" },
-                    height: { xs: 30, sm: 42 },
-                    fontSize: { xs: "15px", sm: "17px" },
-                  },
-                }}
-              />
-            </Box>
-
-            {/* Country & Date of Birth - In one row */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: { xs: "column", sm: "row" },
-                gap: { xs: 1.5, sm: 2 },
-                mb: { xs: 1.5, sm: 2 },
-              }}
-            >
-              <Box sx={{ flex: 1 }}>
-                <InputLabel
-                  sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                    fontFamily: "Calibri, sans-serif",
-                  }}
-                >
-                  Date of Birth *
-                </InputLabel>
-                <DatePicker
-                  value={formData.dateOfBirth}
-                  onChange={handleDateChange}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      fullWidth: true,
-                      required: true,
-                      InputProps: {
-                        sx: {
-                          width: { xs: "230px", sm: "210px" },
-                          height: { xs: 30, sm: 42 },
-                          fontSize: { xs: "15px", sm: "17px" },
+                <Box sx={{ flex: 1 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Date of Birth *
+                  </InputLabel>
+                  <DatePicker
+                    value={formData.dateOfBirth}
+                    onChange={handleDateChange}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true,
+                        required: true,
+                        InputProps: {
+                          sx: {
+                            width: { xs: "230px", sm: "210px" },
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
                         },
                       },
-                    },
-                  }}
-                  maxDate={new Date()}
-                />
+                    }}
+                    maxDate={new Date()}
+                  />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Age Group *
+                  </InputLabel>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    name="ageGroup"
+                    value={formData.ageGroup}
+                    required
+                    onChange={handleChange}
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "210px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  >
+                    {ageGroups.map((age) => (
+                      <MenuItem key={age} value={age}>
+                        {age}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
               </Box>
-              <Box sx={{ flex: 1 }}>
-                <InputLabel
-                  sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                    fontFamily: "Calibri, sans-serif",
-                  }}
-                >
-                  Age Group *
-                </InputLabel>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  name="ageGroup"
-                  value={formData.ageGroup}
-                  required
-                  onChange={handleChange}
-                  InputProps={{
-                    sx: {
-                      width: { xs: "230px", sm: "210px" },
-                      height: { xs: 30, sm: 42 },
-                      fontSize: { xs: "15px", sm: "17px" },
-                    },
-                  }}
-                >
-                  {ageGroups.map((age) => (
-                    <MenuItem key={age} value={age}>
-                      {age}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
-            </Box>
 
-            {/* Username */}
-            {/* <Box sx={{ mb: 2 }}>
+              {/* Email */}
+              {formData.ageGroup !== "<13" && (
+                <Box sx={{ mb: 2 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Email {formData.ageGroup === "<13" ? "(Optional)" : "*"}
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    disabled={formData.ageGroup === "<13"}
+                    onChange={handleChange}
+                    required={formData.ageGroup !== "<13"}
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "440px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Mobile */}
+              {formData.ageGroup !== "<13" && (
+                <Box sx={{ mb: 2 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Mobile Number *
+                  </InputLabel>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="+1234567890"
+                    required
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "440px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Username */}
+              {/* <Box sx={{ mb: 2 }}>
               <InputLabel>Username *</InputLabel>
               <TextField
                 fullWidth
@@ -1029,8 +1086,8 @@ const Register = () => {
               />
             </Box> */}
 
-            {/* Password */}
-            {/* <Box sx={{ mb: 2 }}>
+              {/* Password */}
+              {/* <Box sx={{ mb: 2 }}>
               <InputLabel>Password *</InputLabel>
               <TextField
                 fullWidth
@@ -1059,124 +1116,89 @@ const Register = () => {
               />
             </Box> */}
 
-            {/* Parent Fields If Under 18 */}
-            {(formData.ageGroup === "<13" ||
-              formData.ageGroup === "13-14" ||
-              formData.ageGroup === "15-17") && (
-              <>
-                <Box sx={{ mb: 2 }}>
-                  <InputLabel
-                    sx={{
-                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    Parent/Guardian Name *
-                  </InputLabel>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="parentName"
-                    required
-                    onChange={handleChange}
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px" },
-                        height: { xs: 30, sm: 42 },
-                        fontSize: { xs: "15px", sm: "17px" },
-                      },
-                    }}
-                  />
-                </Box>
+              {/* Parent Fields If Under 18 */}
+              {(formData.ageGroup === "<13" ||
+                formData.ageGroup === "13-14" ||
+                formData.ageGroup === "15-17") && (
+                <>
+                  <Box sx={{ mb: 2 }}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Parent/Guardian Name *
+                    </InputLabel>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="parentName"
+                      required
+                      onChange={handleChange}
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "440px" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    />
+                  </Box>
 
-                <Box sx={{ mb: 2 }}>
-                  <InputLabel
-                    sx={{
-                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    Parent Email *
-                  </InputLabel>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="parentEmail"
-                    required
-                    onChange={handleChange}
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px" },
-                        height: { xs: 30, sm: 42 },
-                        fontSize: { xs: "15px", sm: "17px" },
-                      },
-                    }}
-                  />
-                </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Parent Email *
+                    </InputLabel>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="parentEmail"
+                      required
+                      onChange={handleChange}
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "440px" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    />
+                  </Box>
 
-                <Box sx={{ mb: 2 }}>
-                  <InputLabel
-                    sx={{
-                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    Parent Mobile *
-                  </InputLabel>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="parentMobile"
-                    required
-                    onChange={handleChange}
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px" },
-                        height: { xs: 30, sm: 42 },
-                        fontSize: { xs: "15px", sm: "17px" },
-                      },
-                    }}
-                  />
-                </Box>
-              </>
-            )}
+                  <Box sx={{ mb: 2 }}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Parent Mobile *
+                    </InputLabel>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="parentMobile"
+                      required
+                      onChange={handleChange}
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "440px" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
 
-            {/* Subscription Plan */}
-            <Box sx={{ mb: 2 }}>
-              <InputLabel
-                sx={{
-                  fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                  fontFamily: "Calibri, sans-serif",
-                }}
-              >
-                Subscription Plan *
-              </InputLabel>
-              <TextField
-                select
-                fullWidth
-                size="small"
-                name="subscriptionPlan"
-                value={formData.subscriptionPlan}
-                onChange={handleChange}
-                required
-                InputProps={{
-                  sx: {
-                    width: { xs: "230px", sm: "440px" },
-                    height: { xs: 30, sm: 42 },
-                    fontSize: { xs: "15px", sm: "17px" },
-                  },
-                }}
-              >
-                {subscriptionPlans.map((p) => (
-                  <MenuItem key={p} value={p}>
-                    {p}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-
-            {/* Sub Options */}
-            {formData.subscriptionPlan && (
+              {/* Subscription Plan */}
               <Box sx={{ mb: 2 }}>
                 <InputLabel
                   sx={{
@@ -1184,14 +1206,14 @@ const Register = () => {
                     fontFamily: "Calibri, sans-serif",
                   }}
                 >
-                  Plan Option *
+                  Subscription Plan *
                 </InputLabel>
                 <TextField
                   select
                   fullWidth
                   size="small"
-                  name="childPlan"
-                  value={formData.childPlan}
+                  name="subscriptionPlan"
+                  value={formData.subscriptionPlan}
                   onChange={handleChange}
                   required
                   InputProps={{
@@ -1202,94 +1224,138 @@ const Register = () => {
                     },
                   }}
                 >
-                  {(formData.subscriptionPlan === "Nova"
-                    ? novaOptions
-                    : superNovaOptions
-                  ).map((item) => (
-                    <MenuItem key={item} value={item}>
-                      {item}
+                  {subscriptionPlans.map((p) => (
+                    <MenuItem key={p} value={p}>
+                      {p}
                     </MenuItem>
                   ))}
                 </TextField>
               </Box>
-            )}
 
-            {/* Subscription Type */}
-            <Box sx={{ mb: 2 }}>
-              <InputLabel
-                sx={{
-                  fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                  fontFamily: "Calibri, sans-serif",
-                }}
-              >
-                Subscription Type *
-              </InputLabel>
-              <TextField
-                select
+              {/* Sub Options */}
+              {formData.subscriptionPlan && (
+                <Box sx={{ mb: 2 }}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Plan Option *
+                  </InputLabel>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    name="childPlan"
+                    value={formData.childPlan}
+                    onChange={handleChange}
+                    required
+                    InputProps={{
+                      sx: {
+                        width: { xs: "230px", sm: "440px" },
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                  >
+                    {(formData.subscriptionPlan === "Nova"
+                      ? novaOptions
+                      : superNovaOptions
+                    ).map((item) => (
+                      <MenuItem key={item} value={item}>
+                        {item}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              )}
+
+              {/* Subscription Type */}
+              <Box sx={{ mb: 2 }}>
+                <InputLabel
+                  sx={{
+                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontFamily: "Calibri, sans-serif",
+                  }}
+                >
+                  Subscription Type *
+                </InputLabel>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  name="subscriptionType"
+                  onChange={handleChange}
+                  required
+                  InputProps={{
+                    sx: {
+                      width: { xs: "230px", sm: "440px" },
+                      height: { xs: 30, sm: 42 },
+                      fontSize: { xs: "15px", sm: "17px" },
+                    },
+                  }}
+                >
+                  {subscriptionTypes.map((t) => (
+                    <MenuItem key={t} value={t}>
+                      {t}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              {/* Consent Checkbox */}
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <Checkbox
+                  checked={formData.agree}
+                  onChange={(e) =>
+                    setFormData({ ...formData, agree: e.target.checked })
+                  }
+                />
+                <Typography
+                  sx={{
+                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontFamily: "Calibri, sans-serif",
+                  }}
+                >
+                  I consent the above information is correct *
+                </Typography>
+              </Box>
+
+              <Button
+                type="submit"
                 fullWidth
-                size="small"
-                name="subscriptionType"
-                onChange={handleChange}
-                required
-                InputProps={{
-                  sx: {
-                    width: { xs: "230px", sm: "440px" },
-                    height: { xs: 30, sm: 42 },
-                    fontSize: { xs: "15px", sm: "17px" },
-                  },
+                variant="contained"
+                sx={{
+                  mt: { xs: 1, sm: 2 },
+                  mb: { xs: 1, sm: 2 },
+                  fontSize: { xs: "14px", sm: "16px" },
+                  padding: { xs: "10px", sm: "14px" },
+                  width: { xs: "230px", sm: "440px" },
+                  height: { xs: 36, sm: 42 },
+                }}
+                disabled={loading}
+                size="large"
+              >
+                {loading ? <CircularProgress size={24} /> : "Create Account"}
+              </Button>
+
+              <Box
+                sx={{
+                  textAlign: "center",
+                  fontSize: { xs: "14px", sm: "16px" },
+                  fontFamily: "Calibri, sans-serif",
                 }}
               >
-                {subscriptionTypes.map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {t}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Box>
-
-            {/* Consent Checkbox */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Checkbox
-                checked={formData.agree}
-                onChange={(e) =>
-                  setFormData({ ...formData, agree: e.target.checked })
-                }
-              />
-              <Typography sx={{
-                  fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                  fontFamily: "Calibri, sans-serif",
-                }}>
-                I consent the above information is correct *
-              </Typography>
-            </Box>
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{
-                mt: { xs: 1, sm: 2 },
-                mb: { xs: 1, sm: 2 },
-                fontSize: { xs: "14px", sm: "16px" },
-                padding: { xs: "10px", sm: "14px" },
-                 width: { xs: "230px", sm: "440px" },
-                  height: { xs: 36, sm: 42 },
-              }}
-              disabled={loading}
-              size="large"
-            >
-              {loading ? <CircularProgress size={24} /> : "Create Account"}
-            </Button>
-
-            <Box sx={{ textAlign: "center" , fontSize : { xs: "14px", sm: "16px" }, fontFamily: "Calibri, sans-serif",}}>
-              <span>Already have an account? </span>
-              <Link component={RouterLink} to="/login" variant="body2">
-                Sign In
-              </Link>
-            </Box>
-          </form>
+                <span>Already have an account? </span>
+                <Link component={RouterLink} to="/login" variant="body2">
+                  Sign In
+                </Link>
+              </Box>
+            </form>
+          </Box>
         </Box>
-      </Box>
+      </>
     </LocalizationProvider>
   );
 };
