@@ -57,10 +57,12 @@ import Words1 from "././assets/words1.webp"; // path adjust karo
 // import Words2 from "././assets/words2.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
 import Msg_logo1 from "././assets/Msg_logo.png"; // path adjust karo
+import Icon from "././assets/Icon2.png";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import LanguageIcon from "@mui/icons-material/Language";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -3000,14 +3002,157 @@ const ChatUI = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 width: "100%",
-                mb: 1,
+                mb: 0,
               }}
             >
               {/* Logo */}
               <img src={Words2} height={56} width={110} alt="Logo" />
 
               {/* DROPDOWN MOVED HERE ONLY FOR XS */}
-              <Box sx={{ width: "36%" }}>
+              {/* <Box sx={{ width: "28%" }}>
+                {activeView === "chat" && (
+                  <Select
+                    labelId="bot-select-label"
+                    value={selectedBot}
+                    onChange={(e) => setSelectedBot(e.target.value)}
+                    sx={{
+                      bgcolor: "#fff",
+                      borderRadius: "5px",
+                      height: "27px",
+                      width: "100%",
+                      "& .MuiSelect-select": {
+                        fontSize: "13px",
+                        fontFamily: "Calibri, sans-serif",
+                        py: 0.5,
+                      },
+                    }}
+                  >
+                    <MenuItem
+                      value="chatgpt-5-mini"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      ChatGPT
+                    </MenuItem>
+                    <MenuItem
+                      value="claude-3-haiku"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Claude
+                    </MenuItem>
+                    <MenuItem
+                      value="grok"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Grok
+                    </MenuItem>
+                    <MenuItem
+                      value="mistral"
+                      sx={{
+                        fontSize: "15px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      Mistral
+                    </MenuItem>
+                  </Select>
+                )}
+
+                {activeView === "search2" && (
+                  <Select
+                    value={grokcustomValue}
+                    onChange={async (e) => {
+                      const selected = e.target.value;
+                      setGrokCustomValue(selected);
+                      setSelectedGrokQuery(selected);
+                      await handleSearch(selected);
+                    }}
+                    displayEmpty
+                    IconComponent={() => null}
+                    sx={{
+                      bgcolor: "#fff",
+                      borderRadius: "5px",
+                      width: "100%",
+                      height: "27px",
+                      "& .MuiSelect-select": {
+                        pl: 1.5,
+                        fontSize: "13px",
+                      },
+                    }}
+                  >
+                    <MenuItem
+                      value=""
+                      disabled
+                      sx={{
+                        fontSize: "13px",
+                        fontFamily: "Calibri, sans-serif",
+                      }}
+                    >
+                      AI History
+                    </MenuItem>
+
+                    {historyLoading ? (
+                      <MenuItem disabled sx={{ fontSize: "13px" }}>
+                        Loading...
+                      </MenuItem>
+                    ) : grokhistoryList.length > 0 ? (
+                      grokhistoryList.map((query, idx) => (
+                        <MenuItem
+                          key={idx}
+                          value={query}
+                          sx={{
+                            fontSize: "13px",
+                            fontFamily: "Calibri, sans-serif",
+                            fontWeight: 400,
+                          }}
+                        >
+                          {query}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled sx={{ fontSize: "13px" }}>
+                        No history found
+                      </MenuItem>
+                    )}
+                  </Select>
+                )}
+              </Box> */}
+
+              {/* Hamburger Menu */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0,
+                  cursor: "pointer",
+                }}
+                onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
+              >
+                <PersonRoundedIcon sx={{ fontSize: 29, color: "#fff" }} />
+                <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
+              </Box>
+            </Box>
+
+            {/* Second Row unchanged (new chat, buttons, tabs) */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                gap: 2,
+                justifyContent: "end",
+                // flexWrap: "wrap",
+              }}
+            >
+              <Box sx={{ width: "32%",mb:0,mt:"6px", }}>
                 {activeView === "chat" && (
                   <Select
                     labelId="bot-select-label"
@@ -3123,42 +3268,17 @@ const ChatUI = () => {
                   </Select>
                 )}
               </Box>
-
-              {/* Hamburger Menu */}
               <Box
                 sx={{
                   display: "flex",
+                  // marginLeft: "30px",
+                  gap: { xs: 1, sm: 3 },
                   alignItems: "center",
-                  gap: 0,
-                  cursor: "pointer",
-                }}
-                onClick={(event) => setMobileMenuAnchor(event.currentTarget)}
-              >
-                <PersonRoundedIcon sx={{ fontSize: 29, color: "#fff" }} />
-                <MenuIcon sx={{ fontSize: 28, color: "#fff" }} />
-              </Box>
-            </Box>
-
-            {/* Second Row unchanged (new chat, buttons, tabs) */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-                gap: 1,
-                justifyContent: "end",
-                flexWrap: "wrap",
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  marginLeft: "30px",
-                  gap: { xs: 1.5, sm: 3 },
-                  alignItems: "center",
+                  width: "100%",
+                  justifyContent: "space-between",
                 }}
               >
-                <Box
+                {/* <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3193,10 +3313,37 @@ const ChatUI = () => {
                   >
                     New Chat
                   </Typography>
+                </Box> */}
+                <Box
+                  onClick={() => {
+                    createNewChat();
+                    setMobileMenuAnchor(null);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    // width: { xs: "117px", sm: "129px" },
+                    height: "37px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    pb: "0px",
+                    mt: "5.2px",
+                  }}
+                >
+                  <img
+                    src={Icon}
+                    alt="new-chat"
+                    style={{
+                      width: "89%",
+                      height: "68%",
+                      objectFit: "contain", // or "cover" if you want full fill
+                      borderRadius: "8px",
+                    }}
+                  />
                 </Box>
 
                 {/* Wrds AI Button */}
-                <Button
+                {/* <Button
                   variant="contained"
                   size="small"
                   sx={{
@@ -3217,10 +3364,55 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI
-                </Button>
+                </Button> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "15px" },
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "smartAi" ? 600 : 400,
+                      color:
+                        activeView === "smartAi"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI
+                  </Typography>
+
+                  {activeView === "smartAi" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -5, sm: -4 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
 
                 {/* Wrds AI Pro Button */}
-                <Button
+                {/* <Button
                   variant="outlined"
                   size="small"
                   sx={{
@@ -3245,7 +3437,54 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI Pro
-                </Button>
+                </Button> */}
+
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.7,
+                  }}
+                  onClick={() => {
+                    setActiveView("wrds AiPro");
+                    setIsSmartAIPro(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "14px" },
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "wrds AiPro" ? 600 : 400,
+                      color:
+                        activeView === "wrds AiPro"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI Pro
+                  </Typography>
+
+                  {activeView === "wrds AiPro" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -5, sm: -4 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+
                 <Box
                   sx={{
                     cursor: "pointer",
@@ -3291,7 +3530,7 @@ const ChatUI = () => {
                   )}
                 </Box>
 
-                <Box
+                {/* <Box
                   sx={{
                     cursor: "pointer",
                     position: "relative",
@@ -3331,6 +3570,45 @@ const ChatUI = () => {
                       }}
                     />
                   )}
+                </Box> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  onClick={() => setActiveView("search2")}
+                >
+                  <LanguageIcon
+                    sx={{
+                      fontSize: "20px", // Icon size similar to 15px text
+                      color:
+                        activeView === "search2"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  />
+
+                  {activeView === "search2" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -7, sm: -4 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -3352,7 +3630,7 @@ const ChatUI = () => {
               }}
             >
               {/* Logo */}
-              <img src={Words2} height={60} width={124} alt="Logo" />
+              <img src={Words2} height={62} width={129} alt="Logo" />
 
               {/* Hamburger Menu */}
               <Box
@@ -3392,7 +3670,7 @@ const ChatUI = () => {
                 alignItems: "center",
                 width: "100%",
                 gap: 1,
-                justifyContent: "end",
+                // justifyContent: "end",
               }}
             >
               {/* For Chat/SmartAI View - Show Model Dropdown */}
@@ -3405,8 +3683,9 @@ const ChatUI = () => {
                     bgcolor: "#fff",
                     borderRadius: "5px",
                     height: "32px",
+                    mr: "222px",
                     // width: "100%",
-                    width: { xs: "60%", sm: "100%" },
+                    width: { xs: "60%", sm: "29%" },
                     //  px: { xs: 1, sm: 2, md: 2 },
                     "& .MuiSelect-select": {
                       fontSize: "16px",
@@ -3458,7 +3737,8 @@ const ChatUI = () => {
                     bgcolor: "#fff",
                     borderRadius: "5px",
                     // width: "100%",
-                    width: { xs: "60%", sm: "100%" },
+                    mr: "222px",
+                    width: { xs: "60%", sm: "29%" },
                     height: "32px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
@@ -3505,9 +3785,11 @@ const ChatUI = () => {
                   marginLeft: "30px",
                   gap: { xs: 1, sm: 3 },
                   alignItems: "center",
+                  justifyContent: "end",
+                  // justifyContent: "end",
                 }}
               >
-                <Box
+                {/* <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3539,10 +3821,36 @@ const ChatUI = () => {
                   >
                     New Chat
                   </Typography>
+                </Box> */}
+                <Box
+                  onClick={() => {
+                    createNewChat();
+                    setMobileMenuAnchor(null);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    // width: { xs: "117px", sm: "129px" },
+                    height: "37px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    mt: "4.2px",
+                  }}
+                >
+                  <img
+                    src={Icon}
+                    alt="new-chat"
+                    style={{
+                      width: "95%",
+                      height: "80%",
+                      objectFit: "contain", // or "cover" if you want full fill
+                      borderRadius: "8px",
+                    }}
+                  />
                 </Box>
 
                 {/* Wrds AI Button */}
-                <Button
+                {/* <Button
                   variant="contained"
                   size="small"
                   sx={{
@@ -3563,10 +3871,55 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI
-                </Button>
+                </Button> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "15px", sm: "18px" },
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "smartAi" ? 600 : 400,
+                      color:
+                        activeView === "smartAi"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI
+                  </Typography>
+
+                  {activeView === "smartAi" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -5, sm: -4 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
 
                 {/* Wrds AI Pro Button */}
-                <Button
+                {/* <Button
                   variant="outlined"
                   size="small"
                   sx={{
@@ -3590,7 +3943,54 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI Pro
-                </Button>
+                </Button> */}
+
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("wrds AiPro");
+                    setIsSmartAIPro(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: { xs: "15px", sm: "18px" },
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "wrds AiPro" ? 600 : 400,
+                      color:
+                        activeView === "wrds AiPro"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI Pro
+                  </Typography>
+
+                  {activeView === "wrds AiPro" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -5, sm: -4 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+
                 <Box
                   sx={{
                     cursor: "pointer",
@@ -3606,7 +4006,7 @@ const ChatUI = () => {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontSize: { xs: "15px", sm: "17px" },
+                      fontSize: { xs: "15px", sm: "18px" },
                       fontFamily: "Calibri, sans-serif",
                       fontWeight: activeView === "chat" ? 600 : 400,
                       color:
@@ -3636,7 +4036,7 @@ const ChatUI = () => {
                   )}
                 </Box>
 
-                <Box
+                {/* <Box
                   sx={{
                     cursor: "pointer",
                     position: "relative",
@@ -3668,6 +4068,45 @@ const ChatUI = () => {
                       sx={{
                         position: "absolute",
                         bottom: { xs: -3, sm: 0 },
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  onClick={() => setActiveView("search2")}
+                >
+                  <LanguageIcon
+                    sx={{
+                      fontSize: { xs: "18px", sm: "25px" }, // icon responsive sizing
+                      color:
+                        activeView === "search2"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  />
+
+                  {activeView === "search2" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: { xs: -5, sm: -10 },
                         left: 0,
                         width: "100%",
                         height: "3px",
@@ -3937,7 +4376,7 @@ const ChatUI = () => {
             </Box>
 
             {/* Right Section - User Menu */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
               {/* Navigation Tabs - Show on md and lg screens */}
               <Box
                 sx={{
@@ -3947,7 +4386,7 @@ const ChatUI = () => {
                   alignItems: "center",
                 }}
               >
-                <Box
+                {/* <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3979,10 +4418,36 @@ const ChatUI = () => {
                   >
                     New Chat
                   </Typography>
+                </Box> */}
+                <Box
+                  onClick={() => {
+                    createNewChat();
+                    setMobileMenuAnchor(null);
+                  }}
+                  sx={{
+                    cursor: "pointer",
+                    // width: { md: "117px", lg: "129px" },
+                    height: "37px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    mt: "4.2px",
+                  }}
+                >
+                  <img
+                    src={Icon}
+                    alt="new-chat"
+                    style={{
+                      width: "99%",
+                      height: "85%",
+                      objectFit: "contain", // or "cover" if you want full fill
+                      borderRadius: "8px",
+                    }}
+                  />
                 </Box>
 
                 {/* Wrds AI Button */}
-                <Button
+                {/* <Button
                   variant="contained"
                   size="small"
                   sx={{
@@ -4001,10 +4466,55 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI
-                </Button>
+                </Button> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "19px",
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "smartAi" ? 600 : 400,
+                      color:
+                        activeView === "smartAi"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI
+                  </Typography>
+
+                  {activeView === "smartAi" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -10,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
 
                 {/* Wrds AI Pro Button */}
-                <Button
+                {/* <Button
                   variant="outlined"
                   size="small"
                   sx={{
@@ -4028,7 +4538,54 @@ const ChatUI = () => {
                   }}
                 >
                   WrdsAI Pro
-                </Button>
+                </Button> */}
+
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                  }}
+                  onClick={() => {
+                    setActiveView("wrds AiPro");
+                    setIsSmartAIPro(false);
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: "19px",
+                      fontFamily: "Calibri, sans-serif",
+                      fontWeight: activeView === "wrds AiPro" ? 600 : 400,
+                      color:
+                        activeView === "wrds AiPro"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  >
+                    WrdsAI Pro
+                  </Typography>
+
+                  {activeView === "wrds AiPro" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -10,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box>
+
                 <Box
                   sx={{
                     cursor: "pointer",
@@ -4074,7 +4631,7 @@ const ChatUI = () => {
                   )}
                 </Box>
 
-                <Box
+                {/* <Box
                   sx={{
                     cursor: "pointer",
                     position: "relative",
@@ -4101,6 +4658,45 @@ const ChatUI = () => {
                   >
                     Browsing
                   </Typography>
+                  {activeView === "search2" && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: -10,
+                        left: 0,
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: "#fff",
+                        borderRadius: "2px",
+                      }}
+                    />
+                  )}
+                </Box> */}
+                <Box
+                  sx={{
+                    cursor: "pointer",
+                    position: "relative",
+                    pb: "0px",
+                    mt: 0.4,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                  onClick={() => setActiveView("search2")}
+                >
+                  <LanguageIcon
+                    sx={{
+                      fontSize: "26px",
+                      color:
+                        activeView === "search2"
+                          ? "#fff"
+                          : "rgba(255,255,255,0.8)",
+                      transition: "color 0.3s ease",
+                      "&:hover": {
+                        color: "#fff",
+                      },
+                    }}
+                  />
+
                   {activeView === "search2" && (
                     <Box
                       sx={{
