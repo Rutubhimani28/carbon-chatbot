@@ -58,7 +58,7 @@ import Words1 from "././assets/words1.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
 import Msg_logo1 from "././assets/Msg_logo.png"; // path adjust karo
 import Icon from "././assets/Icon2.png";
-import Icon2 from "././assets/Icon3.png";
+import Icon2 from "./assets/icon3.png";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
