@@ -58,6 +58,7 @@ import Words1 from "././assets/words1.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
 import Msg_logo1 from "././assets/Msg_logo.png"; // path adjust karo
 import Icon from "././assets/Icon2.png";
+import Icon2 from "././assets/Icon3.png";
 import KeyboardVoiceIcon from "@mui/icons-material/KeyboardVoice";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
@@ -562,6 +563,9 @@ const ChatUI = () => {
           text:
             data.message || "This search is not allowed for your age group.",
           icon: "warning",
+          customClass: {
+            popup: "red-alert-icon",
+          },
         });
         setError(data.message);
         setLoading(false);
@@ -3158,11 +3162,11 @@ const ChatUI = () => {
                 alignItems: "center",
                 width: "100%",
                 gap: 2,
-                justifyContent: "end",
+                justifyContent: "space-between",
                 // flexWrap: "wrap",
               }}
             >
-              <Box sx={{ width: "32%",mb:0,mt:"6px", }}>
+              <Box sx={{ width: "32%", mb: 0, mt: "6px" }}>
                 {activeView === "chat" && (
                   <Select
                     labelId="bot-select-label"
@@ -3282,49 +3286,13 @@ const ChatUI = () => {
                 sx={{
                   display: "flex",
                   // marginLeft: "30px",
-                  gap: { xs: 1, sm: 3 },
+                  gap: { xs: "11px", sm: 3 },
                   alignItems: "center",
-                  width: "100%",
-                  justifyContent: "space-between",
+                  // width: "100%",
+                  justifyContent: "end",
                 }}
               >
                 {/* <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                    // setSearchSessionResults([]);
-                    // setShowSessionPanel(false);
-                  }}
-                  sx={{
-                    borderRadius: 2,
-                    backgroundColor: "#1565c0",
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: "#1976d2",
-                    },
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    // width: "129px",
-                    width: { xs: "65px", sm: "129px" },
-                    height: { xs: "28px", sm: "33px" },
-                  }}
-                >
-                  <AddIcon
-                    fontSize="small"
-                    sx={{ mr: 0, width: "15px", height: "18px" }}
-                  />
-                  <Typography
-                    sx={{
-                      fontSize: { xs: "9px" },
-                      fontWeight: 600,
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    New Chat
-                  </Typography>
-                </Box> */}
-                <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3350,31 +3318,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   />
-                </Box>
+                </Box> */}
 
-                {/* Wrds AI Button */}
-                {/* <Button
-                  variant="contained"
-                  size="small"
-                  sx={{
-                    bgcolor: "#1976d2",
-                    textTransform: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontFamily: "Calibri, sans-serif",
-                    px: { xs: 0, sm: 2 },
-                    // height: "28px",
-                    height: { xs: "28px", sm: "33px" },
-                    // width: "10px",
-                    minWidth: { xs: "70px", sm: "100px" },
-                  }}
-                  onClick={() => {
-                    setActiveView("smartAi");
-                    setIsSmartAI(false);
-                  }}
-                >
-                  WrdsAI
-                </Button> */}
                 <Box
                   sx={{
                     cursor: "pointer",
@@ -3680,7 +3625,7 @@ const ChatUI = () => {
                 alignItems: "center",
                 width: "100%",
                 gap: 1,
-                // justifyContent: "end",
+                justifyContent: "space-between",
               }}
             >
               {/* For Chat/SmartAI View - Show Model Dropdown */}
@@ -3693,7 +3638,7 @@ const ChatUI = () => {
                     bgcolor: "#fff",
                     borderRadius: "5px",
                     height: "32px",
-                    mr: "222px",
+                    // mr: "222px",
                     // width: "100%",
                     width: { xs: "60%", sm: "29%" },
                     //  px: { xs: 1, sm: 2, md: 2 },
@@ -3792,7 +3737,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   display: "flex",
-                  marginLeft: "30px",
+                  // marginLeft: "30px",
                   gap: { xs: 1, sm: 3 },
                   alignItems: "center",
                   justifyContent: "end",
@@ -3800,39 +3745,6 @@ const ChatUI = () => {
                 }}
               >
                 {/* <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                    // setSearchSessionResults([]);
-                    // setShowSessionPanel(false);
-                  }}
-                  sx={{
-                    borderRadius: 2,
-                    backgroundColor: "#1565c0",
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: "#1976d2",
-                    },
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    // width: "129px",
-                    width: { xs: "63px", sm: "126px" },
-                    height: { xs: "28px", sm: "33px" },
-                  }}
-                >
-                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
-                  <Typography
-                    sx={{
-                      fontSize: { xs: "10px", sm: "17px" },
-                      fontWeight: 600,
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    New Chat
-                  </Typography>
-                </Box> */}
-                <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3857,7 +3769,7 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   />
-                </Box>
+                </Box> */}
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -4396,39 +4308,7 @@ const ChatUI = () => {
                   alignItems: "center",
                 }}
               >
-                {/* <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                    // setSearchSessionResults([]);
-                    // setShowSessionPanel(false);
-                  }}
-                  sx={{
-                    borderRadius: 2,
-                    backgroundColor: "#1565c0",
-                    color: "white",
-                    "&:hover": {
-                      backgroundColor: "#1976d2",
-                    },
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    // width: "129px",
-                    width: { md: "117px", lg: "129px" },
-                    height: "37px",
-                  }}
-                >
-                  <AddIcon fontSize="small" sx={{ mr: 1 }} />
-                  <Typography
-                    sx={{
-                      fontSize: "18px",
-                      fontWeight: 600,
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    New Chat
-                  </Typography>
-                </Box> */}
+                {/*                
                 <Box
                   onClick={() => {
                     createNewChat();
@@ -4454,7 +4334,7 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   />
-                </Box>
+                </Box> */}
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -5700,6 +5580,54 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { xs: "117px", sm: "129px" },
+                      height: "37px",
+                      display: { xs: "none", sm: "flex" },
+                      justifyContent: "center",
+                      alignItems: "center",
+                      pb: "0px",
+                      // mt: "5.2px",
+                      mr: 1,
+
+                      // ✅ Responsive image container
+                      "& img": {
+                        width: {
+                          xs: "92%",
+                          sm: "115%",
+                          md: "112%",
+                          lg: "108%",
+                        },
+                        height: {
+                          xs: "92%",
+                          sm: "115%",
+                          md: "112%",
+                          lg: "108%",
+                        },
+                        objectFit: "contain",
+                        borderRadius: "8px",
+                      },
+                    }}
+                  >
+                    {/* <img
+                      src={Icon2}
+                      alt="new-chat"
+                      style={{
+                        width: "112%",
+                        height: "115%",
+                        objectFit: "contain", // or "cover" if you want full fill
+                        borderRadius: "8px",
+                      }}
+                    /> */}
+                    <img src={Icon2} alt="new-chat" />
+                  </Box>
+
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
                     fullWidth
@@ -5899,6 +5827,31 @@ const ChatUI = () => {
                       flexShrink: 0,
                     }}
                   >
+                    {/* 🔹 Mobile Only New Chat Icon */}
+                    <Box
+                      onClick={() => {
+                        createNewChat();
+                        setMobileMenuAnchor(null);
+                      }}
+                      sx={{
+                        cursor: "pointer",
+                        height: "37px",
+                        display: { xs: "flex", sm: "none" },
+                        justifyContent: "center",
+                        alignItems: "center",
+                        pb: "0px",
+                        mr: 1,
+                        "& img": {
+                          width: "92%",
+                          height: "92%",
+                          objectFit: "contain",
+                          borderRadius: "8px",
+                        },
+                      }}
+                    >
+                      <img src={Icon2} alt="new-chat" />
+                    </Box>
+
                     <TextField
                       select
                       size="small"

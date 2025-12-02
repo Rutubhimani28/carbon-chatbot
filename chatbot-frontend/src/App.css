@@ -1,10 +1,10 @@
-#root {
+/* #root {
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
 }
-body{
+body {
   margin: 0 !important;
   padding: 0 !important;
 }
@@ -46,4 +46,33 @@ body{
 
 .chat-header-box {
   padding-top: 0px !important;
+}
+
+.red-alert-icon .swal2-icon.swal2-warning {
+  border-color: red !important;
+  color: red !important;
+} */
+
+/* .no-border-icon {
+  border: none !important;
+} */
+
+/* .swal2-icon.swal2-warning {
+  border-color: transparent !important;
+  color: transparent !important;
+}
+
+.swal2-icon.swal2-warning::before,
+.swal2-icon.swal2-warning::after {
+  background: transparent !important;
+} */
+
+/* div:where(.swal2-icon).swal2-warning {
+    border-color: #f8bb86;
+    color: #f8bb86;
+} */
+
+div:where(.swal2-icon).swal2-warning {
+  border-color: #ff0000 !important;
+  color: #ff0000 !important;
 }
