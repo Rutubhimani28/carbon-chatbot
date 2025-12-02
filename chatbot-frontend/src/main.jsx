@@ -16,6 +16,8 @@ import { BrowserRouter } from "react-router-dom";
 import { GrokProvider } from "./context/GrokContext";
 // import { Provider } from "react-redux";
 // import { store } from "./store/index.js";
+// import "./index.css";
+import "./App.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <>
