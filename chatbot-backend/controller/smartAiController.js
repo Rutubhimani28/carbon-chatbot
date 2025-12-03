@@ -1651,7 +1651,7 @@ export const getSmartAIResponse = async (req, res) => {
       if (restricted) {
         return res.status(403).json({
           message:
-            "Oops! The requested content isn’t available for users under 13.",
+            "Oops! The requested content isn’t available for users under 18.",
           allowed: false,
           age,
           restrictedCategory: "under13",

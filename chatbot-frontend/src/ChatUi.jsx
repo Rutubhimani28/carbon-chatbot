@@ -22,7 +22,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  Tooltip,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -64,6 +63,7 @@ import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LanguageIcon from "@mui/icons-material/Language";
+import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -170,6 +170,20 @@ const ChatUI = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
   const isXS = useMediaQuery(theme.breakpoints.only("xs"));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
+
+  const CustomTooltip = styled(({ className, ...props }) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: "#ffffff",
+      color: "#000000",
+      // color: "#1268fb",
+      fontSize: "14px",
+      padding: "10px 14px",
+      borderRadius: "8px",
+      boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
+    },
+  }));
 
   const handleToggleMenu = (event) => {
     if (anchorsEl) {
@@ -3151,12 +3165,12 @@ const ChatUI = () => {
                 display: "flex",
                 alignItems: "center",
                 width: "100%",
-                gap: 2,
+                gap: 1.5,
                 justifyContent: "space-between",
                 // flexWrap: "wrap",
               }}
             >
-              <Box sx={{ width: "32%", mb: 0, mt: "6px" }}>
+              <Box sx={{ width: "28%", mb: 0, mt: "6px" }}>
                 {activeView === "chat" && (
                   <Select
                     labelId="bot-select-label"
@@ -3276,30 +3290,31 @@ const ChatUI = () => {
                 sx={{
                   display: "flex",
                   // marginLeft: "30px",
-                  gap: { xs: "11px", sm: 3 },
+                  gap: { xs: "8px", sm: 3 },
                   alignItems: "center",
                   // width: "100%",
                   justifyContent: "end",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { xs: "117px", sm: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    pb: "0px",
-                    mt: "5.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { xs: "117px", sm: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      pb: "0px",
+                      mt: "5.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3309,7 +3324,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 <Box
                   sx={{
@@ -3517,45 +3533,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: "20px", // Icon size similar to 15px text
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: { xs: -7, sm: -4 },
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: "20px", // Icon size similar to 15px text
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: { xs: -7, sm: -4 },
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
             </Box>
           </>
@@ -3631,7 +3649,7 @@ const ChatUI = () => {
                     height: "32px",
                     // mr: "222px",
                     // width: "100%",
-                    width: { xs: "60%", sm: "29%" },
+                    width: { xs: "60%", sm: "16%" },
                     //  px: { xs: 1, sm: 2, md: 2 },
                     "& .MuiSelect-select": {
                       fontSize: "16px",
@@ -3684,7 +3702,7 @@ const ChatUI = () => {
                     borderRadius: "5px",
                     // width: "100%",
                     mr: "222px",
-                    width: { xs: "60%", sm: "29%" },
+                    width: { xs: "60%", sm: "19%" },
                     height: "32px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
@@ -3735,23 +3753,24 @@ const ChatUI = () => {
                   // justifyContent: "end",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { xs: "117px", sm: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    mt: "4.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { xs: "117px", sm: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mt: "4.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3761,7 +3780,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -3991,45 +4011,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: { xs: "18px", sm: "25px" }, // icon responsive sizing
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: { xs: -5, sm: -10 },
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: { xs: "18px", sm: "25px" }, // icon responsive sizing
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: { xs: -5, sm: -10 },
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
             </Box>
           </>
@@ -4183,7 +4205,7 @@ const ChatUI = () => {
                         bgcolor: "#fff",
                         borderRadius: "5px",
                         height: "36px",
-                        width: "180px",
+                        width: "125px",
                         "& .MuiSelect-select": {
                           fontSize: "18px",
                           fontFamily: "Calibri, sans-serif",
@@ -4247,7 +4269,7 @@ const ChatUI = () => {
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    width: "200px",
+                    width: "175px",
                     height: "36px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
@@ -4300,23 +4322,24 @@ const ChatUI = () => {
                   alignItems: "center",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { md: "117px", lg: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    mt: "4.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { md: "117px", lg: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mt: "4.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -4326,7 +4349,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -4554,45 +4578,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: "26px",
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: -10,
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: "26px",
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: -10,
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
 
               {/* User Menu */}
@@ -7936,5 +7962,4 @@ const ChatUI = () => {
     </Box>
   );
 };
-
 export default ChatUI;
