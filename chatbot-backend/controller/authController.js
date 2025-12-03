@@ -76,6 +76,43 @@ import User from "../model/User.js";
 // import { sendPasswordMail } from "../services/mailService.js";
 import sendPasswordMail from "../middleware/sendPasswordMail.js";
 
+// Plan Options
+const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
+const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
+const subscriptionTypes = ["Monthly", "Yearly"];
+
+// FIXED PRICES IN USD (કદી બદલવાના નહીં)
+const BASE_PRICES_USD = {
+  Nova: {
+    "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
+    "Level Up": { Monthly: 1.99, Yearly: 21.99 },
+    "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
+  },
+  Supernova: {
+    "Step Up": { Monthly: 2.99, Yearly: 32.99 },
+    "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
+    "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
+  },
+};
+
+// BEST FREE + UNLIMITED + SUPER FAST USD → INR API
+const getLiveUSDRate = async () => {
+  try {
+    const response = await fetch(
+      "https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/usd/inr.json"
+    );
+    if (!response.ok) throw new Error("API failed");
+    const data = await response.json();
+    const rate = Math.round(data.inr * 100) / 100; // 2 decimal places
+    console.log("Live USD → INR Rate:", rate);
+    return rate;
+  } catch (err) {
+    console.error("Currency API failed:", err.message);
+    console.log("Using fallback rate: 85 INR");
+    return 85; // emergency fallback
+  }
+};
+
 export const registerUser = async (req, res) => {
   try {
     const {
@@ -83,137 +120,293 @@ export const registerUser = async (req, res) => {
       lastName,
       email,
       mobile,
-      // country,
       dateOfBirth,
       ageGroup,
       parentName,
       parentEmail,
       parentMobile,
-      subscriptionPlan,
-      childPlan,
-      subscriptionType,
+      subscriptionPlan, // "Nova" or "Supernova"
+      childPlan, // "Glow Up", "Scale Up" etc.
+      subscriptionType, // "Monthly" or "Yearly"
     } = req.body;
 
+    // Required fields validation
     if (
       !firstName ||
       !lastName ||
-      !mobile ||
       !dateOfBirth ||
       !ageGroup ||
       !subscriptionPlan ||
       !childPlan ||
       !subscriptionType
     ) {
-      return res.status(400).json({ error: "Missing required fields" });
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Parent validation if age < 18
+    // Parent validation for minors
     if (["<13", "13-14", "15-17"].includes(ageGroup)) {
       if (!parentName || !parentEmail || !parentMobile) {
-        return res.status(400).json({
-          error: "Parent information required for users under 18",
-        });
+        return res
+          .status(400)
+          .json({ error: "Parent details required for users under 18" });
       }
     }
 
-    // If <13 → Parent email becomes login email
+    const isMinor = ["<13", "13-14", "15-17"].includes(ageGroup);
+
+    // Final login email (for <13, parent email is used)
     const finalEmail = ageGroup === "<13" ? parentEmail : email;
+    const finalMobile = ageGroup === "<13" ? parentMobile : mobile;
 
-    // Check if user already exists
-    // const existingUser = await User.findOne({
-    //   $or: [{ email }, { username }, { mobile }]
-    // });
-
-    // if (existingUser) {
-    //   return res.status(400).json({
-    //     error: "Email, Username or Mobile number already exists"
-    //   });
-    // }
-
-    // Check duplicates
-    const existingUser = await User.findOne({
-      $or: [{ email: finalEmail }],
-    });
-
+    // Check duplicate email
+    const existingUser = await User.findOne({ email: finalEmail });
     if (existingUser) {
-      return res.status(400).json({ error: "Account already exists" });
+      return res
+        .status(400)
+        .json({ error: "Account already exists with this email" });
     }
 
-    // -------- Generate Password --------
-    const cleanName = firstName.replace(/\s+/g, "").toLowerCase();
-    const passwordPart =
-      cleanName.length >= 4
-        ? cleanName.slice(0, 4)
-        : cleanName.padEnd(4, cleanName[0]);
-    const year = new Date(dateOfBirth).getFullYear();
-    const generatedPassword = `${passwordPart}@${year}`;
+    // Get USD price
+    let priceUSD = 0;
+    if (subscriptionPlan === "Nova") {
+      priceUSD = BASE_PRICES_USD.Nova[childPlan]?.[subscriptionType];
+    } else if (subscriptionPlan === "Supernova") {
+      priceUSD = BASE_PRICES_USD.Supernova[childPlan]?.[subscriptionType];
+    }
 
-    // Generate Password (first 4 letters + "@" + year)
-    // const cleanName = firstName.replace(/\s+/g, "").toLowerCase();
+    if (!priceUSD) {
+      return res.status(400).json({ error: "Invalid plan selection" });
+    }
 
-    // let namePart = cleanName.length >= 4
-    //   ? cleanName.slice(0,4)
-    //   : cleanName.padEnd(4, cleanName[0]); // If name < 4 chars
+    // Fetch live exchange rate
+    const usdToInrRate = await getLiveUSDRate();
 
-    // const year = new Date(dateOfBirth).getFullYear();
+    // Calculate final amount in INR with GST
+    const baseAmountINR = Math.round(priceUSD * usdToInrRate * 100) / 100;
+    const gstAmount = Math.round(baseAmountINR * 0.18 * 100) / 100;
+    const totalAmountINR = Math.round((baseAmountINR + gstAmount) * 100); // in paise for Razorpay
 
-    // const generatedPassword = `${namePart}@${year}`;
+    // const totalAmountINR = 100; // 1 INR in paise
 
-    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-    // Hash password
-    // const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user with all fields
+    // Create user (password will be set after payment)
     const user = new User({
       firstName,
       lastName,
       email: finalEmail,
-      mobile,
-      dateOfBirth: new Date(dateOfBirth), // Convert to Date object
+      mobile: finalMobile || null,
+      dateOfBirth: new Date(dateOfBirth),
       ageGroup,
-      parentName,
-      parentEmail,
-      parentMobile,
+      parentName: ["<13", "13-14", "15-17"].includes(ageGroup)
+        ? parentName
+        : null,
+      parentEmail: ["<13", "13-14", "15-17"].includes(ageGroup)
+        ? parentEmail
+        : null,
+      parentMobile: ["<13", "13-14", "15-17"].includes(ageGroup)
+        ? parentMobile
+        : null,
+      country: "India", // Hardcoded for Indian GST
+
+      // Subscription details
       subscriptionPlan,
       childPlan,
       subscriptionType,
-      password: hashedPassword,
+      priceUSD,
+      exchangeRateUsed: usdToInrRate,
+      basePriceINR: baseAmountINR,
+      gstAmount,
+      totalPriceINR: totalAmountINR / 100, // stored as rupees (with decimals)
+      currency: "INR",
+      subscriptionStatus: "pending",
+      isActive: false,
     });
 
     await user.save();
 
-    // ---- Send Email ----
-    await sendPasswordMail(finalEmail, firstName, generatedPassword);
-
+    // Send response with exact amount for Razorpay
     res.status(201).json({
-      // message: "User registered successfully",
-      message: "Registration successful. Login details sent to email.",
+      success: true,
+      message: "Registration successful! Starting payment...",
       loginEmail: finalEmail,
-      // autoGeneratedPassword: generatedPassword,
+      paymentAmount: totalAmountINR / 100, // actual rupees (e.g., 99.79)
+      priceBreakdown: {
+        plan: `${subscriptionPlan} - ${childPlan} (${subscriptionType})`,
+        usd: `$${priceUSD}`,
+        rate: `1 USD = ₹${usdToInrRate}`,
+        base: `₹${baseAmountINR}`,
+        gst: `₹${gstAmount} (18%)`,
+        total: `₹${totalAmountINR / 100}`,
+      },
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        // email: user.email,
-        email: finalEmail,
-        mobile: user.mobile,
-        dateOfBirth: user.dateOfBirth,
         subscription: {
-          plan: subscriptionPlan,
-          childPlan,
-          type: subscriptionType,
+          priceINR: totalAmountINR / 100,
         },
-        remainingTokens: user.remainingTokens,
       },
     });
   } catch (err) {
+    console.error("Registration error:", err);
     res.status(500).json({
       error: "Registration failed",
       details: err.message,
     });
   }
 };
+
+// Prices (USD)
+// const novaPrices = {
+//   "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
+//   "Level Up": { Monthly: 1.99, Yearly: 21.99 },
+//   "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
+// };
+
+// const superNovaPrices = {
+//   "Step Up": { Monthly: 2.99, Yearly: 32.99 },
+//   "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
+//   "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
+// };
+
+// // USD → INR conversion
+// const USD_TO_INR = 85;
+
+// export const registerUser = async (req, res) => {
+//   try {
+//     const {
+//       firstName,
+//       lastName,
+//       email,
+//       mobile,
+//       // country,
+//       dateOfBirth,
+//       ageGroup,
+//       parentName,
+//       parentEmail,
+//       parentMobile,
+//       subscriptionPlan,
+//       childPlan,
+//       subscriptionType,
+//     } = req.body;
+
+//     if (
+//       !firstName ||
+//       !lastName ||
+//       !dateOfBirth ||
+//       !ageGroup ||
+//       !subscriptionPlan ||
+//       !childPlan ||
+//       !subscriptionType
+//     ) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Parent validation if age < 18
+//     if (["<13", "13-14", "15-17"].includes(ageGroup)) {
+//       if (!parentName || !parentEmail || !parentMobile) {
+//         return res.status(400).json({
+//           error: "Parent information required for users under 18",
+//         });
+//       }
+//     }
+
+//     // If <13 → Parent email becomes login email
+//     const finalEmail = ageGroup === "<13" ? parentEmail : email;
+
+//     // Check if user already exists
+//     // const existingUser = await User.findOne({
+//     //   $or: [{ email }, { username }, { mobile }]
+//     // });
+
+//     // if (existingUser) {
+//     //   return res.status(400).json({
+//     //     error: "Email, Username or Mobile number already exists"
+//     //   });
+//     // }
+
+//     // Check duplicates
+//     const existingUser = await User.findOne({
+//       $or: [{ email: finalEmail }],
+//     });
+
+//     if (existingUser) {
+//       return res.status(400).json({ error: "Account already exists" });
+//     }
+
+//     // ---------------- PRICE LOGIC ----------------
+
+//     let selectedPriceUSD = 0;
+
+//     // NOVA plans
+//     if (novaOptions.includes(childPlan)) {
+//       selectedPriceUSD = novaPrices[childPlan][subscriptionType];
+//     }
+
+//     // SUPERNOVA plans
+//     else if (superNovaOptions.includes(childPlan)) {
+//       selectedPriceUSD = superNovaPrices[childPlan][subscriptionType];
+//     }
+
+//     // Convert USD -> INR
+//     // const finalAmountINR = Math.round(selectedPriceUSD * USD_TO_INR);
+//     const finalAmountINR = 1;
+
+//     // -------- Generate Password --------
+//     // Password generation moved to payment success
+
+//     // Create user with all fields
+//     const user = new User({
+//       firstName,
+//       lastName,
+//       email: finalEmail,
+//       mobile,
+//       dateOfBirth: new Date(dateOfBirth), // Convert to Date object
+//       ageGroup,
+//       parentName,
+//       parentEmail,
+//       parentMobile,
+//       subscriptionPlan,
+//       childPlan,
+//       subscriptionType,
+//       priceUSD: selectedPriceUSD,
+//       priceINR: finalAmountINR,
+//       // password: hashedPassword, // Password will be set after payment
+//     });
+
+//     await user.save();
+
+//     // ---- Send Email ----
+//     // Email will be sent after payment verification (handled in paymentController)
+
+//     res.status(201).json({
+//       // message: "User registered successfully",
+//       message:
+//         "Registration successful. Please complete payment to receive login details.",
+//       loginEmail: finalEmail,
+//       // autoGeneratedPassword: generatedPassword,
+//       user: {
+//         id: user._id,
+//         firstName: user.firstName,
+//         lastName: user.lastName,
+//         // email: user.email,
+//         email: finalEmail,
+//         mobile: user.mobile,
+//         dateOfBirth: user.dateOfBirth,
+//         subscription: {
+//           plan: subscriptionPlan,
+//           childPlan,
+//           type: subscriptionType,
+//           priceUSD: selectedPriceUSD,
+//           priceINR: finalAmountINR,
+//         },
+//         remainingTokens: user.remainingTokens,
+//       },
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       error: "Registration failed",
+//       details: err.message,
+//     });
+//   }
+// };
 
 export const loginUser = async (req, res) => {
   try {

@@ -18,8 +18,8 @@ const userSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    mobile: { type: String, required: true },
+    email: { type: String, required: false, unique: true },
+    mobile: { type: String, required: false },
     // country: { type: String, required: true },
     dateOfBirth: { type: Date, required: true },
     ageGroup: { type: String, required: true },
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     subscriptionPlan: { type: String, required: true },
     childPlan: { type: String, required: true },
     subscriptionType: { type: String, required: true },
-    password: { type: String, required: false  },
+    password: { type: String, required: false },
     remainingTokens: { type: Number, default: 50000 },
   },
   { timestamps: true }

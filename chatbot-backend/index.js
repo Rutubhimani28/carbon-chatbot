@@ -6,9 +6,14 @@ import connectDB from "./db/connectDB.js";
 import searchRoutes from "./routes/searchRoutes.js"; // New search routes
 import bodyParser from "body-parser";
 import { getAISearchResults } from "./controller/searchController.js"; // Import the search controller
-import { getUserSearchHistory, getUserTokenStats } from "./controller/searchController.js";
+import {
+  getUserSearchHistory,
+  getUserTokenStats,
+} from "./controller/searchController.js";
 import { grokSearchResults } from "./controller/groksearchController.js";
 import { grokUserSearchHistory } from "./controller/groksearchController.js";
+// import { createUPIPayment } from "./controller/paymentController.js";
+import paymentRoutes from "./controller/paymentController.js";
 
 // Load environment variables first
 dotenv.config();
@@ -39,7 +44,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 app.use("/api/ai", aiRoutes);
-// ✅ New AI Search Routes
+app.use("/api/payments", paymentRoutes);// ✅ New AI Search Routes
 // app.use("/api", searchRoutes);
 
 app.post("/search", getAISearchResults);
@@ -49,6 +54,7 @@ app.post("/userTokenStats", getUserTokenStats); // combined chat+search token st
 app.post("/grokSearch", grokSearchResults); // changed to POST
 app.post("/grokSearchhistory", grokUserSearchHistory); // changed to POST
 
+// app.post("/api/create-upi", createUPIPayment);
 
 const PORT = process.env.PORT || 4040;
 app.listen(PORT, () => {
@@ -63,4 +69,3 @@ process.on("unhandledRejection", (err) => {
   console.error("Unhandled Rejection:", err);
   process.exit(1);
 });
-
