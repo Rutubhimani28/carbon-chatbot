@@ -3282,7 +3282,7 @@ const ChatUI = () => {
                   justifyContent: "end",
                 }}
               >
-                {/* <Box
+                <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3298,7 +3298,8 @@ const ChatUI = () => {
                     mt: "5.2px",
                   }}
                 >
-                  <img
+                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                  {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3307,8 +3308,8 @@ const ChatUI = () => {
                       objectFit: "contain", // or "cover" if you want full fill
                       borderRadius: "8px",
                     }}
-                  />
-                </Box> */}
+                  /> */}
+                </Box>
 
                 <Box
                   sx={{
@@ -3734,7 +3735,7 @@ const ChatUI = () => {
                   // justifyContent: "end",
                 }}
               >
-                {/* <Box
+                <Box
                   onClick={() => {
                     createNewChat();
                     setMobileMenuAnchor(null);
@@ -3749,7 +3750,8 @@ const ChatUI = () => {
                     mt: "4.2px",
                   }}
                 >
-                  <img
+                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                  {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3758,8 +3760,8 @@ const ChatUI = () => {
                       objectFit: "contain", // or "cover" if you want full fill
                       borderRadius: "8px",
                     }}
-                  />
-                </Box> */}
+                  /> */}
+                </Box>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -4298,7 +4300,6 @@ const ChatUI = () => {
                   alignItems: "center",
                 }}
               >
-                {/*                
                 <Box
                   onClick={() => {
                     createNewChat();
@@ -4314,7 +4315,8 @@ const ChatUI = () => {
                     mt: "4.2px",
                   }}
                 >
-                  <img
+                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                  {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -4323,8 +4325,8 @@ const ChatUI = () => {
                       objectFit: "contain", // or "cover" if you want full fill
                       borderRadius: "8px",
                     }}
-                  />
-                </Box> */}
+                  /> */}
+                </Box>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -5570,7 +5572,7 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
-                  <Box
+                  {/* <Box
                     onClick={() => {
                       createNewChat();
                       setMobileMenuAnchor(null);
@@ -5605,18 +5607,9 @@ const ChatUI = () => {
                       },
                     }}
                   >
-                    {/* <img
-                      src={Icon2}
-                      alt="new-chat"
-                      style={{
-                        width: "112%",
-                        height: "115%",
-                        objectFit: "contain", // or "cover" if you want full fill
-                        borderRadius: "8px",
-                      }}
-                    /> */}
+                   
                     <img src={Icon2} alt="new-chat" />
-                  </Box>
+                  </Box> */}
 
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
@@ -5818,7 +5811,7 @@ const ChatUI = () => {
                     }}
                   >
                     {/* 🔹 Mobile Only New Chat Icon */}
-                    <Box
+                    {/* <Box
                       onClick={() => {
                         createNewChat();
                         setMobileMenuAnchor(null);
@@ -5840,7 +5833,7 @@ const ChatUI = () => {
                       }}
                     >
                       <img src={Icon2} alt="new-chat" />
-                    </Box>
+                    </Box> */}
 
                     <TextField
                       select
