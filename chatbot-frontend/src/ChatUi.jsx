@@ -5582,7 +5582,7 @@ const ChatUI = () => {
                   // px: { xs: 2, sm: 0, md: 0}
                 }}
               >
-                <Box
+                {/* <Box
                   sx={{
                     minHeight: "60px",
                     p: 1,
@@ -5598,46 +5598,8 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
-                  {/* <Box
-                    onClick={() => {
-                      createNewChat();
-                      setMobileMenuAnchor(null);
-                    }}
-                    sx={{
-                      cursor: "pointer",
-                      // width: { xs: "117px", sm: "129px" },
-                      height: "37px",
-                      display: { xs: "none", sm: "flex" },
-                      justifyContent: "center",
-                      alignItems: "center",
-                      pb: "0px",
-                      // mt: "5.2px",
-                      mr: 1,
 
-                      // ✅ Responsive image container
-                      "& img": {
-                        width: {
-                          xs: "92%",
-                          sm: "115%",
-                          md: "112%",
-                          lg: "108%",
-                        },
-                        height: {
-                          xs: "92%",
-                          sm: "115%",
-                          md: "112%",
-                          lg: "108%",
-                        },
-                        objectFit: "contain",
-                        borderRadius: "8px",
-                      },
-                    }}
-                  >
-                   
-                    <img src={Icon2} alt="new-chat" />
-                  </Box> */}
-
-                  {/* Main Input with extra left padding for file icon */}
+               
                   <TextField
                     fullWidth
                     placeholder="Ask me..."
@@ -5689,7 +5651,7 @@ const ChatUI = () => {
                     InputProps={{
                       startAdornment: (
                         <>
-                          {/* Attach File Icon - Always visible */}
+                      
                           <IconButton
                             component="label"
                             sx={{
@@ -5726,7 +5688,7 @@ const ChatUI = () => {
                             <AttachFileIcon fontSize="small" />
                           </IconButton>
 
-                          {/* File Name Display - When files are selected */}
+                        
                           {selectedFiles.length > 0 && (
                             <Box
                               sx={{
@@ -5785,7 +5747,7 @@ const ChatUI = () => {
 
                       endAdornment: (
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          {/* 🎤 Voice Input Button */}
+                         
                           <IconButton
                             onClick={
                               isListening ? stopListening : startListening
@@ -5807,7 +5769,7 @@ const ChatUI = () => {
                             )}
                           </IconButton>
 
-                          {/* 🛑 Stop Generating Button (for chatbot response) */}
+                       
                           {(isTypingResponse || isSending) && (
                             <Tooltip title="Stop generating">
                               <IconButton
@@ -5836,30 +5798,7 @@ const ChatUI = () => {
                       flexShrink: 0,
                     }}
                   >
-                    {/* 🔹 Mobile Only New Chat Icon */}
-                    {/* <Box
-                      onClick={() => {
-                        createNewChat();
-                        setMobileMenuAnchor(null);
-                      }}
-                      sx={{
-                        cursor: "pointer",
-                        height: "37px",
-                        display: { xs: "flex", sm: "none" },
-                        justifyContent: "center",
-                        alignItems: "center",
-                        pb: "0px",
-                        mr: 1,
-                        "& img": {
-                          width: "92%",
-                          height: "92%",
-                          objectFit: "contain",
-                          borderRadius: "8px",
-                        },
-                      }}
-                    >
-                      <img src={Icon2} alt="new-chat" />
-                    </Box> */}
+                  
 
                     <TextField
                       select
@@ -5920,21 +5859,254 @@ const ChatUI = () => {
                       <SendIcon />
                     </IconButton>
 
-                    {/* 🔹 Stop icon appears when AI is typing a response */}
-                    {/* {isTypingResponse && (
-                        <IconButton
-                          onClick={() => handleStop()}
-                          color="error"
-                          title="Stop Response"
-                          sx={{
-                            ml: 1,
-                            bgcolor: "#ffe6e6",
-                            "&:hover": { bgcolor: "#ffcccc" },
-                          }}
-                        >
-                          <StopIcon />
-                        </IconButton>
-                      )} */}
+                  </Box>
+                </Box> */}
+
+             
+
+                <Box
+                  sx={{
+                    p: 1,
+                    bgcolor: "#fff",
+                    borderRadius: "40px",
+                    border: "1px solid #dcdcdc",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    flexDirection: "column",
+                    width: "100%",
+                    boxShadow: "0px 1px 6px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  {/* 📝 Input Field */}
+                  <Box sx={{ width: "100%" }}>
+                    <TextField
+                      fullWidth
+                      placeholder="Ask me..."
+                      variant="outlined"
+                      size="small"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      disabled={isSending || isTypingResponse}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "30px",
+                          backgroundColor: "#fff",
+                          height: "auto",
+                          minHeight: selectedFiles.length > 0 ? "75px" : "60px",
+                          padding:
+                            selectedFiles.length > 0
+                              ? "25px 14px 10px 50px"
+                              : "4px 14px 4px 50px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "6px 8px",
+                          height: "auto",
+                          fontSize: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .Mui-disabled": { opacity: 0.5 },
+                        minWidth: { xs: "100%", sm: "200px" },
+                        mb: { xs: 1, sm: 0 },
+                      }}
+                      multiline
+                      maxRows={2}
+                      // maxRows={selectedFiles.length > 0 ? 1 : 4}
+                      InputProps={{
+                        startAdornment: (
+                          <>
+                            {/* 📁 ATTACH ICON (Always shown) */}
+                            <IconButton
+                              component="label"
+                              sx={{
+                                color: "#2F67F6",
+                                position: "absolute",
+                                left: "10px",
+                                bottom:
+                                  selectedFiles.length > 0 ? "36px" : "16px",
+                                borderRadius: "50%",
+                                width: "32px",
+                                height: "32px",
+                                backgroundColor: "rgba(47, 103, 246, 0.1)",
+                                "&:hover": {
+                                  backgroundColor: "rgba(47,103,246,0.2)",
+                                },
+                              }}
+                            >
+                              <input
+                                type="file"
+                                hidden
+                                multiple
+                                accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                                onChange={(e) => {
+                                  const files = Array.from(e.target.files);
+                                  if (files.length > 0) {
+                                    setSelectedFiles((prev) =>
+                                      [...prev, ...files].slice(0, 5)
+                                    );
+                                  }
+                                  e.target.value = "";
+                                }}
+                              />
+                              <AttachFileIcon fontSize="small" />
+                            </IconButton>
+
+                            {/* FILE BADGE SECTION */}
+                            {selectedFiles.length > 0 && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  top: "5px",
+                                  left: "50px",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 0.5,
+                                  maxWidth: "70%",
+                                }}
+                              >
+                                {selectedFiles.map((file, index) => (
+                                  <Box
+                                    key={index}
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      backgroundColor: "#eef3ff",
+                                      borderRadius: "14px",
+                                      padding: "2px 8px",
+                                      border: "1px solid #2F67F6",
+                                      maxWidth: "120px",
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        color: "#2F67F6",
+                                      }}
+                                    >
+                                      {file.name.length > 15
+                                        ? file.name.substring(0, 12) + "..."
+                                        : file.name}
+                                    </Typography>
+
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeFile(index)}
+                                      sx={{ color: "#ff4444", ml: 0.5, p: 0 }}
+                                    >
+                                      <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+                          </>
+                        ),
+
+                        endAdornment: (
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            {/*Mic Btn if needed*/}
+                          </Box>
+                        ),
+                      }}
+                    />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      flexDirection: "raw",
+                      width: "100%",
+                      justifyContent: "end",
+                    }}
+                  >
+                    {/* ▼ Dropdown */}
+                    <TextField
+                      select
+                      size="small"
+                      value={responseLength}
+                      onChange={(e) => setResponseLength(e.target.value)}
+                      sx={{
+                        width: "150px",
+                        "& fieldset": { border: "none" },
+                        bgcolor: "#f6f6f6",
+                        borderRadius: "10px",
+                        textAlign: "left",
+                        fontSize: "14px",
+                        paddingLeft: "4px",
+                      }}
+                    >
+                      <MenuItem value="Short">Short</MenuItem>
+                      <MenuItem value="Concise">Concise</MenuItem>
+                      <MenuItem value="Long">Long</MenuItem>
+                      <MenuItem value="NoOptimisation">
+                        No Optimisation
+                      </MenuItem>
+                    </TextField>
+
+                    {/* ➤ Send Button */}
+                    <IconButton
+                      onClick={() => handleSend()}
+                      // disabled={!input.trim() || isSending || isTypingResponse}
+                      sx={{
+                        bgcolor: "#2F67F6",
+                        color: "white",
+                        width: "40px",
+                        height: "40px",
+                        "&:hover": { bgcolor: "#204BC4" },
+                        borderRadius: "50%",
+                      }}
+                    >
+                      <SendIcon />
+                    </IconButton>
+
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <IconButton
+                        onClick={isListening ? stopListening : startListening}
+                        sx={{
+                          color: isListening ? "red" : "#10a37f",
+                          mr: 0.5,
+                        }}
+                        title={
+                          isListening ? "Stop recording" : "Start voice input"
+                        }
+                      >
+                        {isListening ? (
+                          <StopCircleIcon />
+                        ) : (
+                          <KeyboardVoiceIcon />
+                        )}
+                      </IconButton>
+
+                      {(isTypingResponse || isSending) && (
+                        <Tooltip title="Stop generating">
+                          <IconButton
+                            onClick={() => {
+                              isStoppedRef.current = true;
+                              handleStopResponse();
+                            }}
+                            color="error"
+                            sx={{ mr: 0.5 }}
+                          >
+                            <StopCircleIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
                   </Box>
                 </Box>
 
