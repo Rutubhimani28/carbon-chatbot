@@ -13,6 +13,8 @@ import fs from "fs";
 import OpenAI from "openai";
 import axios from "axios";
 import pdfjs from "pdfjs-dist/legacy/build/pdf.js";
+import XLSX from "xlsx";
+import JSZip from "jszip";
 import {
   checkGlobalTokenLimit,
   getGlobalTokenStats,
@@ -486,6 +488,80 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
           const { data } = await Tesseract.recognize(file.path, "eng");
           content = data.text || "[No text found in DOCX]";
         }
+        break;
+      }
+
+      case ".xlsx":
+      case ".xls":
+      case ".csv": {
+        let buffer;
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch spreadsheet file");
+          buffer = Buffer.from(await res.arrayBuffer());
+        } else {
+          buffer = fs.readFileSync(file.path);
+        }
+
+        const workbook = XLSX.read(buffer, { type: "buffer" });
+        const sheetTexts = workbook.SheetNames.map((name) => {
+          const sheet = workbook.Sheets[name];
+          // Use CSV for simple, flat text extraction
+          return XLSX.utils.sheet_to_csv(sheet);
+        });
+
+        content =
+          sheetTexts.join("\n").trim() ||
+          "[No readable text found in spreadsheet]";
+        break;
+      }
+
+      case ".pptx":
+      case ".ppt": {
+        let buffer;
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch PPT file");
+          buffer = Buffer.from(await res.arrayBuffer());
+        } else {
+          buffer = fs.readFileSync(file.path);
+        }
+
+        const zip = await JSZip.loadAsync(buffer);
+        const slideFiles = Object.keys(zip.files).filter(
+          (name) =>
+            name.startsWith("ppt/slides/slide") && name.endsWith(".xml")
+        );
+
+        if (slideFiles.length === 0) {
+          content = "[No slides found in PPT file]";
+          break;
+        }
+
+        let slideText = "";
+        for (const slidePath of slideFiles) {
+          const xml = await zip.file(slidePath).async("string");
+          const matches = [...xml.matchAll(/<a:t[^>]*>(.*?)<\/a:t>/g)];
+          const text = matches.map((m) => m[1]).join(" ").trim();
+          if (text) slideText += text + " ";
+        }
+
+        content = slideText.trim() || "[No readable text found in PPT]";
+        break;
+      }
+
+      case ".jpg":
+      case ".jpeg":
+      case ".png": {
+        let imageInput = file.path;
+        if (file.path.startsWith("http")) {
+          const res = await fetch(file.path);
+          if (!res.ok) throw new Error("Failed to fetch image file");
+          imageInput = Buffer.from(await res.arrayBuffer());
+        }
+
+        const { data } = await Tesseract.recognize(imageInput, "eng");
+        content = data.text?.trim() || "[No text found in image]";
         break;
       }
 

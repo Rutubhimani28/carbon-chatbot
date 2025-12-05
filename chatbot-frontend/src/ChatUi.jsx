@@ -5901,8 +5901,8 @@ const ChatUI = () => {
                           minHeight: selectedFiles.length > 0 ? "75px" : "60px",
                           padding:
                             selectedFiles.length > 0
-                              ? "25px 14px 10px 50px"
-                              : "4px 14px 4px 50px",
+                              ? "25px 14px 10px 14px"
+                              : "4px 14px 4px 14px",
                           display: "flex",
                           alignItems: "center",
                         },
@@ -5934,7 +5934,7 @@ const ChatUI = () => {
                                 sx={{
                                   position: "absolute",
                                   top: "5px",
-                                  left: "50px",
+                                  left: "14px",
                                   display: "flex",
                                   flexWrap: "wrap",
                                   gap: 0.5,
