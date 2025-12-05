@@ -1103,12 +1103,12 @@ export const getAIResponse = async (req, res) => {
         botName === "chatgpt-5-mini"
           ? "gpt-4o-mini"
           : botName === "grok"
-            ? "grok-3-mini"
-            : botName === "claude-3-haiku"
-              ? "claude-3-haiku-20240307"
-              : botName === "mistral"
-                ? "mistral-small-2506"
-                : undefined;
+          ? "grok-3-mini"
+          : botName === "claude-3-haiku"
+          ? "claude-3-haiku-20240307"
+          : botName === "mistral"
+          ? "mistral-small-2506"
+          : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
 
@@ -1289,7 +1289,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch { }
+        } catch {}
 
         const apiError = errJson?.error || errJson;
 
@@ -1407,8 +1407,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -1416,8 +1416,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
