@@ -389,8 +389,8 @@ export const getAISearchResults = async (req, res) => {
       const restricted = restrictions.under13.some((word) => lowerQuery.includes(word));
       if (restricted) {
         return res.status(403).json({
-          // message: "Search blocked ❌: Content not suitable for users below 13.",
-          message: "Oops! The requested info isn’t available for users under 13.",
+          // message: "Search blocked ❌: Content not suitable for users below 18.",
+          message: "Oops! The requested info isn’t available for users under 18.",
           allowed: false,
           age,
           restrictedCategory: "under13",

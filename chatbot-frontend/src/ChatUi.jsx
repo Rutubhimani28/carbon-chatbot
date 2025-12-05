@@ -22,7 +22,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  Tooltip,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -64,6 +63,7 @@ import StopCircleIcon from "@mui/icons-material/StopCircle";
 import { useTheme, useMediaQuery } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LanguageIcon from "@mui/icons-material/Language";
+import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -170,6 +170,20 @@ const ChatUI = () => {
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md")); // Small and medium screens
   const isXS = useMediaQuery(theme.breakpoints.only("xs"));
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("lg")); // Large screens only
+
+  const CustomTooltip = styled(({ className, ...props }) => (
+    <Tooltip {...props} classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: "#ffffff",
+      color: "#000000",
+      // color: "#1268fb",
+      fontSize: "14px",
+      padding: "10px 14px",
+      borderRadius: "8px",
+      boxShadow: "0px 2px 10px rgba(0,0,0,0.15)",
+    },
+  }));
 
   const handleToggleMenu = (event) => {
     if (anchorsEl) {
@@ -3161,12 +3175,12 @@ const ChatUI = () => {
                 display: "flex",
                 alignItems: "center",
                 width: "100%",
-                gap: 2,
+                gap: 1.5,
                 justifyContent: "space-between",
                 // flexWrap: "wrap",
               }}
             >
-              <Box sx={{ width: "32%", mb: 0, mt: "6px" }}>
+              <Box sx={{ width: "28%", mb: 0, mt: "6px" }}>
                 {activeView === "chat" && (
                   <Select
                     labelId="bot-select-label"
@@ -3286,30 +3300,31 @@ const ChatUI = () => {
                 sx={{
                   display: "flex",
                   // marginLeft: "30px",
-                  gap: { xs: "11px", sm: 3 },
+                  gap: { xs: "8px", sm: 3 },
                   alignItems: "center",
                   // width: "100%",
                   justifyContent: "end",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { xs: "117px", sm: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    pb: "0px",
-                    mt: "5.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { xs: "117px", sm: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      pb: "0px",
+                      mt: "5.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3319,7 +3334,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 <Box
                   sx={{
@@ -3527,45 +3543,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: "20px", // Icon size similar to 15px text
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: { xs: -7, sm: -4 },
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: "20px", // Icon size similar to 15px text
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: { xs: -7, sm: -4 },
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
             </Box>
           </>
@@ -3641,7 +3659,7 @@ const ChatUI = () => {
                     height: "32px",
                     // mr: "222px",
                     // width: "100%",
-                    width: { xs: "60%", sm: "29%" },
+                    width: { xs: "60%", sm: "16%" },
                     //  px: { xs: 1, sm: 2, md: 2 },
                     "& .MuiSelect-select": {
                       fontSize: "16px",
@@ -3694,7 +3712,7 @@ const ChatUI = () => {
                     borderRadius: "5px",
                     // width: "100%",
                     mr: "222px",
-                    width: { xs: "60%", sm: "29%" },
+                    width: { xs: "60%", sm: "19%" },
                     height: "32px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
@@ -3745,23 +3763,24 @@ const ChatUI = () => {
                   // justifyContent: "end",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { xs: "117px", sm: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    mt: "4.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { xs: "117px", sm: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mt: "4.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -3771,7 +3790,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -4001,45 +4021,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: { xs: "18px", sm: "25px" }, // icon responsive sizing
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: { xs: -5, sm: -10 },
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: { xs: "18px", sm: "25px" }, // icon responsive sizing
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: { xs: -5, sm: -10 },
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
             </Box>
           </>
@@ -4193,7 +4215,7 @@ const ChatUI = () => {
                         bgcolor: "#fff",
                         borderRadius: "5px",
                         height: "36px",
-                        width: "180px",
+                        width: "125px",
                         "& .MuiSelect-select": {
                           fontSize: "18px",
                           fontFamily: "Calibri, sans-serif",
@@ -4257,7 +4279,7 @@ const ChatUI = () => {
                   sx={{
                     bgcolor: "#fff",
                     borderRadius: "5px",
-                    width: "200px",
+                    width: "175px",
                     height: "36px",
                     "& .MuiSelect-select": {
                       pl: 1.5,
@@ -4310,23 +4332,24 @@ const ChatUI = () => {
                   alignItems: "center",
                 }}
               >
-                <Box
-                  onClick={() => {
-                    createNewChat();
-                    setMobileMenuAnchor(null);
-                  }}
-                  sx={{
-                    cursor: "pointer",
-                    // width: { md: "117px", lg: "129px" },
-                    height: "37px",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    mt: "4.2px",
-                  }}
-                >
-                  <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
-                  {/* <img
+                <CustomTooltip title="New Chat" placement="bottom">
+                  <Box
+                    onClick={() => {
+                      createNewChat();
+                      setMobileMenuAnchor(null);
+                    }}
+                    sx={{
+                      cursor: "pointer",
+                      // width: { md: "117px", lg: "129px" },
+                      height: "37px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      mt: "4.2px",
+                    }}
+                  >
+                    <EditIcon sx={{ color: "white", width: 18, height: 18 }} />
+                    {/* <img
                     src={Icon}
                     alt="new-chat"
                     style={{
@@ -4336,7 +4359,8 @@ const ChatUI = () => {
                       borderRadius: "8px",
                     }}
                   /> */}
-                </Box>
+                  </Box>
+                </CustomTooltip>
 
                 {/* Wrds AI Button */}
                 {/* <Button
@@ -4564,45 +4588,47 @@ const ChatUI = () => {
                     />
                   )}
                 </Box> */}
-                <Box
-                  sx={{
-                    cursor: "pointer",
-                    position: "relative",
-                    pb: "0px",
-                    mt: 0.4,
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  onClick={() => setActiveView("search2")}
-                >
-                  <LanguageIcon
+                <CustomTooltip title="AI Browsing" placement="bottom">
+                  <Box
                     sx={{
-                      fontSize: "26px",
-                      color:
-                        activeView === "search2"
-                          ? "#fff"
-                          : "rgba(255,255,255,0.8)",
-                      transition: "color 0.3s ease",
-                      "&:hover": {
-                        color: "#fff",
-                      },
+                      cursor: "pointer",
+                      position: "relative",
+                      pb: "0px",
+                      mt: 0.4,
+                      display: "flex",
+                      alignItems: "center",
                     }}
-                  />
-
-                  {activeView === "search2" && (
-                    <Box
+                    onClick={() => setActiveView("search2")}
+                  >
+                    <LanguageIcon
                       sx={{
-                        position: "absolute",
-                        bottom: -10,
-                        left: 0,
-                        width: "100%",
-                        height: "3px",
-                        backgroundColor: "#fff",
-                        borderRadius: "2px",
+                        fontSize: "26px",
+                        color:
+                          activeView === "search2"
+                            ? "#fff"
+                            : "rgba(255,255,255,0.8)",
+                        transition: "color 0.3s ease",
+                        "&:hover": {
+                          color: "#fff",
+                        },
                       }}
                     />
-                  )}
-                </Box>
+
+                    {activeView === "search2" && (
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          bottom: -10,
+                          left: 0,
+                          width: "100%",
+                          height: "3px",
+                          backgroundColor: "#fff",
+                          borderRadius: "2px",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </CustomTooltip>
               </Box>
 
               {/* User Menu */}
@@ -5095,7 +5121,7 @@ const ChatUI = () => {
                                 backgroundColor: "#f0f4ff",
                                 borderRadius: "6px",
                                 padding: "2px 8px",
-                                border: "1px solid #2F67F6",
+                                border: "1px solid #1268fb",
                                 maxWidth: "120px",
                                 mb: 0.5,
                                 // size: "20px",
@@ -5104,7 +5130,7 @@ const ChatUI = () => {
                               <InsertDriveFile
                                 sx={{
                                   fontSize: "14px",
-                                  color: "#2F67F6",
+                                  color: "#1268fb",
                                   mr: 1,
                                 }}
                               />
@@ -5112,7 +5138,7 @@ const ChatUI = () => {
                               {/* <Typography
                             variant="caption"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -5133,7 +5159,7 @@ const ChatUI = () => {
                                     rel="noopener noreferrer"
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       display: "block",
                                       textDecoration: "none",
                                       overflow: "hidden",
@@ -5158,7 +5184,7 @@ const ChatUI = () => {
                           <Paper
                             sx={{
                               p: { xs: 1, sm: 1.5 },
-                              bgcolor: "#2F67F6",
+                              bgcolor: "#1268fb",
                               color: "#fff",
                               borderRadius: 3,
                               minWidth: {
@@ -5566,7 +5592,7 @@ const ChatUI = () => {
                   // px: { xs: 2, sm: 0, md: 0}
                 }}
               >
-                <Box
+                {/* <Box
                   sx={{
                     minHeight: "60px",
                     p: 1,
@@ -5582,46 +5608,8 @@ const ChatUI = () => {
                     // position: "relative",
                   }}
                 >
-                  {/* <Box
-                    onClick={() => {
-                      createNewChat();
-                      setMobileMenuAnchor(null);
-                    }}
-                    sx={{
-                      cursor: "pointer",
-                      // width: { xs: "117px", sm: "129px" },
-                      height: "37px",
-                      display: { xs: "none", sm: "flex" },
-                      justifyContent: "center",
-                      alignItems: "center",
-                      pb: "0px",
-                      // mt: "5.2px",
-                      mr: 1,
 
-                      // ✅ Responsive image container
-                      "& img": {
-                        width: {
-                          xs: "92%",
-                          sm: "115%",
-                          md: "112%",
-                          lg: "108%",
-                        },
-                        height: {
-                          xs: "92%",
-                          sm: "115%",
-                          md: "112%",
-                          lg: "108%",
-                        },
-                        objectFit: "contain",
-                        borderRadius: "8px",
-                      },
-                    }}
-                  >
-                   
-                    <img src={Icon2} alt="new-chat" />
-                  </Box> */}
-
-                  {/* Main Input with extra left padding for file icon */}
+               
                   <TextField
                     fullWidth
                     placeholder="Ask me..."
@@ -5673,11 +5661,11 @@ const ChatUI = () => {
                     InputProps={{
                       startAdornment: (
                         <>
-                          {/* Attach File Icon - Always visible */}
+                      
                           <IconButton
                             component="label"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               position: "absolute",
                               left: "8px",
                               bottom:
@@ -5710,7 +5698,7 @@ const ChatUI = () => {
                             <AttachFileIcon fontSize="small" />
                           </IconButton>
 
-                          {/* File Name Display - When files are selected */}
+                        
                           {selectedFiles.length > 0 && (
                             <Box
                               sx={{
@@ -5733,7 +5721,7 @@ const ChatUI = () => {
                                     backgroundColor: "#f0f4ff",
                                     borderRadius: "12px",
                                     padding: "2px 8px",
-                                    border: "1px solid #2F67F6",
+                                    border: "1px solid #1268fb",
                                     maxWidth: "120px",
                                     mb: 0.5,
                                   }}
@@ -5741,7 +5729,7 @@ const ChatUI = () => {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
@@ -5769,7 +5757,7 @@ const ChatUI = () => {
 
                       endAdornment: (
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          {/* 🎤 Voice Input Button */}
+                         
                           <IconButton
                             onClick={
                               isListening ? stopListening : startListening
@@ -5791,7 +5779,7 @@ const ChatUI = () => {
                             )}
                           </IconButton>
 
-                          {/* 🛑 Stop Generating Button (for chatbot response) */}
+                       
                           {(isTypingResponse || isSending) && (
                             <Tooltip title="Stop generating">
                               <IconButton
@@ -5820,30 +5808,7 @@ const ChatUI = () => {
                       flexShrink: 0,
                     }}
                   >
-                    {/* 🔹 Mobile Only New Chat Icon */}
-                    {/* <Box
-                      onClick={() => {
-                        createNewChat();
-                        setMobileMenuAnchor(null);
-                      }}
-                      sx={{
-                        cursor: "pointer",
-                        height: "37px",
-                        display: { xs: "flex", sm: "none" },
-                        justifyContent: "center",
-                        alignItems: "center",
-                        pb: "0px",
-                        mr: 1,
-                        "& img": {
-                          width: "92%",
-                          height: "92%",
-                          objectFit: "contain",
-                          borderRadius: "8px",
-                        },
-                      }}
-                    >
-                      <img src={Icon2} alt="new-chat" />
-                    </Box> */}
+                  
 
                     <TextField
                       select
@@ -5904,34 +5869,273 @@ const ChatUI = () => {
                       <SendIcon />
                     </IconButton>
 
-                    {/* 🔹 Stop icon appears when AI is typing a response */}
-                    {/* {isTypingResponse && (
+                  </Box>
+                </Box> */}
+
+                <Box
+                  sx={{
+                    p: 1,
+                    bgcolor: "#fff",
+                    borderRadius: "40px",
+                    border: "1px solid #dcdcdc",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 0.5,
+                    flexDirection: "column",
+                    width: "100%",
+                    boxShadow: "0px 1px 6px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  {/* 📝 Input Field */}
+                  <Box sx={{ width: "100%" }}>
+                    <TextField
+                      fullWidth
+                      placeholder="Ask WrdsAI..."
+                      variant="outlined"
+                      size="small"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }}
+                      disabled={isSending || isTypingResponse}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "30px",
+                          backgroundColor: "#fff",
+                          height: "auto",
+                          border: 0,
+                          minHeight: selectedFiles.length > 0 ? "75px" : "60px",
+                          padding:
+                            selectedFiles.length > 0
+                              ? "25px 14px 10px 14px"
+                              : "4px 14px 4px 14px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          border: "none !important", // 🔥 outline remove
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "6px 8px",
+                          height: "auto",
+                          fontSize: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .Mui-disabled": { opacity: 0.5 },
+                        minWidth: { xs: "100%", sm: "200px" },
+                        mb: { xs: 1, sm: 0 },
+                      }}
+                      multiline
+                      maxRows={2}
+                      // maxRows={selectedFiles.length > 0 ? 1 : 4}
+                      InputProps={{
+                        startAdornment: (
+                          <>
+                            {/* 📁 ATTACH ICON (Always shown) */}
+
+                            {/* FILE BADGE SECTION */}
+                            {selectedFiles.length > 0 && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  top: "5px",
+                                  left: "20px",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 0.5,
+                                  maxWidth: "70%",
+                                }}
+                              >
+                                {selectedFiles.map((file, index) => (
+                                  <Box
+                                    key={index}
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      backgroundColor: "#eef3ff",
+                                      borderRadius: "14px",
+                                      padding: "2px 8px",
+                                      border: "1px solid #1268fb",
+                                      maxWidth: "120px",
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        color: "#1268fb",
+                                      }}
+                                    >
+                                      {file.name.length > 15
+                                        ? file.name.substring(0, 12) + "..."
+                                        : file.name}
+                                    </Typography>
+
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeFile(index)}
+                                      sx={{ color: "#ff4444", ml: 0.5, p: 0 }}
+                                    >
+                                      <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                              </Box>
+                            )}
+                          </>
+                        ),
+
+                        endAdornment: (
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            {/*Mic Btn if needed*/}
+                          </Box>
+                        ),
+                      }}
+                    />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      flexDirection: "raw",
+                      width: "100%",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Box sx={{ ml: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton
-                          onClick={() => handleStop()}
-                          color="error"
-                          title="Stop Response"
+                          component="label"
                           sx={{
-                            ml: 1,
-                            bgcolor: "#ffe6e6",
-                            "&:hover": { bgcolor: "#ffcccc" },
+                            color: "#1268fb",
+                            // position: "absolute",
+                            // left: "10px",
+
+                            // bottom: selectedFiles.length > 0 ? "36px" : "16px",
+                            borderRadius: "50%",
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "rgba(47, 103, 246, 0.1)",
+                            "&:hover": {
+                              backgroundColor: "rgba(47,103,246,0.2)",
+                            },
                           }}
                         >
-                          <StopIcon />
+                          <input
+                            type="file"
+                            hidden
+                            multiple
+                            accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files);
+                              if (files.length > 0) {
+                                setSelectedFiles((prev) =>
+                                  [...prev, ...files].slice(0, 5)
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          <AttachFileIcon fontSize="small" />
                         </IconButton>
-                      )} */}
+                        <IconButton
+                          onClick={isListening ? stopListening : startListening}
+                          sx={{
+                            color: isListening ? "red" : "#1268fb",
+                            mr: 0.5,
+                          }}
+                          title={
+                            isListening ? "Stop recording" : "Start voice input"
+                          }
+                        >
+                          {isListening ? (
+                            <StopCircleIcon />
+                          ) : (
+                            <KeyboardVoiceIcon />
+                          )}
+                        </IconButton>
+
+                        {(isTypingResponse || isSending) && (
+                          <Tooltip title="Stop generating">
+                            <IconButton
+                              onClick={() => {
+                                isStoppedRef.current = true;
+                                handleStopResponse();
+                              }}
+                              color="error"
+                              sx={{ mr: 0.5 }}
+                            >
+                              <StopCircleIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </Box>
+                    <Box sx={{ mr: 1 }}>
+                      {/* ▼ Dropdown */}
+                      <TextField
+                        select
+                        size="small"
+                        value={responseLength}
+                        onChange={(e) => setResponseLength(e.target.value)}
+                        sx={{
+                          width: "150px",
+                          "& fieldset": { border: "none" },
+                          bgcolor: "#f6f6f6",
+                          borderRadius: "10px",
+                          textAlign: "left",
+                          fontSize: "14px",
+                          paddingLeft: "4px",
+                        }}
+                      >
+                        <MenuItem value="Short">Short</MenuItem>
+                        <MenuItem value="Concise">Concise</MenuItem>
+                        <MenuItem value="Long">Long</MenuItem>
+                        <MenuItem value="NoOptimisation">
+                          No Optimisation
+                        </MenuItem>
+                      </TextField>
+
+                      {/* ➤ Send Button */}
+                      <IconButton
+                        onClick={() => handleSend()}
+                        // disabled={!input.trim() || isSending || isTypingResponse}
+                        sx={{
+                          bgcolor: "#1268fb",
+                          color: "white",
+                          width: "40px",
+                          height: "40px",
+                          ml: 1,
+                          "&:hover": { bgcolor: "#204BC4" },
+                          borderRadius: "50%",
+                        }}
+                      >
+                        <SendIcon />
+                      </IconButton>
+                    </Box>
                   </Box>
                 </Box>
 
                 {/* 👉 Tagline (Always Common) */}
-                <Box textAlign="center">
+                {/* <Box textAlign="center" mt={1}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: "14px" }}
+                    sx={{ fontSize: "14px", mt: 1 }}
                   >
                     How <strong>Wrds</strong> can help you today?
                   </Typography>
-                </Box>
+                </Box> */}
               </Box>
             </Box>
           </>
@@ -6069,7 +6273,7 @@ const ChatUI = () => {
                                 backgroundColor: "#f0f4ff",
                                 borderRadius: "6px",
                                 padding: "2px 8px",
-                                border: "1px solid #2F67F6",
+                                border: "1px solid #1268fb",
                                 maxWidth: "120px",
                                 mb: 0.5,
                                 // size: "20px",
@@ -6078,7 +6282,7 @@ const ChatUI = () => {
                               <InsertDriveFile
                                 sx={{
                                   fontSize: "14px",
-                                  color: "#2F67F6",
+                                  color: "#1268fb",
                                   mr: 1,
                                 }}
                               />
@@ -6086,7 +6290,7 @@ const ChatUI = () => {
                               {/* <Typography
                             variant="caption"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -6107,7 +6311,7 @@ const ChatUI = () => {
                                     rel="noopener noreferrer"
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       display: "block",
                                       textDecoration: "none",
                                       overflow: "hidden",
@@ -6132,7 +6336,7 @@ const ChatUI = () => {
                           <Paper
                             sx={{
                               p: { xs: 1, sm: 1.5 },
-                              bgcolor: "#2F67F6",
+                              bgcolor: "#1268fb",
                               color: "#fff",
                               borderRadius: 3,
                               minWidth: "300px",
@@ -6544,7 +6748,7 @@ const ChatUI = () => {
                   {/* <IconButton
                     component="label"
                     sx={{
-                      color: "#2F67F6",
+                      color: "#1268fb",
                       position: "absolute",
                       left: "15px",
                       bottom: "34px", // 👈 bottom ma fix karva
@@ -6590,7 +6794,7 @@ const ChatUI = () => {
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
                     fullWidth
-                    placeholder="Ask me..."
+                    placeholder="Ask WrdsAI..."
                     variant="outlined"
                     size="small"
                     value={input}
@@ -6608,11 +6812,15 @@ const ChatUI = () => {
                         backgroundColor: "#fff",
                         height: "auto",
                         minHeight: "67px",
+                        border: 0,
                         padding:
                           selectedFiles.length > 0
                             ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
                             : "12px 14px 12px 50px !important", // Added padding for file icon
                         paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none !important", // 🔥 outline remove
                       },
                       "& .MuiOutlinedInput-input": {
                         padding: "8px 0", // Remove left/right padding since we have container padding
@@ -6636,7 +6844,7 @@ const ChatUI = () => {
                           <IconButton
                             component="label"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               position: "absolute",
                               left: "12px",
                               bottom:
@@ -6692,7 +6900,7 @@ const ChatUI = () => {
                                     backgroundColor: "#f0f4ff",
                                     borderRadius: "12px",
                                     padding: "2px 8px",
-                                    border: "1px solid #2F67F6",
+                                    border: "1px solid #1268fb",
                                     maxWidth: "120px",
                                     mb: 0.5,
                                   }}
@@ -6700,7 +6908,7 @@ const ChatUI = () => {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
@@ -6857,7 +7065,7 @@ const ChatUI = () => {
                 </Box>
 
                 {/* 👉 Tagline (Always Common) */}
-                <Box textAlign="center">
+                {/* <Box textAlign="center">
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -6865,7 +7073,7 @@ const ChatUI = () => {
                   >
                     How <strong>WrdsAI</strong> can help you today?
                   </Typography>
-                </Box>
+                </Box> */}
               </Box>
             </Box>
           </>
@@ -6986,7 +7194,7 @@ const ChatUI = () => {
                                 backgroundColor: "#f0f4ff",
                                 borderRadius: "6px",
                                 padding: "2px 8px",
-                                border: "1px solid #2F67F6",
+                                border: "1px solid #1268fb",
                                 maxWidth: "120px",
                                 mb: 0.5,
                                 // size: "20px",
@@ -6995,7 +7203,7 @@ const ChatUI = () => {
                               <InsertDriveFile
                                 sx={{
                                   fontSize: "14px",
-                                  color: "#2F67F6",
+                                  color: "#1268fb",
                                   mr: 1,
                                 }}
                               />
@@ -7003,7 +7211,7 @@ const ChatUI = () => {
                               {/* <Typography
                             variant="caption"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -7024,7 +7232,7 @@ const ChatUI = () => {
                                     rel="noopener noreferrer"
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       display: "block",
                                       textDecoration: "none",
                                       overflow: "hidden",
@@ -7049,7 +7257,7 @@ const ChatUI = () => {
                           <Paper
                             sx={{
                               p: { xs: 1, sm: 1.5 },
-                              bgcolor: "#2F67F6",
+                              bgcolor: "#1268fb",
                               color: "#fff",
                               borderRadius: 3,
                               minWidth: "300px",
@@ -7461,7 +7669,7 @@ const ChatUI = () => {
                   {/* <IconButton
                     component="label"
                     sx={{
-                      color: "#2F67F6",
+                      color: "#1268fb",
                       position: "absolute",
                       left: "15px",
                       bottom: "34px", // 👈 bottom ma fix karva
@@ -7507,7 +7715,7 @@ const ChatUI = () => {
                   {/* Main Input with extra left padding for file icon */}
                   <TextField
                     fullWidth
-                    placeholder="Ask me..."
+                    placeholder="Ask WrdsAI..."
                     variant="outlined"
                     size="small"
                     value={input}
@@ -7525,11 +7733,15 @@ const ChatUI = () => {
                         backgroundColor: "#fff",
                         height: "auto",
                         minHeight: "67px",
+                        border: 0,
                         padding:
                           selectedFiles.length > 0
                             ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
                             : "12px 14px 12px 50px !important", // Added padding for file icon
                         paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
+                      },
+                      "& .MuiOutlinedInput-notchedOutline": {
+                        border: "none !important", // 🔥 outline remove
                       },
                       "& .MuiOutlinedInput-input": {
                         padding: "8px 0", // Remove left/right padding since we have container padding
@@ -7553,7 +7765,7 @@ const ChatUI = () => {
                           <IconButton
                             component="label"
                             sx={{
-                              color: "#2F67F6",
+                              color: "#1268fb",
                               position: "absolute",
                               left: "12px",
                               bottom:
@@ -7609,7 +7821,7 @@ const ChatUI = () => {
                                     backgroundColor: "#f0f4ff",
                                     borderRadius: "12px",
                                     padding: "2px 8px",
-                                    border: "1px solid #2F67F6",
+                                    border: "1px solid #1268fb",
                                     maxWidth: "120px",
                                     mb: 0.5,
                                   }}
@@ -7617,7 +7829,7 @@ const ChatUI = () => {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: "#2F67F6",
+                                      color: "#1268fb",
                                       overflow: "hidden",
                                       textOverflow: "ellipsis",
                                       whiteSpace: "nowrap",
@@ -7774,7 +7986,7 @@ const ChatUI = () => {
                 </Box>
 
                 {/* 👉 Tagline (Always Common) */}
-                <Box textAlign="center">
+                {/* <Box textAlign="center">
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -7782,7 +7994,7 @@ const ChatUI = () => {
                   >
                     How <strong>WrdsAI Pro</strong> can help you today?
                   </Typography>
-                </Box>
+                </Box> */}
               </Box>
             </Box>
           </>
@@ -8879,5 +9091,4 @@ const ChatUI = () => {
     </Box>
   );
 };
-
 export default ChatUI;
