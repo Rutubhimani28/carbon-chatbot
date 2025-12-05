@@ -5934,7 +5934,7 @@ const ChatUI = () => {
                                 sx={{
                                   position: "absolute",
                                   top: "5px",
-                                  left: "14px",
+                                  left: "20px",
                                   display: "flex",
                                   flexWrap: "wrap",
                                   gap: 0.5,
