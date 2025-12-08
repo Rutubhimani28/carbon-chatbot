@@ -3750,7 +3750,7 @@ const ChatUI = () => {
                   gap: { xs: 1, sm: 3 },
                   alignItems: "center",
                   justifyContent: "end",
-                  // justifyContent: "end",
+                  width: "100%" ,
                 }}
               >
                 <CustomTooltip title="New Chat" placement="bottom">
@@ -5870,7 +5870,7 @@ const ChatUI = () => {
                     border: "1px solid #dcdcdc",
                     display: "flex",
                     alignItems: "center",
-                    gap: 0.5,
+                    gap: isXS ? 0 : 0.5,
                     flexDirection: "column",
                     width: "100%",
                     boxShadow: "0px 1px 6px rgba(0,0,0,0.1)",
@@ -5996,7 +5996,7 @@ const ChatUI = () => {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1,
+                      gap: isXS ? 0.5 : 1,
                       flexDirection: "raw",
                       width: "100%",
                       justifyContent: "space-between",
@@ -6013,8 +6013,8 @@ const ChatUI = () => {
 
                             // bottom: selectedFiles.length > 0 ? "36px" : "16px",
                             borderRadius: "50%",
-                            width: "32px",
-                            height: "32px",
+                            width: isXS ? "25px" : "32px",
+                            height: isXS ? "25px" : "32px",
                             backgroundColor: "rgba(47, 103, 246, 0.1)",
                             "&:hover": {
                               backgroundColor: "rgba(47,103,246,0.2)",
@@ -6051,27 +6051,41 @@ const ChatUI = () => {
                           {isListening ? (
                             <StopCircleIcon />
                           ) : (
-                            <KeyboardVoiceIcon />
+                            <KeyboardVoiceIcon
+                              sx={{
+                                width: isXS ? "23px" : "25px",
+                                height: isXS ? "23px" : "25px",
+                              }}
+                            />
                           )}
                         </IconButton>
 
-                        {(isTypingResponse || isSending) && (
-                          <Tooltip title="Stop generating">
-                            <IconButton
-                              onClick={() => {
-                                isStoppedRef.current = true;
-                                handleStopResponse();
-                              }}
-                              color="error"
-                              sx={{ mr: 0.5 }}
-                            >
-                              <StopCircleIcon />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                        {/* {(isTypingResponse || isSending) && ( */}
+                        <Tooltip title="Stop generating">
+                          <IconButton
+                            onClick={() => {
+                              isStoppedRef.current = true;
+                              handleStopResponse();
+                            }}
+                            color="error"
+                            sx={{ mr: 0.5, width: "9px", height: "11px" }}
+                          >
+                            <StopCircleIcon
+                              sx={{ width: "25px", height: "25px" }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                        {/* )} */}
                       </Box>
                     </Box>
-                    <Box sx={{ mr: 1 }}>
+                    <Box
+                      sx={{
+                        mr: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {/* ▼ Dropdown */}
                       <TextField
                         select
@@ -6079,7 +6093,8 @@ const ChatUI = () => {
                         value={responseLength}
                         onChange={(e) => setResponseLength(e.target.value)}
                         sx={{
-                          width: "150px",
+                          // width: "150px",
+                          width: isXS ? "112px" : "150px",
                           "& fieldset": { border: "none" },
                           bgcolor: "#f6f6f6",
                           borderRadius: "10px",
@@ -6103,14 +6118,19 @@ const ChatUI = () => {
                         sx={{
                           bgcolor: "#1268fb",
                           color: "white",
-                          width: "40px",
-                          height: "40px",
+                          width: isXS ? "30px" : "40px",
+                          height: isXS ? "30px" : "40px",
                           ml: 1,
                           "&:hover": { bgcolor: "#204BC4" },
                           borderRadius: "50%",
                         }}
                       >
-                        <SendIcon />
+                        <SendIcon
+                          sx={{
+                            width: isXS ? "15px" : "25px",
+                            height: isXS ? "15px" : "25px",
+                          }}
+                        />
                       </IconButton>
                     </Box>
                   </Box>
@@ -6852,7 +6872,7 @@ const ChatUI = () => {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1,
+                      gap: isXS ? 0.5 : 1,
                       flexDirection: "raw",
                       width: "100%",
                       justifyContent: "space-between",
@@ -6869,8 +6889,8 @@ const ChatUI = () => {
 
                             // bottom: selectedFiles.length > 0 ? "36px" : "16px",
                             borderRadius: "50%",
-                            width: "32px",
-                            height: "32px",
+                            width: isXS ? "25px" : "32px",
+                            height: isXS ? "25px" : "32px",
                             backgroundColor: "rgba(47, 103, 246, 0.1)",
                             "&:hover": {
                               backgroundColor: "rgba(47,103,246,0.2)",
@@ -6907,27 +6927,41 @@ const ChatUI = () => {
                           {isListening ? (
                             <StopCircleIcon />
                           ) : (
-                            <KeyboardVoiceIcon />
+                            <KeyboardVoiceIcon
+                              sx={{
+                                width: isXS ? "23px" : "25px",
+                                height: isXS ? "23px" : "25px",
+                              }}
+                            />
                           )}
                         </IconButton>
 
-                        {(isTypingResponse || isSending) && (
-                          <Tooltip title="Stop generating">
-                            <IconButton
-                              onClick={() => {
-                                isStoppedRef.current = true;
-                                handleStopSmartAIResponse();
-                              }}
-                              color="error"
-                              sx={{ mr: 0.5 }}
-                            >
-                              <StopCircleIcon />
-                            </IconButton>
-                          </Tooltip>
-                        )}
+                        {/* {(isTypingResponse || isSending) && ( */}
+                        <Tooltip title="Stop generating">
+                          <IconButton
+                            onClick={() => {
+                              isStoppedRef.current = true;
+                              handleStopSmartAIResponse();
+                            }}
+                            color="error"
+                            sx={{ mr: 0.5, width: "9px", height: "11px" }}
+                          >
+                            <StopCircleIcon
+                              sx={{ width: "25px", height: "25px" }}
+                            />
+                          </IconButton>
+                        </Tooltip>
+                        {/* )} */}
                       </Box>
                     </Box>
-                    <Box sx={{ mr: 1 }}>
+                    <Box
+                      sx={{
+                        mr: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {/* ▼ Dropdown */}
                       <TextField
                         select
@@ -6935,7 +6969,8 @@ const ChatUI = () => {
                         value={responseLength}
                         onChange={(e) => setResponseLength(e.target.value)}
                         sx={{
-                          width: "150px",
+                          // width: "150px",
+                          width: isXS ? "112px" : "150px",
                           "& fieldset": { border: "none" },
                           bgcolor: "#f6f6f6",
                           borderRadius: "10px",
@@ -6959,14 +6994,19 @@ const ChatUI = () => {
                         sx={{
                           bgcolor: "#1268fb",
                           color: "white",
-                          width: "40px",
-                          height: "40px",
+                          width: isXS ? "30px" : "40px",
+                          height: isXS ? "30px" : "40px",
                           ml: 1,
                           "&:hover": { bgcolor: "#204BC4" },
                           borderRadius: "50%",
                         }}
                       >
-                        <SendIcon />
+                        <SendIcon
+                          sx={{
+                            width: isXS ? "15px" : "25px",
+                            height: isXS ? "15px" : "25px",
+                          }}
+                        />
                       </IconButton>
                     </Box>
                   </Box>
@@ -7574,7 +7614,7 @@ const ChatUI = () => {
                   {/* 📝 Input Field */}
                   <Box sx={{ width: "100%" }}>
                     <TextField
-                      fullWidth 
+                      fullWidth
                       placeholder="Ask WrdsAI Pro..."
                       variant="outlined"
                       size="small"
@@ -7691,7 +7731,7 @@ const ChatUI = () => {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1,
+                      gap: isXS ? 0.5 : 1,
                       flexDirection: "raw",
                       width: "100%",
                       justifyContent: "space-between",
@@ -7708,8 +7748,8 @@ const ChatUI = () => {
 
                             // bottom: selectedFiles.length > 0 ? "36px" : "16px",
                             borderRadius: "50%",
-                            width: "32px",
-                            height: "32px",
+                            width: isXS ? "25px" : "32px",
+                            height: isXS ? "25px" : "32px",
                             backgroundColor: "rgba(47, 103, 246, 0.1)",
                             "&:hover": {
                               backgroundColor: "rgba(47,103,246,0.2)",
@@ -7746,7 +7786,12 @@ const ChatUI = () => {
                           {isListening ? (
                             <StopCircleIcon />
                           ) : (
-                            <KeyboardVoiceIcon />
+                            <KeyboardVoiceIcon
+                              sx={{
+                                width: isXS ? "23px" : "25px",
+                                height: isXS ? "23px" : "25px",
+                              }}
+                            />
                           )}
                         </IconButton>
 
@@ -7758,15 +7803,24 @@ const ChatUI = () => {
                                 handleStopSmartAIProResponse();
                               }}
                               color="error"
-                              sx={{ mr: 0.5 }}
+                              sx={{ mr: 0.5, width: "9px", height: "11px" }}
                             >
-                              <StopCircleIcon />
+                              <StopCircleIcon
+                                sx={{ width: "25px", height: "25px" }}
+                              />
                             </IconButton>
                           </Tooltip>
                         )}
                       </Box>
                     </Box>
-                    <Box sx={{ mr: 1 }}>
+                    <Box
+                      sx={{
+                        mr: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
                       {/* ▼ Dropdown */}
                       <TextField
                         select
@@ -7774,7 +7828,8 @@ const ChatUI = () => {
                         value={responseLength}
                         onChange={(e) => setResponseLength(e.target.value)}
                         sx={{
-                          width: "150px",
+                          // width: "150px",
+                          width: isXS ? "112px" : "150px",
                           "& fieldset": { border: "none" },
                           bgcolor: "#f6f6f6",
                           borderRadius: "10px",
@@ -7798,14 +7853,19 @@ const ChatUI = () => {
                         sx={{
                           bgcolor: "#1268fb",
                           color: "white",
-                          width: "40px",
-                          height: "40px",
+                          width: isXS ? "30px" : "40px",
+                          height: isXS ? "30px" : "40px",
                           ml: 1,
                           "&:hover": { bgcolor: "#204BC4" },
                           borderRadius: "50%",
                         }}
                       >
-                        <SendIcon />
+                        <SendIcon
+                          sx={{
+                            width: isXS ? "15px" : "25px",
+                            height: isXS ? "15px" : "25px",
+                          }}
+                        />
                       </IconButton>
                     </Box>
                   </Box>
