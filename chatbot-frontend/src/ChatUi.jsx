@@ -5880,7 +5880,7 @@ const ChatUI = () => {
                   <Box sx={{ width: "100%" }}>
                     <TextField
                       fullWidth
-                      placeholder="Ask WrdsAI..."
+                      placeholder="Ask Wrds..."
                       variant="outlined"
                       size="small"
                       value={input}
@@ -6710,358 +6710,276 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
-                  // p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   width: { xs: "92%", sm: "100%", md: "100%" },
-                  // width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
+                  // px: { xs: 2, sm: 0, md: 0}
                 }}
               >
                 <Box
                   sx={{
-                    minHeight: "60px",
                     p: 1,
+                    bgcolor: "#fff",
+                    borderRadius: "40px",
+                    border: "1px solid #dcdcdc",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    borderTop: "1px solid #e0e0e0",
-                    bgcolor: "#fafafa",
-                    // pb: 0.5,
-                    pb: "20px",
-                    position: "relative",
-                    flexWrap: { xs: "wrap", sm: "nowrap" },
-                    // position: "relative",
+                    gap: 0.5,
+                    flexDirection: "column",
+                    width: "100%",
+                    boxShadow: "0px 1px 6px rgba(0,0,0,0.1)",
                   }}
                 >
-                  {/* <IconButton
-                    component="label"
-                    sx={{
-                      color: "#1268fb",
-                      position: "absolute",
-                      left: "15px",
-                      bottom: "34px", // 👈 bottom ma fix karva
-                      zIndex: 2,
-                      // backgroundColor: "white",
-                      borderRadius: "50%",
-                      width: "32px",
-                      height: "40px",
-                    }}
-                  >
-                    <input
-                      type="file"
-                      hidden
-                      multiple
-                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                      // onChange={(e) => {
-                      //   const files = e.target.files;
-                      //   if (files && files.length > 0) {
-                      //     setSelectedFile(files); // 🔹 array of files સેટ કરો
-                      //     console.log("Files selected:", files);
-                      //   }
-                      // }}
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files); // Convert FileList to Array
-                        // if (files.length > 0) {
-                        //   // setSelectedFiles(files);
-                        //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-                        //   console.log("Files selected:", files);
-                        // }
-                        if (files.length > 0) {
-                          setSelectedFiles((prevFiles) => {
-                            // Limit to 5 files maximum (matches backend limit)
-                            const newFiles = [...prevFiles, ...files];
-                            return newFiles.slice(0, 5);
-                          });
+                  {/* 📝 Input Field */}
+                  <Box sx={{ width: "100%" }}>
+                    <TextField
+                      fullWidth
+                      placeholder="Ask WrdsAI..."
+                      variant="outlined"
+                      size="small"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
                         }
-                        e.target.value = "";
                       }}
-                    />
-                    <AttachFileIcon fontSize="small" />
-                  </IconButton> */}
+                      disabled={isSending || isTypingResponse}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "30px",
+                          backgroundColor: "#fff",
+                          height: "auto",
+                          border: 0,
+                          minHeight: selectedFiles.length > 0 ? "75px" : "60px",
+                          padding:
+                            selectedFiles.length > 0
+                              ? "25px 14px 10px 14px"
+                              : "4px 14px 4px 14px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          border: "none !important", // 🔥 outline remove
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "6px 8px",
+                          height: "auto",
+                          fontSize: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .Mui-disabled": { opacity: 0.5 },
+                        minWidth: { xs: "100%", sm: "200px" },
+                        mb: { xs: 1, sm: 0 },
+                      }}
+                      multiline
+                      maxRows={2}
+                      // maxRows={selectedFiles.length > 0 ? 1 : 4}
+                      InputProps={{
+                        startAdornment: (
+                          <>
+                            {/* 📁 ATTACH ICON (Always shown) */}
 
-                  {/* Main Input with extra left padding for file icon */}
-                  <TextField
-                    fullWidth
-                    placeholder="Ask WrdsAI..."
-                    variant="outlined"
-                    size="small"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    disabled={isSending || isTypingResponse}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "25px",
-                        backgroundColor: "#fff",
-                        height: "auto",
-                        minHeight: "67px",
-                        border: 0,
-                        padding:
-                          selectedFiles.length > 0
-                            ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
-                            : "12px 14px 12px 50px !important", // Added padding for file icon
-                        paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
-                      },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        border: "none !important", // 🔥 outline remove
-                      },
-                      "& .MuiOutlinedInput-input": {
-                        padding: "8px 0", // Remove left/right padding since we have container padding
-                        height: "auto",
-                        minHeight: "24px",
-                        marginTop: selectedFiles.length > 0 ? "24px" : "0px",
-                      },
-                      "& .Mui-disabled": {
-                        opacity: 0.5,
-                      },
-                      fontSize: { xs: "14px", sm: "16px" },
-                      minWidth: { xs: "100%", sm: "200px" },
-                      mb: { xs: 1, sm: 0 },
-                    }}
-                    multiline
-                    maxRows={selectedFiles.length > 0 ? 4 : 3}
-                    InputProps={{
-                      startAdornment: (
-                        <>
-                          {/* Attach File Icon - Always visible inside TextField */}
-                          <IconButton
-                            component="label"
-                            sx={{
-                              color: "#1268fb",
-                              position: "absolute",
-                              left: "12px",
-                              bottom:
-                                selectedFiles.length > 0 ? "34px" : "18px",
-                              zIndex: 2,
-                              borderRadius: "50%",
-                              width: "32px",
-                              height: "32px",
-                              "&:hover": {
-                                backgroundColor: "rgba(47, 103, 246, 0.1)",
-                              },
-                            }}
-                          >
-                            <input
-                              type="file"
-                              hidden
-                              multiple
-                              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files);
-                                if (files.length > 0) {
-                                  setSelectedFiles((prevFiles) => {
-                                    const newFiles = [...prevFiles, ...files];
-                                    return newFiles.slice(0, 5);
-                                  });
-                                }
-                                e.target.value = "";
-                              }}
-                            />
-                            <AttachFileIcon fontSize="small" />
-                          </IconButton>
-
-                          {/* File Name Display - When files are selected */}
-                          {selectedFiles.length > 0 && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                top: "8px",
-                                left: "50px", // Adjusted to align with increased padding
-                                display: "flex",
-                                alignItems: "center",
-                                flexWrap: "wrap",
-                                gap: 0.5,
-                                maxWidth: "calc(100% - 100px)",
-                              }}
-                            >
-                              {selectedFiles.map((file, index) => (
-                                <Box
-                                  key={index}
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    backgroundColor: "#f0f4ff",
-                                    borderRadius: "12px",
-                                    padding: "2px 8px",
-                                    border: "1px solid #1268fb",
-                                    maxWidth: "120px",
-                                    mb: 0.5,
-                                  }}
-                                >
-                                  <Typography
-                                    variant="caption"
+                            {/* FILE BADGE SECTION */}
+                            {selectedFiles.length > 0 && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  top: "5px",
+                                  left: "20px",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 0.5,
+                                  maxWidth: "70%",
+                                }}
+                              >
+                                {selectedFiles.map((file, index) => (
+                                  <Box
+                                    key={index}
                                     sx={{
-                                      color: "#1268fb",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                      fontSize: "11px",
-                                      fontWeight: "500",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      backgroundColor: "#eef3ff",
+                                      borderRadius: "14px",
+                                      padding: "2px 8px",
+                                      border: "1px solid #1268fb",
+                                      maxWidth: "120px",
                                     }}
                                   >
-                                    {file.name.length > 15
-                                      ? file.name.substring(0, 12) + "..."
-                                      : file.name}
-                                  </Typography>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => removeFile(index)}
-                                    sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
-                                  >
-                                    <CloseIcon fontSize="small" />
-                                  </IconButton>
-                                </Box>
-                              ))}
-                            </Box>
-                          )}
-                        </>
-                      ),
+                                    <Typography
+                                      sx={{
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        color: "#1268fb",
+                                      }}
+                                    >
+                                      {file.name.length > 15
+                                        ? file.name.substring(0, 12) + "..."
+                                        : file.name}
+                                    </Typography>
 
-                      endAdornment: (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          {/* 🎤 Voice Input Button */}
-                          <IconButton
-                            onClick={
-                              isListening ? stopListening : startListening
-                            }
-                            sx={{
-                              color: isListening ? "red" : "#10a37f",
-                              mr: 0.5,
-                            }}
-                            title={
-                              isListening
-                                ? "Stop recording"
-                                : "Start voice input"
-                            }
-                          >
-                            {isListening ? (
-                              <StopCircleIcon />
-                            ) : (
-                              <KeyboardVoiceIcon />
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeFile(index)}
+                                      sx={{ color: "#ff4444", ml: 0.5, p: 0 }}
+                                    >
+                                      <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                              </Box>
                             )}
-                          </IconButton>
+                          </>
+                        ),
 
-                          {/* 🛑 Stop Generating Button (for chatbot response) */}
-                          {(isTypingResponse || isSending) && (
-                            <Tooltip title="Stop generating">
-                              <IconButton
-                                onClick={() => {
-                                  isStoppedRef.current = true;
-                                  // handleStopResponse();
-                                  handleStopSmartAIResponse();
-                                }}
-                                color="error"
-                                sx={{ mr: 0.5 }}
-                              >
-                                <StopCircleIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      ),
-                    }}
-                  />
-                  {console.log("selectedFiles length:", selectedFiles.length)}
+                        endAdornment: (
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            {/*Mic Btn if needed*/}
+                          </Box>
+                        ),
+                      }}
+                    />
+                  </Box>
+
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      ml: 1,
-                      flexShrink: 0,
+                      gap: 1,
+                      flexDirection: "raw",
+                      width: "100%",
+                      justifyContent: "space-between",
                     }}
                   >
-                    <TextField
-                      select
-                      size="small"
-                      value={responseLength}
-                      onChange={(e) => {
-                        setResponseLength(e.target.value);
-                        lastSelectedResponseLength.current = e.target.value; // ✅ store last selected
-                      }}
-                      sx={{
-                        width: { xs: "140px", sm: "179px" },
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          backgroundColor: "#fff",
-                          textAlign: "center",
-                          height: {
-                            xs: "32px",
-                            sm: "36px",
-                            md: "36px",
-                            lg: "36px",
-                          },
-                        },
-                      }}
-                      SelectProps={{
-                        displayEmpty: true,
-                        MenuProps: {
-                          disablePortal: true,
-                          PaperProps: {
-                            style: { maxHeight: 200, borderRadius: "10px" },
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value="" disabled>
-                        Response Length:
-                      </MenuItem>
-                      <MenuItem value="Short">Short (50-100 words)</MenuItem>
-                      <MenuItem value="Concise">
-                        Concise (150-250 words)
-                      </MenuItem>
-                      <MenuItem value="Long">Long (300-500 words)</MenuItem>
-                      <MenuItem value="NoOptimisation">
-                        No Optimisation
-                      </MenuItem>
-                    </TextField>
-
-                    <IconButton
-                      onClick={() => handleSend()}
-                      disabled={!input.trim() || isSending || isTypingResponse}
-                      sx={{
-                        "&:disabled": {
-                          opacity: 0.5,
-                          cursor: "not-allowed",
-                        },
-                        ml: 1,
-                      }}
-                    >
-                      <SendIcon />
-                    </IconButton>
-
-                    {/* 🔹 Stop icon appears when AI is typing a response */}
-                    {/* {isTypingResponse && (
+                    <Box sx={{ ml: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton
-                          onClick={() => handleStop()}
-                          color="error"
-                          title="Stop Response"
+                          component="label"
                           sx={{
-                            ml: 1,
-                            bgcolor: "#ffe6e6",
-                            "&:hover": { bgcolor: "#ffcccc" },
+                            color: "#1268fb",
+                            // position: "absolute",
+                            // left: "10px",
+
+                            // bottom: selectedFiles.length > 0 ? "36px" : "16px",
+                            borderRadius: "50%",
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "rgba(47, 103, 246, 0.1)",
+                            "&:hover": {
+                              backgroundColor: "rgba(47,103,246,0.2)",
+                            },
                           }}
                         >
-                          <StopIcon />
+                          <input
+                            type="file"
+                            hidden
+                            multiple
+                            accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files);
+                              if (files.length > 0) {
+                                setSelectedFiles((prev) =>
+                                  [...prev, ...files].slice(0, 5)
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          <AttachFileIcon fontSize="small" />
                         </IconButton>
-                      )} */}
+                        <IconButton
+                          onClick={isListening ? stopListening : startListening}
+                          sx={{
+                            color: isListening ? "red" : "#1268fb",
+                            mr: 0.5,
+                          }}
+                          title={
+                            isListening ? "Stop recording" : "Start voice input"
+                          }
+                        >
+                          {isListening ? (
+                            <StopCircleIcon />
+                          ) : (
+                            <KeyboardVoiceIcon />
+                          )}
+                        </IconButton>
+
+                        {(isTypingResponse || isSending) && (
+                          <Tooltip title="Stop generating">
+                            <IconButton
+                              onClick={() => {
+                                isStoppedRef.current = true;
+                                handleStopSmartAIResponse();
+                              }}
+                              color="error"
+                              sx={{ mr: 0.5 }}
+                            >
+                              <StopCircleIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </Box>
+                    <Box sx={{ mr: 1 }}>
+                      {/* ▼ Dropdown */}
+                      <TextField
+                        select
+                        size="small"
+                        value={responseLength}
+                        onChange={(e) => setResponseLength(e.target.value)}
+                        sx={{
+                          width: "150px",
+                          "& fieldset": { border: "none" },
+                          bgcolor: "#f6f6f6",
+                          borderRadius: "10px",
+                          textAlign: "left",
+                          fontSize: "14px",
+                          paddingLeft: "4px",
+                        }}
+                      >
+                        <MenuItem value="Short">Short</MenuItem>
+                        <MenuItem value="Concise">Concise</MenuItem>
+                        <MenuItem value="Long">Long</MenuItem>
+                        <MenuItem value="NoOptimisation">
+                          No Optimisation
+                        </MenuItem>
+                      </TextField>
+
+                      {/* ➤ Send Button */}
+                      <IconButton
+                        onClick={() => handleSend()}
+                        // disabled={!input.trim() || isSending || isTypingResponse}
+                        sx={{
+                          bgcolor: "#1268fb",
+                          color: "white",
+                          width: "40px",
+                          height: "40px",
+                          ml: 1,
+                          "&:hover": { bgcolor: "#204BC4" },
+                          borderRadius: "50%",
+                        }}
+                      >
+                        <SendIcon />
+                      </IconButton>
+                    </Box>
                   </Box>
                 </Box>
 
                 {/* 👉 Tagline (Always Common) */}
-                {/* <Box textAlign="center">
+                {/* <Box textAlign="center" mt={1}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: "14px" }}
+                    sx={{ fontSize: "14px", mt: 1 }}
                   >
-                    How <strong>WrdsAI</strong> can help you today?
+                    How <strong>Wrds</strong> can help you today?
                   </Typography>
                 </Box> */}
               </Box>
@@ -7631,358 +7549,276 @@ const ChatUI = () => {
                   mb: 0,
                   pb: "16px",
                   display: "flex",
-                  // p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   p: { xs: 1, sm: 1, md: 2 }, // 🔹 Reduced padding
                   width: { xs: "92%", sm: "100%", md: "100%" },
-                  // width: "100%",
                   // maxWidth: { xs: "100%", md: "940px" },
                   // maxWidth: { xs: "100%", sm: "95%", md: "1080px" },
                   flexDirection: "column",
+                  // px: { xs: 2, sm: 0, md: 0}
                 }}
               >
                 <Box
                   sx={{
-                    minHeight: "60px",
                     p: 1,
+                    bgcolor: "#fff",
+                    borderRadius: "40px",
+                    border: "1px solid #dcdcdc",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "space-between",
-                    borderTop: "1px solid #e0e0e0",
-                    bgcolor: "#fafafa",
-                    // pb: 0.5,
-                    pb: "20px",
-                    position: "relative",
-                    flexWrap: { xs: "wrap", sm: "nowrap" },
-                    // position: "relative",
+                    gap: 0.5,
+                    flexDirection: "column",
+                    width: "100%",
+                    boxShadow: "0px 1px 6px rgba(0,0,0,0.1)",
                   }}
                 >
-                  {/* <IconButton
-                    component="label"
-                    sx={{
-                      color: "#1268fb",
-                      position: "absolute",
-                      left: "15px",
-                      bottom: "34px", // 👈 bottom ma fix karva
-                      zIndex: 2,
-                      // backgroundColor: "white",
-                      borderRadius: "50%",
-                      width: "32px",
-                      height: "40px",
-                    }}
-                  >
-                    <input
-                      type="file"
-                      hidden
-                      multiple
-                      accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                      // onChange={(e) => {
-                      //   const files = e.target.files;
-                      //   if (files && files.length > 0) {
-                      //     setSelectedFile(files); // 🔹 array of files સેટ કરો
-                      //     console.log("Files selected:", files);
-                      //   }
-                      // }}
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files); // Convert FileList to Array
-                        // if (files.length > 0) {
-                        //   // setSelectedFiles(files);
-                        //   setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
-                        //   console.log("Files selected:", files);
-                        // }
-                        if (files.length > 0) {
-                          setSelectedFiles((prevFiles) => {
-                            // Limit to 5 files maximum (matches backend limit)
-                            const newFiles = [...prevFiles, ...files];
-                            return newFiles.slice(0, 5);
-                          });
+                  {/* 📝 Input Field */}
+                  <Box sx={{ width: "100%" }}>
+                    <TextField
+                      fullWidth 
+                      placeholder="Ask WrdsAI Pro..."
+                      variant="outlined"
+                      size="small"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
                         }
-                        e.target.value = "";
                       }}
-                    />
-                    <AttachFileIcon fontSize="small" />
-                  </IconButton> */}
+                      disabled={isSending || isTypingResponse}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "30px",
+                          backgroundColor: "#fff",
+                          height: "auto",
+                          border: 0,
+                          minHeight: selectedFiles.length > 0 ? "75px" : "60px",
+                          padding:
+                            selectedFiles.length > 0
+                              ? "25px 14px 10px 14px"
+                              : "4px 14px 4px 14px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .MuiOutlinedInput-notchedOutline": {
+                          border: "none !important", // 🔥 outline remove
+                        },
+                        "& .MuiOutlinedInput-input": {
+                          padding: "6px 8px",
+                          height: "auto",
+                          fontSize: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                        },
+                        "& .Mui-disabled": { opacity: 0.5 },
+                        minWidth: { xs: "100%", sm: "200px" },
+                        mb: { xs: 1, sm: 0 },
+                      }}
+                      multiline
+                      maxRows={2}
+                      // maxRows={selectedFiles.length > 0 ? 1 : 4}
+                      InputProps={{
+                        startAdornment: (
+                          <>
+                            {/* 📁 ATTACH ICON (Always shown) */}
 
-                  {/* Main Input with extra left padding for file icon */}
-                  <TextField
-                    fullWidth
-                    placeholder="Ask WrdsAI..."
-                    variant="outlined"
-                    size="small"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    disabled={isSending || isTypingResponse}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "25px",
-                        backgroundColor: "#fff",
-                        height: "auto",
-                        minHeight: "67px",
-                        border: 0,
-                        padding:
-                          selectedFiles.length > 0
-                            ? "30px 14px 8.5px 50px !important" // Increased left padding for file icon
-                            : "12px 14px 12px 50px !important", // Added padding for file icon
-                        paddingTop: selectedFiles.length > 0 ? "30px" : "12px",
-                      },
-                      "& .MuiOutlinedInput-notchedOutline": {
-                        border: "none !important", // 🔥 outline remove
-                      },
-                      "& .MuiOutlinedInput-input": {
-                        padding: "8px 0", // Remove left/right padding since we have container padding
-                        height: "auto",
-                        minHeight: "24px",
-                        marginTop: selectedFiles.length > 0 ? "24px" : "0px",
-                      },
-                      "& .Mui-disabled": {
-                        opacity: 0.5,
-                      },
-                      fontSize: { xs: "14px", sm: "16px" },
-                      minWidth: { xs: "100%", sm: "200px" },
-                      mb: { xs: 1, sm: 0 },
-                    }}
-                    multiline
-                    maxRows={selectedFiles.length > 0 ? 4 : 3}
-                    InputProps={{
-                      startAdornment: (
-                        <>
-                          {/* Attach File Icon - Always visible inside TextField */}
-                          <IconButton
-                            component="label"
-                            sx={{
-                              color: "#1268fb",
-                              position: "absolute",
-                              left: "12px",
-                              bottom:
-                                selectedFiles.length > 0 ? "34px" : "18px",
-                              zIndex: 2,
-                              borderRadius: "50%",
-                              width: "32px",
-                              height: "32px",
-                              "&:hover": {
-                                backgroundColor: "rgba(47, 103, 246, 0.1)",
-                              },
-                            }}
-                          >
-                            <input
-                              type="file"
-                              hidden
-                              multiple
-                              accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
-                              onChange={(e) => {
-                                const files = Array.from(e.target.files);
-                                if (files.length > 0) {
-                                  setSelectedFiles((prevFiles) => {
-                                    const newFiles = [...prevFiles, ...files];
-                                    return newFiles.slice(0, 5);
-                                  });
-                                }
-                                e.target.value = "";
-                              }}
-                            />
-                            <AttachFileIcon fontSize="small" />
-                          </IconButton>
-
-                          {/* File Name Display - When files are selected */}
-                          {selectedFiles.length > 0 && (
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                top: "8px",
-                                left: "50px", // Adjusted to align with increased padding
-                                display: "flex",
-                                alignItems: "center",
-                                flexWrap: "wrap",
-                                gap: 0.5,
-                                maxWidth: "calc(100% - 100px)",
-                              }}
-                            >
-                              {selectedFiles.map((file, index) => (
-                                <Box
-                                  key={index}
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    backgroundColor: "#f0f4ff",
-                                    borderRadius: "12px",
-                                    padding: "2px 8px",
-                                    border: "1px solid #1268fb",
-                                    maxWidth: "120px",
-                                    mb: 0.5,
-                                  }}
-                                >
-                                  <Typography
-                                    variant="caption"
+                            {/* FILE BADGE SECTION */}
+                            {selectedFiles.length > 0 && (
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  top: "5px",
+                                  left: "20px",
+                                  display: "flex",
+                                  flexWrap: "wrap",
+                                  gap: 0.5,
+                                  maxWidth: "70%",
+                                }}
+                              >
+                                {selectedFiles.map((file, index) => (
+                                  <Box
+                                    key={index}
                                     sx={{
-                                      color: "#1268fb",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                      fontSize: "11px",
-                                      fontWeight: "500",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      backgroundColor: "#eef3ff",
+                                      borderRadius: "14px",
+                                      padding: "2px 8px",
+                                      border: "1px solid #1268fb",
+                                      maxWidth: "120px",
                                     }}
                                   >
-                                    {file.name.length > 15
-                                      ? file.name.substring(0, 12) + "..."
-                                      : file.name}
-                                  </Typography>
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => removeFile(index)}
-                                    sx={{ color: "#ff4444", p: 0.5, ml: 0.5 }}
-                                  >
-                                    <CloseIcon fontSize="small" />
-                                  </IconButton>
-                                </Box>
-                              ))}
-                            </Box>
-                          )}
-                        </>
-                      ),
+                                    <Typography
+                                      sx={{
+                                        fontSize: "11px",
+                                        fontWeight: 600,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                        color: "#1268fb",
+                                      }}
+                                    >
+                                      {file.name.length > 15
+                                        ? file.name.substring(0, 12) + "..."
+                                        : file.name}
+                                    </Typography>
 
-                      endAdornment: (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          {/* 🎤 Voice Input Button */}
-                          <IconButton
-                            onClick={
-                              isListening ? stopListening : startListening
-                            }
-                            sx={{
-                              color: isListening ? "red" : "#10a37f",
-                              mr: 0.5,
-                            }}
-                            title={
-                              isListening
-                                ? "Stop recording"
-                                : "Start voice input"
-                            }
-                          >
-                            {isListening ? (
-                              <StopCircleIcon />
-                            ) : (
-                              <KeyboardVoiceIcon />
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeFile(index)}
+                                      sx={{ color: "#ff4444", ml: 0.5, p: 0 }}
+                                    >
+                                      <CloseIcon fontSize="inherit" />
+                                    </IconButton>
+                                  </Box>
+                                ))}
+                              </Box>
                             )}
-                          </IconButton>
+                          </>
+                        ),
 
-                          {/* 🛑 Stop Generating Button (for chatbot response) */}
-                          {(isTypingResponse || isSending) && (
-                            <Tooltip title="Stop generating">
-                              <IconButton
-                                onClick={() => {
-                                  isStoppedRef.current = true;
-                                  // handleStopResponse();
-                                  handleStopSmartAIProResponse();
-                                }}
-                                color="error"
-                                sx={{ mr: 0.5 }}
-                              >
-                                <StopCircleIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
-                      ),
-                    }}
-                  />
-                  {console.log("selectedFiles length:", selectedFiles.length)}
+                        endAdornment: (
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            {/*Mic Btn if needed*/}
+                          </Box>
+                        ),
+                      }}
+                    />
+                  </Box>
+
                   <Box
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      ml: 1,
-                      flexShrink: 0,
+                      gap: 1,
+                      flexDirection: "raw",
+                      width: "100%",
+                      justifyContent: "space-between",
                     }}
                   >
-                    <TextField
-                      select
-                      size="small"
-                      value={responseLength}
-                      onChange={(e) => {
-                        setResponseLength(e.target.value);
-                        lastSelectedResponseLength.current = e.target.value; // ✅ store last selected
-                      }}
-                      sx={{
-                        width: { xs: "140px", sm: "179px" },
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                          backgroundColor: "#fff",
-                          textAlign: "center",
-                          height: {
-                            xs: "32px",
-                            sm: "36px",
-                            md: "36px",
-                            lg: "36px",
-                          },
-                        },
-                      }}
-                      SelectProps={{
-                        displayEmpty: true,
-                        MenuProps: {
-                          disablePortal: true,
-                          PaperProps: {
-                            style: { maxHeight: 200, borderRadius: "10px" },
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value="" disabled>
-                        Response Length:
-                      </MenuItem>
-                      <MenuItem value="Short">Short (50-100 words)</MenuItem>
-                      <MenuItem value="Concise">
-                        Concise (150-250 words)
-                      </MenuItem>
-                      <MenuItem value="Long">Long (300-500 words)</MenuItem>
-                      <MenuItem value="NoOptimisation">
-                        No Optimisation
-                      </MenuItem>
-                    </TextField>
-
-                    <IconButton
-                      onClick={() => handleSend()}
-                      disabled={!input.trim() || isSending || isTypingResponse}
-                      sx={{
-                        "&:disabled": {
-                          opacity: 0.5,
-                          cursor: "not-allowed",
-                        },
-                        ml: 1,
-                      }}
-                    >
-                      <SendIcon />
-                    </IconButton>
-
-                    {/* 🔹 Stop icon appears when AI is typing a response */}
-                    {/* {isTypingResponse && (
+                    <Box sx={{ ml: 1 }}>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton
-                          onClick={() => handleStop()}
-                          color="error"
-                          title="Stop Response"
+                          component="label"
                           sx={{
-                            ml: 1,
-                            bgcolor: "#ffe6e6",
-                            "&:hover": { bgcolor: "#ffcccc" },
+                            color: "#1268fb",
+                            // position: "absolute",
+                            // left: "10px",
+
+                            // bottom: selectedFiles.length > 0 ? "36px" : "16px",
+                            borderRadius: "50%",
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "rgba(47, 103, 246, 0.1)",
+                            "&:hover": {
+                              backgroundColor: "rgba(47,103,246,0.2)",
+                            },
                           }}
                         >
-                          <StopIcon />
+                          <input
+                            type="file"
+                            hidden
+                            multiple
+                            accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files);
+                              if (files.length > 0) {
+                                setSelectedFiles((prev) =>
+                                  [...prev, ...files].slice(0, 5)
+                                );
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                          <AttachFileIcon fontSize="small" />
                         </IconButton>
-                      )} */}
+                        <IconButton
+                          onClick={isListening ? stopListening : startListening}
+                          sx={{
+                            color: isListening ? "red" : "#1268fb",
+                            mr: 0.5,
+                          }}
+                          title={
+                            isListening ? "Stop recording" : "Start voice input"
+                          }
+                        >
+                          {isListening ? (
+                            <StopCircleIcon />
+                          ) : (
+                            <KeyboardVoiceIcon />
+                          )}
+                        </IconButton>
+
+                        {(isTypingResponse || isSending) && (
+                          <Tooltip title="Stop generating">
+                            <IconButton
+                              onClick={() => {
+                                isStoppedRef.current = true;
+                                handleStopSmartAIProResponse();
+                              }}
+                              color="error"
+                              sx={{ mr: 0.5 }}
+                            >
+                              <StopCircleIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    </Box>
+                    <Box sx={{ mr: 1 }}>
+                      {/* ▼ Dropdown */}
+                      <TextField
+                        select
+                        size="small"
+                        value={responseLength}
+                        onChange={(e) => setResponseLength(e.target.value)}
+                        sx={{
+                          width: "150px",
+                          "& fieldset": { border: "none" },
+                          bgcolor: "#f6f6f6",
+                          borderRadius: "10px",
+                          textAlign: "left",
+                          fontSize: "14px",
+                          paddingLeft: "4px",
+                        }}
+                      >
+                        <MenuItem value="Short">Short</MenuItem>
+                        <MenuItem value="Concise">Concise</MenuItem>
+                        <MenuItem value="Long">Long</MenuItem>
+                        <MenuItem value="NoOptimisation">
+                          No Optimisation
+                        </MenuItem>
+                      </TextField>
+
+                      {/* ➤ Send Button */}
+                      <IconButton
+                        onClick={() => handleSend()}
+                        // disabled={!input.trim() || isSending || isTypingResponse}
+                        sx={{
+                          bgcolor: "#1268fb",
+                          color: "white",
+                          width: "40px",
+                          height: "40px",
+                          ml: 1,
+                          "&:hover": { bgcolor: "#204BC4" },
+                          borderRadius: "50%",
+                        }}
+                      >
+                        <SendIcon />
+                      </IconButton>
+                    </Box>
                   </Box>
                 </Box>
 
                 {/* 👉 Tagline (Always Common) */}
-                {/* <Box textAlign="center">
+                {/* <Box textAlign="center" mt={1}>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: "14px" }}
+                    sx={{ fontSize: "14px", mt: 1 }}
                   >
-                    How <strong>WrdsAI Pro</strong> can help you today?
+                    How <strong>Wrds</strong> can help you today?
                   </Typography>
                 </Box> */}
               </Box>
