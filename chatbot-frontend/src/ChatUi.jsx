@@ -3750,7 +3750,7 @@ const ChatUI = () => {
                   gap: { xs: 1, sm: 3 },
                   alignItems: "center",
                   justifyContent: "end",
-                  width: "100%" ,
+                  width: "100%",
                 }}
               >
                 <CustomTooltip title="New Chat" placement="bottom">
@@ -6060,22 +6060,22 @@ const ChatUI = () => {
                           )}
                         </IconButton>
 
-                        {/* {(isTypingResponse || isSending) && ( */}
-                        <Tooltip title="Stop generating">
-                          <IconButton
-                            onClick={() => {
-                              isStoppedRef.current = true;
-                              handleStopResponse();
-                            }}
-                            color="error"
-                            sx={{ mr: 0.5, width: "9px", height: "11px" }}
-                          >
-                            <StopCircleIcon
-                              sx={{ width: "25px", height: "25px" }}
-                            />
-                          </IconButton>
-                        </Tooltip>
-                        {/* )} */}
+                        {(isTypingResponse || isSending) && (
+                          <Tooltip title="Stop generating">
+                            <IconButton
+                              onClick={() => {
+                                isStoppedRef.current = true;
+                                handleStopResponse();
+                              }}
+                              color="error"
+                              sx={{ mr: 0.5, width: "9px", height: "11px" }}
+                            >
+                              <StopCircleIcon
+                                sx={{ width: "25px", height: "25px" }}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>
                     <Box
@@ -6936,22 +6936,22 @@ const ChatUI = () => {
                           )}
                         </IconButton>
 
-                        {/* {(isTypingResponse || isSending) && ( */}
-                        <Tooltip title="Stop generating">
-                          <IconButton
-                            onClick={() => {
-                              isStoppedRef.current = true;
-                              handleStopSmartAIResponse();
-                            }}
-                            color="error"
-                            sx={{ mr: 0.5, width: "9px", height: "11px" }}
-                          >
-                            <StopCircleIcon
-                              sx={{ width: "25px", height: "25px" }}
-                            />
-                          </IconButton>
-                        </Tooltip>
-                        {/* )} */}
+                        {(isTypingResponse || isSending) && (
+                          <Tooltip title="Stop generating">
+                            <IconButton
+                              onClick={() => {
+                                isStoppedRef.current = true;
+                                handleStopSmartAIResponse();
+                              }}
+                              color="error"
+                              sx={{ mr: 0.5, width: "9px", height: "11px" }}
+                            >
+                              <StopCircleIcon
+                                sx={{ width: "25px", height: "25px" }}
+                              />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
                     </Box>
                     <Box
