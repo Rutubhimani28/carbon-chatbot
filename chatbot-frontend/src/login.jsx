@@ -301,8 +301,14 @@ const Login = () => {
 
       const userData = {
         id: res.data.data.id,
-        username: res.data.data.username,
+        firstName: res.data.data.firstName,
+        lastName: res.data.data.lastName,
+        // username: res.data.data.username,
         email: res.data.data.email,
+        remainingTokens: res.data.data.remainingTokens,
+        subscriptionPlan: res.data.data.subscriptionPlan,
+        childPlans: res.data.data.childPlans,
+        subscriptionType: res.data.data.subscriptionType,
         // Add any other fields you need
       };
       localStorage.setItem("user", JSON.stringify(userData));
