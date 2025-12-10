@@ -68,6 +68,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
 import { useNavigate } from "react-router-dom";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -2991,8 +2992,8 @@ const ChatUI = () => {
 
   const handleRedirect = () => {
     window.open(
-      // "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
-      "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
+      "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
+      // "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
     );
   };
 
@@ -3025,8 +3026,9 @@ const ChatUI = () => {
           position: "fixed",
           // position: isXS ? "fixed" : "sticky",
           top: 0,
-          height: isSmallScreen ? "75px" : { sm: "90px", lg: "102px" },
-          minHeight: isSmallScreen ? "60px" : "auto",
+          height: isXS ? "70px" : { sm: "71px", md: "84px", lg: "86px" },
+          // isSmallScreen ? "63px" : { sm: "84px", lg: "85px" },
+          minHeight: isXS ? "60px" : "auto",
           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
           py: isSmallScreen ? 1 : 0,
         }}
@@ -5283,7 +5285,7 @@ const ChatUI = () => {
                   <Box sx={{ width: "100%" }}>
                     <TextField
                       fullWidth
-                      placeholder="Ask Wrds..."
+                      placeholder="Ask WrdsAI..."
                       variant="outlined"
                       size="small"
                       value={input}
@@ -5487,7 +5489,7 @@ const ChatUI = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "6px",
+                        gap: 2,
                       }}
                     >
                       {/* ▼ Dropdown */}
@@ -7043,7 +7045,7 @@ const ChatUI = () => {
                   <Box sx={{ width: "100%" }}>
                     <TextField
                       fullWidth
-                      placeholder="Ask WrdsAI Pro..."
+                      placeholder="Ask WrdsAI..."
                       variant="outlined"
                       size="small"
                       value={input}
@@ -7784,35 +7786,6 @@ const ChatUI = () => {
                 </Box>
               )}
 
-              {/* <Select
-                inputRef={selectRef}
-                value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
-                fullWidth
-                displayEmpty
-                MenuProps={{
-                  anchorOrigin: { vertical: "bottom", horizontal: "left" },
-                  transformOrigin: { vertical: "top", horizontal: "left" },
-                }}
-                sx={{
-                  mt: 1,
-                  bgcolor: "#fff",
-                  borderRadius: "6px",
-                  border: "1px solid #dcdcdc",
-                  height: "36px",
-                  "& .MuiSelect-select": {
-                    fontSize: "16px",
-                    fontFamily: "Calibri, sans-serif",
-                    py: 0.5,
-                  },
-                }}
-              >
-                <MenuItem value="chatgpt-5-mini">ChatGPT</MenuItem>
-                <MenuItem value="claude-3-haiku">Claude</MenuItem>
-                <MenuItem value="grok">Grok</MenuItem>
-                <MenuItem value="mistral">Mistral</MenuItem>
-              </Select> */}
-
               {/* AI Browsing */}
               <Typography
                 sx={{
@@ -7821,11 +7794,12 @@ const ChatUI = () => {
                   px: 1.5,
                   py: 0.7,
                   borderRadius: "6px",
-                  display: "inline-block",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   transition: "0.25s",
                   backgroundColor:
                     activeView === "search2" ? "#e3e3e3ff" : "transparent",
-                  // color: activeView === "search2" ? "#000" : "#000",
                   color: disabled ? "#7a7a7a" : "#000",
                   fontWeight: activeView === "search2" ? 600 : 400,
                   "&:hover": {
@@ -7833,14 +7807,19 @@ const ChatUI = () => {
                       activeView === "search2" ? "#eaeaea" : "#eaeaea",
                   },
                 }}
-                // onClick={() => {
-                //   setActiveView("search2");
-                //   setOpenSidebar(false);
-                //   setSearchValue("");
-                //   setSearchSessionResults([]);
-                // }}
               >
                 AI Browsing
+                <CustomTooltip title="coming soon..." placement="bottom">
+                  <InfoOutlinedIcon
+                    sx={{
+                      fontSize: 20,
+                      color: "#7a7a7a",
+                      cursor: "pointer",
+                      ml: 1,
+                      "&:hover": { color: "#000" },
+                    }}
+                  />
+                </CustomTooltip>
               </Typography>
 
               <MenuItem
@@ -7868,6 +7847,7 @@ const ChatUI = () => {
 
                 <KeyboardArrowDownIcon
                   sx={{
+                    mr: "-4px",
                     transform: showSessionPanel
                       ? "rotate(180deg)"
                       : "rotate(0deg)",
