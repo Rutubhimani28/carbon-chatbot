@@ -213,8 +213,12 @@ router.post("/create-order", async (req, res) => {
 // 2) Verify Payment (frontend posts payload returned by Razorpay handler)
 router.post("/verify-payment", async (req, res) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, email } =
-      req.body;
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      email,
+    } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({ success: false, error: "invalid payload" });
@@ -238,12 +242,11 @@ router.post("/verify-payment", async (req, res) => {
           razorpay_payment_id,
           amount: payment.amount / 100, // amount in paise
           currency: payment.currency,
-          status: "success"
+          status: "success",
         });
 
         await newTransaction.save();
         console.log("Transaction saved:", newTransaction);
-
       } catch (dbError) {
         console.error("Error saving transaction:", dbError);
         // Continue as payment is verified
@@ -269,12 +272,46 @@ router.post("/verify-payment", async (req, res) => {
             await user.save();
 
             // ---- Send Email ----
-            const recipientEmail = ["<13", "13-14", "15-17"].includes(user.ageGroup) ? user.parentEmail : email;
-            const recipientName = ["<13", "13-14", "15-17"].includes(user.ageGroup) ? user.parentName : user.firstName;
-            await sendPasswordMail(recipientEmail, recipientName, generatedPassword);
-            console.log(`Password generated and email sent to ${recipientEmail}`);
+            const recipientEmail = ["<13", "13-14", "15-17"].includes(
+              user.ageGroup
+            )
+              ? user.parentEmail
+              : email;
+            const recipientName = ["<13", "13-14", "15-17"].includes(
+              user.ageGroup
+            )
+              ? user.parentName
+              : user.firstName;
+            // await sendPasswordMail(
+            //   recipientEmail,
+            //   recipientName,
+            //   generatedPassword
+            // );
+            // console.log(
+            //   `Password generated and email sent to ${recipientEmail}`
+            // );
+
             // ---- Send Receipt Email ----
             // const pdfPath = "C:/Users/AAC/OneDrive/Desktop/Meeral/chatbot_carbon/RECEIPT-1 (1).pdf";
+
+            // ⏳ DELAY EMAIL BY 4 MINUTES
+            // --------------------------------------------------
+            setTimeout(async () => {
+              try {
+                // SEND PASSWORD MAIL
+                await sendPasswordMail(
+                  recipientEmail,
+                  recipientName,
+                  generatedPassword
+                );
+                console.log(
+                  `📩 Password email sent after 4 min → ${recipientEmail}`
+                );
+              } catch (err) {
+                console.error("4 min delayed email error:", err);
+              }
+            }, 120000); // 4 minutes = 240000ms
+            // }, 43200000); // 12 hours
 
             const receiptData = {
               transactionId: razorpay_payment_id,
@@ -283,11 +320,15 @@ router.post("/verify-payment", async (req, res) => {
               email: recipientEmail,
               planName: `${user.subscriptionPlan} - ${user.childPlan}`,
               amount: user.totalPriceINR || "N/A", // Ensure this field exists or fetch from payment details
-              currency: "INR"
+              currency: "INR",
             };
 
             const dynamicPdfPath = await generateReceipt(receiptData);
-            await sendReceiptMail(recipientEmail, recipientName, dynamicPdfPath);
+            await sendReceiptMail(
+              recipientEmail,
+              recipientName,
+              dynamicPdfPath
+            );
             console.log(`Receipt email sent to ${recipientEmail}`);
           }
         } catch (userError) {
@@ -298,7 +339,7 @@ router.post("/verify-payment", async (req, res) => {
       return res.json({
         success: true,
         message: "Payment verified",
-        transactionId: razorpay_payment_id
+        transactionId: razorpay_payment_id,
       });
     } else {
       return res

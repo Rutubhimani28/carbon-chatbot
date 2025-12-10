@@ -16,12 +16,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Looking to send emails in production? Check out our Email API/SMTP product!
-const transporter = nodemailer.createTransport({
+// const transporter = nodemailer.createTransport({
+//   host: "sandbox.smtp.mailtrap.io",
+//   port: 2525,
+//   auth: {
+//     user: "39703f65d41de4",
+//     pass: "4a129ece9c1d41",
+//   },
+// });
+
+// Looking to send emails in production? Check out our Email API/SMTP product!
+var transporter = nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
   port: 2525,
   auth: {
-    user: "39703f65d41de4",
-    pass: "4a129ece9c1d41",
+    user: "f16095e93d6eed",
+    pass: "11d9f9e9e8da27",
   },
 });
 
@@ -38,7 +48,7 @@ const sendPasswordMail = async (email, firstName, password) => {
       email,
       password,
       loginUrl: "http://localhost:5173/login",
-      logoUrl: "http://localhost:5173/assets/Msg_logo.png"
+      logoUrl: "http://localhost:5173/assets/Msg_logo.png",
     });
 
     const mailOptions = {
