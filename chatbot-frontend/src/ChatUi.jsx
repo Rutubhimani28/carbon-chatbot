@@ -53,6 +53,7 @@ import Popper from "@mui/material/Popper";
 import { styled } from "@mui/material/styles";
 import PersonIcon from "@mui/icons-material/Person";
 import chat from "././assets/chat.webp";
+import Wrds from "././assets/Wrds White.webp";
 import Words1 from "././assets/words1.webp"; // path adjust karo
 // import Words2 from "././assets/words2.webp"; // path adjust karo
 import Words2 from "././assets/words2.png"; // path adjust karo
@@ -68,6 +69,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
 import { useNavigate } from "react-router-dom";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -3001,8 +3003,8 @@ const ChatUI = () => {
 
   const handleRedirect = () => {
     window.open(
-      // "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
-      "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
+      "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
+      // "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
     );
   };
 
@@ -3035,8 +3037,9 @@ const ChatUI = () => {
           position: "fixed",
           // position: isXS ? "fixed" : "sticky",
           top: 0,
-          height: isSmallScreen ? "75px" : { sm: "90px", lg: "102px" },
-          minHeight: isSmallScreen ? "60px" : "auto",
+          height: isXS ? "70px" : { sm: "71px", md: "84px", lg: "86px" },
+          // isSmallScreen ? "63px" : { sm: "84px", lg: "85px" },
+          minHeight: isXS ? "60px" : "auto",
           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
           py: isSmallScreen ? 1 : 0,
         }}
@@ -3068,7 +3071,7 @@ const ChatUI = () => {
                 />
 
                 {/* Logo */}
-                <img src={Words2} height={56} width={110} alt="Logo" />
+                <img src={Wrds} height={48} width={110} alt="Logo" />
               </Box>
 
               {/* DROPDOWN MOVED HERE ONLY FOR XS */}
@@ -3566,6 +3569,7 @@ const ChatUI = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 width: "100%",
+                height:"100vh",
                 mb: 1,
                 mt: 0,
               }}
@@ -3576,6 +3580,7 @@ const ChatUI = () => {
                   // justifyContent: "space-between",
                   alignItems: "center",
                   // width: "100%",
+                  gap:1,
                 }}
               >
                 <MenuIcon
@@ -3584,7 +3589,7 @@ const ChatUI = () => {
                 />
 
                 {/* Logo */}
-                <img src={Words2} height={62} width={129} alt="Logo" />
+                <img src={Wrds} height={50} width={129} alt="Logo" />
               </Box>
 
               {/* Hamburger Menu */}
@@ -3953,7 +3958,7 @@ const ChatUI = () => {
         {!isSmallScreen && (
           <>
             {/* Left Section - Logo and AI Components */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               {/* Logo */}
 
               <MenuIcon
@@ -3961,7 +3966,7 @@ const ChatUI = () => {
                 onClick={() => setOpenSidebar(true)}
               />
 
-              <img src={Words2} height={85} width={146} alt="Logo" />
+              <img src={Wrds} height={55} width={135} alt="Logo" />
 
               {/* Wrds AI Components - Only show for chat/smartAi views */}
               {/* {(activeView === "chat" || activeView === "smartAi") && (
@@ -5293,7 +5298,7 @@ const ChatUI = () => {
                   <Box sx={{ width: "100%" }}>
                     <TextField
                       fullWidth
-                      placeholder="Ask Wrds..."
+                      placeholder="Ask WrdsAI..."
                       variant="outlined"
                       size="small"
                       value={input}
@@ -5497,7 +5502,7 @@ const ChatUI = () => {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "6px",
+                        gap: 2,
                       }}
                     >
                       {/* ▼ Dropdown */}
@@ -7053,7 +7058,7 @@ const ChatUI = () => {
                   <Box sx={{ width: "100%" }}>
                     <TextField
                       fullWidth
-                      placeholder="Ask WrdsAI Pro..."
+                      placeholder="Ask WrdsAI..."
                       variant="outlined"
                       size="small"
                       value={input}
@@ -8280,6 +8285,7 @@ const ChatUI = () => {
           />
         ) : null}
       </Box>
+
       <Drawer
         anchor="left"
         open={openSidebar}
@@ -8290,7 +8296,7 @@ const ChatUI = () => {
         }}
         PaperProps={{
           sx: {
-            width: 300,
+            width: isXS ? 207 : 300,
             bgcolor: "#f7f7f8",
             height: "100vh",
             borderRight: "1px solid #e0e0e0",
@@ -8518,35 +8524,36 @@ const ChatUI = () => {
               </Typography>
 
               {/* WrdsAI */}
-              <Typography
-                sx={{
-                  fontSize: 18,
-                  cursor: "pointer",
-                  px: 1.5,
-                  py: 0.7,
-                  borderRadius: "6px",
-                  display: "inline-block",
-                  transition: "0.25s",
-                  backgroundColor:
-                    activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
-                  color: activeView === "smartAi" ? "#000" : "#000",
-                  fontWeight: activeView === "smartAi" ? 600 : 400,
-
-                  "&:hover": {
+              {User?.subscriptionPlan === "Nova" && (
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    cursor: "pointer",
+                    px: 1.5,
+                    py: 0.7,
+                    borderRadius: "6px",
+                    display: "inline-block",
+                    transition: "0.25s",
                     backgroundColor:
-                      activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
-                  },
-                }}
-                onClick={() => {
-                  setActiveView("smartAi");
-                  setIsSmartAI(false);
-                  setOpenSidebar(false);
-                  setSearchValue("");
-                  setSearchSessionResults([]);
-                }}
-              >
-                WrdsAI
-                {/* {activeView === "smartAi" && (
+                      activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
+                    color: activeView === "smartAi" ? "#000" : "#000",
+                    fontWeight: activeView === "smartAi" ? 600 : 400,
+
+                    "&:hover": {
+                      backgroundColor:
+                        activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
+                    },
+                  }}
+                  onClick={() => {
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                    setOpenSidebar(false);
+                    setSearchValue("");
+                    setSearchSessionResults([]);
+                  }}
+                >
+                  WrdsAI
+                  {/* {activeView === "smartAi" && (
                 <Box
                   sx={{
                     position: "absolute",
@@ -8559,38 +8566,40 @@ const ChatUI = () => {
                   }}
                 />
               )} */}
-              </Typography>
+                </Typography>
+              )}
 
               {/* WrdsAI Pro */}
-              <Typography
-                sx={{
-                  fontSize: 18,
-                  cursor: "pointer",
-                  px: 1.5,
-                  py: 0.7,
-                  borderRadius: "6px",
-                  display: "inline-block",
-                  transition: "0.25s",
-                  backgroundColor:
-                    activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
-                  color: activeView === "wrds AiPro" ? "#000" : "#000",
-                  fontWeight: activeView === "wrds AiPro" ? 600 : 400,
-
-                  "&:hover": {
+              {User?.subscriptionPlan === "Supernova" && (
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    cursor: "pointer",
+                    px: 1.5,
+                    py: 0.7,
+                    borderRadius: "6px",
+                    display: "inline-block",
+                    transition: "0.25s",
                     backgroundColor:
-                      activeView === "wrds AiPro" ? "#eaeaea" : "#eaeaea",
-                  },
-                }}
-                onClick={() => {
-                  setActiveView("wrds AiPro");
-                  setIsSmartAIPro(false);
-                  setOpenSidebar(false);
-                  setSearchValue("");
-                  setSearchSessionResults([]);
-                }}
-              >
-                WrdsAI Pro
-                {/* {activeView === "wrds AiPro" && (
+                      activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
+                    color: activeView === "wrds AiPro" ? "#000" : "#000",
+                    fontWeight: activeView === "wrds AiPro" ? 600 : 400,
+
+                    "&:hover": {
+                      backgroundColor:
+                        activeView === "wrds AiPro" ? "#eaeaea" : "#eaeaea",
+                    },
+                  }}
+                  onClick={() => {
+                    setActiveView("wrds AiPro");
+                    setIsSmartAIPro(false);
+                    setOpenSidebar(false);
+                    setSearchValue("");
+                    setSearchSessionResults([]);
+                  }}
+                >
+                  WrdsAI Pro
+                  {/* {activeView === "wrds AiPro" && (
                 <Box
                   sx={{
                     position: "absolute",
@@ -8603,7 +8612,8 @@ const ChatUI = () => {
                   }}
                 />
               )} */}
-              </Typography>
+                </Typography>
+              )}
 
               {/* Chat */}
               {/* <Typography
@@ -8727,64 +8737,43 @@ const ChatUI = () => {
                 </Box>
               )}
 
-              {/* <Select
-                inputRef={selectRef}
-                value={selectedBot}
-                onChange={(e) => setSelectedBot(e.target.value)}
-                fullWidth
-                displayEmpty
-                MenuProps={{
-                  anchorOrigin: { vertical: "bottom", horizontal: "left" },
-                  transformOrigin: { vertical: "top", horizontal: "left" },
-                }}
-                sx={{
-                  mt: 1,
-                  bgcolor: "#fff",
-                  borderRadius: "6px",
-                  border: "1px solid #dcdcdc",
-                  height: "36px",
-                  "& .MuiSelect-select": {
-                    fontSize: "16px",
-                    fontFamily: "Calibri, sans-serif",
-                    py: 0.5,
-                  },
-                }}
-              >
-                <MenuItem value="chatgpt-5-mini">ChatGPT</MenuItem>
-                <MenuItem value="claude-3-haiku">Claude</MenuItem>
-                <MenuItem value="grok">Grok</MenuItem>
-                <MenuItem value="mistral">Mistral</MenuItem>
-              </Select> */}
-
               {/* AI Browsing */}
-              <Typography
-                sx={{
-                  fontSize: 18,
-                  cursor: "pointer",
-                  px: 1.5,
-                  py: 0.7,
-                  borderRadius: "6px",
-                  display: "inline-block",
-                  transition: "0.25s",
-                  backgroundColor:
-                    activeView === "search2" ? "#e3e3e3ff" : "transparent",
-                  // color: activeView === "search2" ? "#000" : "#000",
-                  color: disabled ? "#7a7a7a" : "#000",
-                  fontWeight: activeView === "search2" ? 600 : 400,
-                  "&:hover": {
+              {User?.subscriptionPlan === "Supernova" && (
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    cursor: "pointer",
+                    px: 1.5,
+                    py: 0.7,
+                    borderRadius: "6px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    transition: "0.25s",
                     backgroundColor:
-                      activeView === "search2" ? "#eaeaea" : "#eaeaea",
-                  },
-                }}
-                // onClick={() => {
-                //   setActiveView("search2");
-                //   setOpenSidebar(false);
-                //   setSearchValue("");
-                //   setSearchSessionResults([]);
-                // }}
-              >
-                AI Browsing
-              </Typography>
+                      activeView === "search2" ? "#e3e3e3ff" : "transparent",
+                    color: disabled ? "#7a7a7a" : "#000",
+                    fontWeight: activeView === "search2" ? 600 : 400,
+                    "&:hover": {
+                      backgroundColor:
+                        activeView === "search2" ? "#eaeaea" : "#eaeaea",
+                    },
+                  }}
+                >
+                  AI Browsing
+                  <CustomTooltip title="coming soon..." placement="bottom">
+                    <InfoOutlinedIcon
+                      sx={{
+                        fontSize: 20,
+                        color: "#7a7a7a",
+                        cursor: "pointer",
+                        ml: 1,
+                        "&:hover": { color: "#000" },
+                      }}
+                    />
+                  </CustomTooltip>
+                </Typography>
+              )}
 
               <MenuItem
                 onClick={() => setShowSessionPanel((prev) => !prev)}
@@ -8811,6 +8800,7 @@ const ChatUI = () => {
 
                 <KeyboardArrowDownIcon
                   sx={{
+                    mr: "-4px",
                     transform: showSessionPanel
                       ? "rotate(180deg)"
                       : "rotate(0deg)",

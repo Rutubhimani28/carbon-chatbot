@@ -82,16 +82,29 @@ const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
 const subscriptionTypes = ["Monthly", "Yearly"];
 
 // FIXED PRICES IN USD (કદી બદલવાના નહીં)
-const BASE_PRICES_USD = {
+// const BASE_PRICES_USD = {
+//   Nova: {
+//     "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
+//     "Level Up": { Monthly: 1.99, Yearly: 21.99 },
+//     "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
+//   },
+//   Supernova: {
+//     "Step Up": { Monthly: 2.99, Yearly: 32.99 },
+//     "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
+//     "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
+//   },
+// };
+
+const BASE_PRICES_INR = {
   Nova: {
-    "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
-    "Level Up": { Monthly: 1.99, Yearly: 21.99 },
-    "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
+    "Glow Up": { Monthly: 99, Yearly: 999 },
+    "Level Up": { Monthly: 199, Yearly: 1999 },
+    "Rise Up": { Monthly: 399, Yearly: 3999 },
   },
   Supernova: {
-    "Step Up": { Monthly: 2.99, Yearly: 32.99 },
-    "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
-    "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
+    "Step Up": { Monthly: 299, Yearly: 2999 },
+    "Speed Up": { Monthly: 499, Yearly: 4999 },
+    "Scale Up": { Monthly: 899, Yearly: 8999 },
   },
 };
 
@@ -113,6 +126,24 @@ const getLiveUSDRate = async () => {
   }
 };
 
+// AGE GROUP AUTO CALCULATOR
+const getAgeGroup = (dob) => {
+  const today = new Date();
+  const birth = new Date(dob);
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  if (age < 13) return "<13";
+  if (age >= 13 && age <= 14) return "13-14";
+  if (age >= 15 && age <= 17) return "15-17";
+  return "18+";
+};
+
 export const registerUser = async (req, res) => {
   try {
     const {
@@ -121,7 +152,7 @@ export const registerUser = async (req, res) => {
       email,
       mobile,
       dateOfBirth,
-      ageGroup,
+      // ageGroup,
       parentName,
       parentEmail,
       parentMobile,
@@ -130,12 +161,14 @@ export const registerUser = async (req, res) => {
       subscriptionType, // "Monthly" or "Yearly"
     } = req.body;
 
+    const finalAgeGroup = getAgeGroup(dateOfBirth);
+
     // Required fields validation
     if (
       !firstName ||
       !lastName ||
       !dateOfBirth ||
-      !ageGroup ||
+      // !ageGroup ||
       !subscriptionPlan ||
       !childPlan ||
       !subscriptionType
@@ -144,7 +177,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Parent validation for minors
-    if (["<13", "13-14", "15-17"].includes(ageGroup)) {
+    if (["<13", "13-14", "15-17"].includes(finalAgeGroup)) {
       if (!parentName || !parentEmail || !parentMobile) {
         return res
           .status(400)
@@ -152,11 +185,11 @@ export const registerUser = async (req, res) => {
       }
     }
 
-    const isMinor = ["<13", "13-14", "15-17"].includes(ageGroup);
+    const isMinor = ["<13", "13-14", "15-17"].includes(finalAgeGroup);
 
     // Final login email (for <13, parent email is used)
-    const finalEmail = ageGroup === "<13" ? parentEmail : email;
-    const finalMobile = ageGroup === "<13" ? parentMobile : mobile;
+    const finalEmail = finalAgeGroup === "<13" ? parentEmail : email;
+    const finalMobile = finalAgeGroup === "<13" ? parentMobile : mobile;
 
     // Check duplicate email
     const existingUser = await User.findOne({ email: finalEmail });
@@ -167,24 +200,38 @@ export const registerUser = async (req, res) => {
     }
 
     // Get USD price
-    let priceUSD = 0;
-    if (subscriptionPlan === "Nova") {
-      priceUSD = BASE_PRICES_USD.Nova[childPlan]?.[subscriptionType];
-    } else if (subscriptionPlan === "Supernova") {
-      priceUSD = BASE_PRICES_USD.Supernova[childPlan]?.[subscriptionType];
-    }
+    // let priceUSD = 0;
+    // if (subscriptionPlan === "Nova") {
+    //   priceUSD = BASE_PRICES_USD.Nova[childPlan]?.[subscriptionType];
+    // } else if (subscriptionPlan === "Supernova") {
+    //   priceUSD = BASE_PRICES_USD.Supernova[childPlan]?.[subscriptionType];
+    // }
 
-    if (!priceUSD) {
+    // if (!priceUSD) {
+    //   return res.status(400).json({ error: "Invalid plan selection" });
+    // }
+
+    // // Fetch live exchange rate
+    // const usdToInrRate = await getLiveUSDRate();
+
+    // // Calculate final amount in INR with GST
+    // const baseAmountINR = Math.round(priceUSD * usdToInrRate * 100) / 100;
+    // const gstAmount = Math.round(baseAmountINR * 0.18 * 100) / 100;
+    // const totalAmountINR = Math.round((baseAmountINR + gstAmount) * 100); // in paise for Razorpay
+
+    // INR price
+    const priceINR =
+      BASE_PRICES_INR[subscriptionPlan]?.[childPlan]?.[subscriptionType];
+
+    if (!priceINR) {
       return res.status(400).json({ error: "Invalid plan selection" });
     }
 
-    // Fetch live exchange rate
-    const usdToInrRate = await getLiveUSDRate();
+    // GST (18%)
+    const gstAmount = Math.round(priceINR * 0.18 * 100) / 100;
 
-    // Calculate final amount in INR with GST
-    const baseAmountINR = Math.round(priceUSD * usdToInrRate * 100) / 100;
-    const gstAmount = Math.round(baseAmountINR * 0.18 * 100) / 100;
-    const totalAmountINR = Math.round((baseAmountINR + gstAmount) * 100); // in paise for Razorpay
+    // Total payable amount
+    const totalAmountINR = Math.round((priceINR + gstAmount) * 100); // paise
 
     // const totalAmountINR = 100; // 1 INR in paise
 
@@ -195,14 +242,14 @@ export const registerUser = async (req, res) => {
       email: finalEmail,
       mobile: finalMobile || null,
       dateOfBirth: new Date(dateOfBirth),
-      ageGroup,
-      parentName: ["<13", "13-14", "15-17"].includes(ageGroup)
+      ageGroup: finalAgeGroup,
+      parentName: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
         ? parentName
         : null,
-      parentEmail: ["<13", "13-14", "15-17"].includes(ageGroup)
+      parentEmail: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
         ? parentEmail
         : null,
-      parentMobile: ["<13", "13-14", "15-17"].includes(ageGroup)
+      parentMobile: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
         ? parentMobile
         : null,
       country: "India", // Hardcoded for Indian GST
@@ -211,9 +258,9 @@ export const registerUser = async (req, res) => {
       subscriptionPlan,
       childPlan,
       subscriptionType,
-      priceUSD,
-      exchangeRateUsed: usdToInrRate,
-      basePriceINR: baseAmountINR,
+      // priceUSD,
+      // exchangeRateUsed: usdToInrRate,
+      basePriceINR: priceINR,
       gstAmount,
       totalPriceINR: totalAmountINR / 100, // stored as rupees (with decimals)
       currency: "INR",
@@ -231,9 +278,9 @@ export const registerUser = async (req, res) => {
       paymentAmount: totalAmountINR / 100, // actual rupees (e.g., 99.79)
       priceBreakdown: {
         plan: `${subscriptionPlan} - ${childPlan} (${subscriptionType})`,
-        usd: `$${priceUSD}`,
-        rate: `1 USD = ₹${usdToInrRate}`,
-        base: `₹${baseAmountINR}`,
+        // usd: `$${priceUSD}`,
+        // rate: `1 USD = ₹${usdToInrRate}`,
+        base: `₹${priceINR}`,
         gst: `₹${gstAmount} (18%)`,
         total: `₹${totalAmountINR / 100}`,
       },
@@ -444,6 +491,12 @@ export const loginUser = async (req, res) => {
         mobile: user.mobile,
         dateOfBirth: user.dateOfBirth,
         remainingTokens: user.remainingTokens,
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+        subscriptionType: user.subscriptionType,
+        // subscriptionStatus: user.subscriptionStatus,
+        // isActive: user.isActive,
+        // totalPriceINR: user.totalPriceINR,
       },
     });
   } catch (err) {

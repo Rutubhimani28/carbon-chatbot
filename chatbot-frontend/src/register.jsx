@@ -889,6 +889,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Modal,
 } from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -908,22 +909,25 @@ const Register = () => {
     firstName: "",
     lastName: "",
     email: "",
-    mobile: "",
+    mobile: "+91 ",
     // country: "",
     dateOfBirth: null,
     ageGroup: "",
     parentName: "",
     parentEmail: "",
-    parentMobile: "",
+    parentMobile: "+91 ",
     subscriptionPlan: "",
     childPlan: "",
     subscriptionType: "",
     agree: false,
+    agreeActivation: false,
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [openPayment, setOpenPayment] = useState(false);
   const [priceINR, setPriceINR] = useState(0);
+  const [openTerms, setOpenTerms] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -958,13 +962,37 @@ const Register = () => {
   };
 
   const handleDateChange = (date) => {
+    const ageGroup = calculateAgeGroup(date);
+
     setFormData((prev) => ({
       ...prev,
       dateOfBirth: date,
+      ageGroup: ageGroup,
     }));
   };
 
+  const calculateAgeGroup = (dob) => {
+    if (!dob) return "";
+
+    const today = new Date();
+    const birthDate = new Date(dob);
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    if (age < 13) return "<13";
+    if (age >= 13 && age <= 14) return "13-14";
+    if (age >= 15 && age <= 17) return "15-17";
+    return "18+";
+  };
+
   const handlePayment = async (mode, upiId = "") => {
+    setAgreeTerms(false);
+
     if (mode === "qr") {
       window.location.href = `upi://pay?pa=mymerchant@upi&pn=CarbonAI&am=${priceINR}&cu=INR`;
       return;
@@ -1061,13 +1089,14 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setAgreeTerms(false);
 
     // Validation
     if (
       !formData.firstName ||
       !formData.lastName ||
       !formData.dateOfBirth ||
-      !formData.ageGroup ||
+      // !formData.ageGroup ||
       !formData.subscriptionPlan ||
       !formData.childPlan ||
       !formData.subscriptionType
@@ -1100,6 +1129,22 @@ const Register = () => {
     // CONSENT VALIDATION
     if (!formData.agree) {
       toast.error("Please agree to the consent before submitting.");
+      setLoading(false);
+      return;
+    }
+
+    // New activation checkbox validation
+    if (!formData.agreeActivation) {
+      toast.error(
+        "Please agree that your account will be activated within 24 hours."
+      );
+      setLoading(false);
+      return;
+    }
+
+    // TERMS CHECK
+    if (!agreeTerms) {
+      toast.error("Please agree to the Terms & Conditions.");
       setLoading(false);
       return;
     }
@@ -1138,6 +1183,7 @@ const Register = () => {
         childPlan: "",
         subscriptionType: "",
         agree: false,
+        agreeActivation: false,
       });
 
       // setPriceINR(res.data.user.subscription.priceINR);
@@ -1359,6 +1405,7 @@ const Register = () => {
                   </InputLabel>
                   <TextField
                     select
+                    disabled
                     fullWidth
                     size="small"
                     name="ageGroup"
@@ -1429,7 +1476,16 @@ const Register = () => {
                     size="small"
                     name="mobile"
                     value={formData.mobile}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      let v = e.target.value;
+
+                      // Always start with +91
+                      if (!v.startsWith("+91 ")) {
+                        v = "+91 " + v.replace("+91", "").replace(" ", "");
+                      }
+
+                      setFormData({ ...formData, mobile: v });
+                    }}
                     placeholder="+1234567890"
                     required
                     InputProps={{
@@ -1529,6 +1585,7 @@ const Register = () => {
                       fullWidth
                       size="small"
                       name="parentEmail"
+                      value={formData.parentEmail}
                       required
                       onChange={handleChange}
                       InputProps={{
@@ -1554,8 +1611,18 @@ const Register = () => {
                       fullWidth
                       size="small"
                       name="parentMobile"
+                      value={formData.parentMobile}
                       required
-                      onChange={handleChange}
+                      // onChange={handleChange}
+                      onChange={(e) => {
+                        let v = e.target.value;
+
+                        if (!v.startsWith("+91 ")) {
+                          v = "+91 " + v.replace("+91", "").replace(" ", "");
+                        }
+
+                        setFormData({ ...formData, parentMobile: v });
+                      }}
                       InputProps={{
                         sx: {
                           width: { xs: "230px", sm: "440px", md: "467px" },
@@ -1674,7 +1741,7 @@ const Register = () => {
               </Box>
 
               {/* Consent Checkbox */}
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
                 <Checkbox
                   checked={formData.agree}
                   onChange={(e) =>
@@ -1688,6 +1755,52 @@ const Register = () => {
                   }}
                 >
                   I consent the above information is correct *
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mb: "-6px",
+                  cursor: "pointer",
+                }}
+              >
+                <Checkbox
+                  // checked={formData.agree}
+                  // onChange={(e) =>
+                  //   setFormData({ ...formData, agree: e.target.checked })
+                  checked={agreeTerms} // always unchecked (only for opening modal)
+                  onClick={() => setOpenTerms(true)}
+                />
+                <Typography
+                  sx={{
+                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontFamily: "Calibri, sans-serif",
+                  }}
+                >
+                  I agree to WrdsAI terms & conditions.
+                </Typography>
+              </Box>
+
+              {/* New Activation Consent */}
+              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                <Checkbox
+                  checked={formData.agreeActivation}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      agreeActivation: e.target.checked,
+                    })
+                  }
+                />
+                <Typography
+                  sx={{
+                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontFamily: "Calibri, sans-serif",
+                  }}
+                >
+                  I agree that my account will be activated within 24 hours.
                 </Typography>
               </Box>
 
@@ -1742,6 +1855,117 @@ const Register = () => {
             </form>
           </Box>
         </Box>
+
+        <Modal open={openTerms} onClose={() => setOpenTerms(false)}>
+          <Box
+            sx={{
+              width: { xs: "68%", sm: "60%", md: "40%" },
+              bgcolor: "#fff",
+              p: 3,
+              borderRadius: 2,
+              mx: "auto",
+              mt: { xs: "30%", sm: "18%", md: "10%" },
+              boxShadow: 24,
+              maxHeight: "60vh",
+              overflowY: "auto",
+            }}
+          >
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
+              WrdsAI – Terms & Conditions
+            </Typography>
+
+            <Typography sx={{ mb: 3, fontSize: "15px", lineHeight: "22px" }}>
+              {/* <strong>WrdsAI – Terms & Conditions</strong> <br />
+              <br /> */}
+              <strong>Last updated:</strong> 15th Dec 2025 <br />
+              <br />
+              Welcome to WrdsAI. By creating an account or using our services,
+              you agree to the following Terms & Conditions. <br />
+              <br />
+              <strong>1. About WrdsAI</strong> <br />
+              WrdsAI is an AI-powered learning platform primarily designed to
+              support K–12 education through responsible and age-appropriate
+              use. <br />
+              <br />
+              <strong>2. Eligibility & Use by Parents</strong> <br />
+              WrdsAI is intended for school-age learners. Users under the age of
+              18 are expected to use the service with the knowledge and consent
+              of a parent or legal guardian. Parents and guardians are
+              encouraged to remain involved and guide how WrdsAI is used as part
+              of a child’s learning. <br />
+              <br />
+              <strong>3. Account Registration</strong> <br />
+              You are responsible for maintaining the confidentiality of your
+              login details and for all activity that occurs under your account.
+              WrdsAI may suspend or terminate accounts that violate these Terms,
+              immediately. <br />
+              <br />
+              <strong>4. Subscription, Payments & No Refunds</strong> <br />
+              WrdsAI is offered on a subscription basis. <br />
+              • Subscription prices are displayed clearly at the time of
+              purchase. <br />
+              • All payments are final. WrdsAI does not offer refunds once a
+              subscription is purchased. <br />• Unused time or tokens do not
+              carry over and are not refundable. <br />
+              <br />
+              <strong>5. Account Activation</strong> <br />
+              After successful payment, account access will be activated within
+              24 hours as part of WrdsAI’s safety and quality standards. <br />
+              By completing payment, you acknowledge and agree to this
+              activation timeline. <br />
+              <br />
+              <strong>6. Acceptable Use</strong> <br />
+              Users agree to use WrdsAI responsibly and for lawful educational
+              purposes only. <br />
+              You must not misuse the service, attempt to bypass safeguards, or
+              engage in harmful or abusive behaviour. <br />
+              <br />
+              <strong>7. Service Availability</strong> <br />
+              WrdsAI is provided on an “as-is” and “as-available” basis. While
+              we aim to keep the service reliable, uninterrupted or error-free
+              access cannot be guaranteed. <br />
+              <br />
+              <strong>8. Changes to the Service</strong> <br />
+              WrdsAI may update, modify, or discontinue features at any time. We
+              may remove deprecated LLM models and add new ones without prior
+              notice. We may also revise these Terms when necessary. Continued
+              use of the service indicates acceptance of any updates. <br />
+              <br />
+              <strong>9. Limitation of Liability</strong> <br />
+              To the maximum extent permitted by law, WrdsAI is not liable for
+              indirect, incidental, or consequential damages arising from use of
+              the service. WrdsAI is a learning support tool and does not
+              replace teachers, schools, or professional guidance. <br />
+              <br />
+              <strong>10. Contact Information</strong> <br />
+              For questions or support, please contact us at: support@wrdsai.com
+            </Typography>
+
+            {/* Checkbox inside Modal */}
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+              <Checkbox
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+              />
+              <Typography
+                sx={{
+                  fontSize: { xs: "14px", sm: "16px" },
+                  fontFamily: "Calibri, sans-serif",
+                }}
+              >
+                I have read and agree to the Terms & Conditions *
+              </Typography>
+            </Box>
+
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => setOpenTerms(false)}
+            >
+              Close
+            </Button>
+          </Box>
+        </Modal>
       </>
     </LocalizationProvider>
   );

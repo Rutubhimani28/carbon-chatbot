@@ -286,14 +286,11 @@ const restrictions = {
     "death",
     "weed",
     "marijuana",
-    "pot",
-    "coke",
     "cocaine",
     "meth",
     "heroin",
     "fentanyl",
     "opioid",
-    "pill",
     "xanax",
     "oxy",
     "perc",
@@ -303,9 +300,8 @@ const restrictions = {
     "ecstasy",
     "MDMA",
     "LSD",
-    "acid",
     "shrooms",
-    "mushroom",
+
     "ketamine",
     "ket",
     "special-k",
@@ -315,20 +311,12 @@ const restrictions = {
     "dab",
     "dabbing",
     "cartel",
-    "dealer",
     "trap",
-    "high",
-    "stoned",
-    "tripped",
     "OD",
     "overdose",
     "inject",
-    "needle",
     "snort",
     "sniff",
-    "smoke",
-    "blunt",
-    "joint",
     "bong",
     "rig",
     "paraphernalia",
@@ -348,7 +336,6 @@ const restrictions = {
     "cum",
     "jizz",
     "orgasm",
-    "climax",
     "masturbate",
     "jerk",
     "wank",
@@ -357,10 +344,8 @@ const restrictions = {
     "hentai",
     "nude",
     "naked",
-    "strip",
     "hooker",
     "prostitute",
-    "escort",
     "sugar daddy",
     "onlyfans",
     "camgirl",
@@ -401,36 +386,21 @@ const restrictions = {
     "teen",
     "jailbait",
 
-    "date",
     "boyfriend",
     "girlfriend",
     "hookup",
-    "hook-up",
     "tinder",
     "grindr",
     "bumble",
     "snapchat sext",
     "DM slide",
     "thirst trap",
-    "catfish",
-    "groom",
-    "grooming",
     "predator",
     "meetup",
-    "stranger",
-    "older",
-    "sugar",
-    "daddy",
-    "mommy",
-    "trade",
     "nudes for",
-    "trade pics",
     "body count",
     "virgin",
-    "lose virginity",
-    "sleep with",
     "smash",
-    "Netflix and chill",
 
     "killing",
     "killed",
@@ -453,12 +423,8 @@ const restrictions = {
     "strangle",
     "hang",
     "self-harm",
-    "cut",
-    "wrist",
-    "razor",
     "poison",
     "drown",
-    "burn",
     "torture",
     "massacre",
     "genocide",
@@ -475,11 +441,7 @@ const restrictions = {
     "disembowel",
     "slaughter",
     "carnage",
-    "execution",
-    "execute",
 
-    "steal",
-    "rob",
     "robbery",
     "theft",
     "shoplift",
@@ -496,43 +458,31 @@ const restrictions = {
     "kidnap",
     "ransom",
     "trafficking",
-    "gang",
     "mafia",
-    "hit",
-    "contract kill",
     "arson",
     "vandalism",
     "graffiti",
-    "trespass",
+
     "fugitive",
     "warrant",
     "jail",
     "prison",
     "felony",
     "cop",
-    "police brutality",
     "riot",
     "loot",
-
     "depression",
     "depressed",
-    "anxiety",
-    "anxious",
-    "panic attack",
-    "therapy",
     "meds",
     "suicidal",
     "KMS",
     "end it",
     "rope",
     "noose",
-    "bridge",
     "gun to head",
     "swallow pills",
-    "worthless",
     "hate myself",
     "kill myself",
-
     "fag",
     "dyke",
     "tranny",
@@ -547,57 +497,32 @@ const restrictions = {
     "cripple",
     "autistic",
     "incel",
-    "fat",
+
     "ugly",
     "loser",
-
     "DAN",
     "jailbreak",
-    "ignore rules",
-    "pretend",
-    "roleplay as",
-    "unfiltered",
-    "no limits",
-    "bypass",
-    "override",
-    "system prompt",
-    "hypothetical",
-    "story",
-    "fiction",
-    "creative writing",
-    "simulate",
-    "generate",
-    "uncensored",
-    "raw",
-    "dark mode",
-
     "bet",
     "betting",
     "gamble",
     "poker",
     "casino",
-    "slot",
     "blackjack",
     "roulette",
-    "sportsbook",
+
     "draftkings",
     "fanduel",
-    "stake",
     "wager",
-    "odds",
     "parlay",
     "crypto gambling",
     "NFT flip",
     "loot box",
     "skin betting",
-
     "beer",
     "liquor",
     "vodka",
     "whiskey",
     "drunk",
-    "wasted",
-    "blackout",
     "binge",
     "shot",
     "chug",
@@ -606,12 +531,10 @@ const restrictions = {
     "alc",
     "booze",
     "underage drinking",
-    "fake ID",
-    "bar",
-    "club",
     "DUI",
     "breathalyzer",
   ],
+
   under18: [
     "gambling",
     "adult",
@@ -629,10 +552,9 @@ const restrictions = {
     "slot",
     "blackjack",
     "roulette",
-    "sportsbook",
+
     "draftkings",
     "fanduel",
-    "stake",
     "wager",
     "odds",
     "parlay",
@@ -640,14 +562,11 @@ const restrictions = {
     "NFT flip",
     "loot box",
     "skin betting",
-
     "beer",
     "liquor",
     "vodka",
     "whiskey",
     "drunk",
-    "wasted",
-    "blackout",
     "binge",
     "shot",
     "chug",
@@ -655,10 +574,7 @@ const restrictions = {
     "party",
     "alc",
     "booze",
-    "underage drinking",
     "fake ID",
-    "bar",
-    "club",
     "DUI",
     "breathalyzer",
   ],
@@ -1689,12 +1605,12 @@ export const getSmartAIProResponse = async (req, res) => {
         botName === "chatgpt-5-mini"
           ? "gpt-4o-mini"
           : botName === "grok"
-            ? "grok-4-1-fast-reasoning"
-            : botName === "claude-haiku-4.5"
-              ? "claude-haiku-4-5-20251001"
-              : botName === "mistral"
-                ? "mistral-medium-2508"
-                : undefined;
+          ? "grok-4-1-fast-reasoning"
+          : botName === "claude-haiku-4.5"
+          ? "claude-haiku-4-5-20251001"
+          : botName === "mistral"
+          ? "mistral-medium-2508"
+          : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
 
@@ -1975,10 +1891,14 @@ Strict: No explanation. No extra words.`,
     if (related && previousBotName) {
       // ✅ Topic is related → Reuse the same model from previous response
       botName = previousBotName;
-      console.log(`✅ Topic-related prompt detected. Reusing model: ${botName}`);
+      console.log(
+        `✅ Topic-related prompt detected. Reusing model: ${botName}`
+      );
     } else {
       // 🔄 Topic changed or first prompt → Keep the auto-detected model
-      console.log(`🔄 Topic changed or first prompt. Using detected model: ${botName}`);
+      console.log(
+        `🔄 Topic changed or first prompt. Using detected model: ${botName}`
+      );
     }
 
     // Build topic-aware system instruction
@@ -1988,8 +1908,8 @@ Strict: No explanation. No extra words.`,
     const keywordContext =
       conversationKeywords.length > 0
         ? `\nKey concepts from conversation: ${conversationKeywords
-          .slice(0, 10)
-          .join(", ")}`
+            .slice(0, 10)
+            .join(", ")}`
         : "";
 
     if (related) {
@@ -2202,7 +2122,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch { }
+        } catch {}
 
         const apiError = errJson?.error || errJson;
 
@@ -2239,30 +2159,30 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         const fallbackPayload =
           fallback === "claude-haiku-4.5"
             ? {
-              model: modelName,
-              max_tokens: maxWords * 2,
-              system: messages[0].content,
-              messages: [{ role: "user", content: combinedPrompt }],
-            }
+                model: modelName,
+                max_tokens: maxWords * 2,
+                system: messages[0].content,
+                messages: [{ role: "user", content: combinedPrompt }],
+              }
             : {
-              model: modelName,
-              messages,
-              temperature: 0.7,
-              max_tokens: maxWords * 2,
-            };
+                model: modelName,
+                messages,
+                temperature: 0.7,
+                max_tokens: maxWords * 2,
+              };
 
         // Build fallback headers
         const fallbackHeaders =
           fallback === "claude-haiku-4.5"
             ? {
-              "Content-Type": "application/json",
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-            }
+                "Content-Type": "application/json",
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
+              }
             : {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            };
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              };
 
         // Retry with fallback model
         const fbRes = await fetch(apiUrl, {
@@ -2340,8 +2260,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2349,8 +2269,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
