@@ -890,6 +890,7 @@ import {
   InputAdornment,
   MenuItem,
   Modal,
+  Grid,
 } from "@mui/material";
 import Checkbox from "@mui/material/Checkbox";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -921,6 +922,7 @@ const Register = () => {
     subscriptionType: "",
     agree: false,
     agreeActivation: false,
+    agreepermission: false,
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -1142,6 +1144,14 @@ const Register = () => {
       return;
     }
 
+    if (!formData.agreepermission) {
+      toast.error(
+        "Please agree that your account will be activated within 24 hours."
+      );
+      setLoading(false);
+      return;
+    }
+
     // TERMS CHECK
     if (!agreeTerms) {
       toast.error("Please agree to the Terms & Conditions.");
@@ -1184,6 +1194,7 @@ const Register = () => {
         subscriptionType: "",
         agree: false,
         agreeActivation: false,
+        agreepermission: false,
       });
 
       // setPriceINR(res.data.user.subscription.priceINR);
@@ -1212,7 +1223,14 @@ const Register = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100vh",
+          overflow: "hidden",
+        }}
+      >
         {/* Header */}
         <Box
           sx={{
@@ -1221,16 +1239,15 @@ const Register = () => {
             alignItems: isSmallScreen ? "flex-start" : "center",
             justifyContent: "space-between",
             px: { xs: 1, sm: 2, md: 2, lg: 2 },
+            flexShrink: 0,
             bgcolor: "#1268fb",
             zIndex: 100,
             width: "100%",
             position: "fixed",
             top: 0,
             left: 0,
-            // height: isSmallScreen
-            //   ? "auto"
-            height: { xs: "80px", sm: "85px", lg: "102px" },
-            minHeight: isSmallScreen ? "75px" : "102px",
+            height: { xs: "80px", sm: "85px", lg: "84px" },
+            minHeight: isSmallScreen ? "75px" : "60px",
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
             py: isSmallScreen ? 1 : 0,
           }}
@@ -1239,36 +1256,20 @@ const Register = () => {
           <img src={Words2} height={90} width={180} alt="Logo" />
         </Box>
 
-        {/* <Box
-          sx={{
-            marginTop: { xs: 1, sm: 4, md: 8 },
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: { xs: 1, sm: 2, md: 2 },
-            width: "100vw", // 🔹 Full width on mobile
-            maxWidth: "100%", // 🔹 Prevent overflow
-            height: "100vh", // full screen height
-              // overflowY: "auto", // content scroll only
-              // overflowX: "hidden",
-            pt: { xs: "90px", sm: "100px", md: "120px" },
-            // overflowX: "hidden",
-            // flexWrap: "wrap",
-          }}
-        > */}
+        {/* Scrollable Content Area */}
         <Box
           sx={{
-            marginTop: { xs: 1, sm: 4, md: 3 },
+            marginTop: { xs: "108px", sm: "106px", lg: "84px" }, // Same as header height
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "flex-start",
             padding: { xs: 1, sm: 2, md: 2 },
-            width: "100vw",
-            maxWidth: "100%",
-            minHeight: "100vh",
-            // overflow: "visible",
-            pt: { xs: "90px", sm: "100px", md: "70px" }, // compensate header height
+            width: "100%",
+            height: "100%",
+            overflowY: "auto",
+            overflowX: "hidden",
+            pb: 4, // Add bottom padding for better scrolling experience
           }}
         >
           <Box
@@ -1294,17 +1295,9 @@ const Register = () => {
             </Typography>
 
             <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-              {/* First Name & Last Name - In one row */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", sm: "row" },
-                  gap: 2,
-                  width: "100%",
-                  mb: 2,
-                }}
-              >
-                <Box sx={{ flex: 1 }}>
+              <Grid container spacing={2} sx={{ width: "100%", mb: 2 }}>
+                {/* First Name */}
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InputLabel
                     sx={{
                       fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1313,6 +1306,7 @@ const Register = () => {
                   >
                     First Name *
                   </InputLabel>
+
                   <TextField
                     fullWidth
                     size="small"
@@ -1322,14 +1316,15 @@ const Register = () => {
                     required
                     InputProps={{
                       sx: {
-                        width: { xs: "230px", sm: "210px", width: "100%" },
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
                       },
                     }}
                   />
-                </Box>
-                <Box sx={{ flex: 1 }}>
+                </Grid>
+
+                {/* Last Name */}
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InputLabel
                     sx={{
                       fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1338,6 +1333,7 @@ const Register = () => {
                   >
                     Last Name *
                   </InputLabel>
+
                   <TextField
                     fullWidth
                     size="small"
@@ -1347,25 +1343,22 @@ const Register = () => {
                     required
                     InputProps={{
                       sx: {
-                        width: { xs: "230px", sm: "210px" },
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
                       },
                     }}
                   />
-                </Box>
-              </Box>
+                </Grid>
+              </Grid>
 
-              {/* Country & Date of Birth - In one row */}
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: { xs: "column", sm: "row" },
-                  gap: { xs: 1.5, sm: 2 },
-                  mb: { xs: 1.5, sm: 2 },
-                }}
+              {/* Country & DOB */}
+              <Grid
+                container
+                spacing={2}
+                sx={{ width: "100%", mb: { xs: 1.5, sm: 2 } }}
               >
-                <Box sx={{ flex: 1 }}>
+                {/* Date of Birth */}
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InputLabel
                     sx={{
                       fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1374,6 +1367,7 @@ const Register = () => {
                   >
                     Date of Birth *
                   </InputLabel>
+
                   <DatePicker
                     value={formData.dateOfBirth}
                     onChange={handleDateChange}
@@ -1384,7 +1378,6 @@ const Register = () => {
                         required: true,
                         InputProps: {
                           sx: {
-                            width: { xs: "230px", sm: "210px" },
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
                           },
@@ -1393,8 +1386,10 @@ const Register = () => {
                     }}
                     maxDate={new Date()}
                   />
-                </Box>
-                <Box sx={{ flex: 1 }}>
+                </Grid>
+
+                {/* Age Group */}
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <InputLabel
                     sx={{
                       fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1403,6 +1398,7 @@ const Register = () => {
                   >
                     Age Group *
                   </InputLabel>
+
                   <TextField
                     select
                     disabled
@@ -1414,7 +1410,6 @@ const Register = () => {
                     onChange={handleChange}
                     InputProps={{
                       sx: {
-                        width: { xs: "230px", sm: "210px" },
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
                       },
@@ -1426,77 +1421,376 @@ const Register = () => {
                       </MenuItem>
                     ))}
                   </TextField>
-                </Box>
-              </Box>
+                </Grid>
+              </Grid>
 
-              {/* Email */}
-              {formData.ageGroup !== "<13" && (
-                <Box sx={{ mb: 2 }}>
+              {/* First Name & Last Name - In one row */}
+              {/* <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "center", sm: "flex-start" },
+                  gap: 2,
+                  width: "100%",
+                  mb: 2,
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    // alignItems: { xs: "center", sm: "flex-start" },
+                  }}
+                >
                   <InputLabel
                     sx={{
                       fontSize: { xs: "17px", sm: "19px", md: "19px" },
                       fontFamily: "Calibri, sans-serif",
                     }}
                   >
-                    Email {formData.ageGroup === "<13" ? "(Optional)" : "*"}
+                    First Name *
                   </InputLabel>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                      width: "100%",
+                    }}
+                  >
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      required
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "210px", width: "100%" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    // alignItems: { xs: "center", sm: "flex-start" },
+                  }}
+                >
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Last Name *
+                  </InputLabel>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                      width: "100%",
+                    }}
+                  >
+                    <TextField
+                      fullWidth
+                      size="small"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      required
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "210px" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    />
+                  </Box>
+                </Box>
+              </Box> */}
+
+              {/* Country & Date of Birth - In one row */}
+              {/* <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
+                  alignItems: { xs: "center", sm: "flex-start" },
+                  gap: { xs: 1.5, sm: 2 },
+                  mb: { xs: 1.5, sm: 2 },
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    // alignItems: { xs: "center", sm: "flex-start" },
+                  }}
+                >
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Date of Birth *
+                  </InputLabel>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                      width: "100%",
+                    }}
+                  >
+                    <DatePicker
+                      value={formData.dateOfBirth}
+                      onChange={handleDateChange}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          fullWidth: true,
+                          required: true,
+                          InputProps: {
+                            sx: {
+                              width: { xs: "230px", sm: "210px" },
+                              height: { xs: 30, sm: 42 },
+                              fontSize: { xs: "15px", sm: "17px" },
+                            },
+                          },
+                        },
+                      }}
+                      maxDate={new Date()}
+                    />
+                  </Box>
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    // alignItems: { xs: "center", sm: "flex-start" },
+                  }}
+                >
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Age Group *
+                  </InputLabel>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: { xs: "center", sm: "flex-start" },
+                      width: "100%",
+                    }}
+                  >
+                    <TextField
+                      select
+                      disabled
+                      fullWidth
+                      size="small"
+                      name="ageGroup"
+                      value={formData.ageGroup}
+                      required
+                      onChange={handleChange}
+                      InputProps={{
+                        sx: {
+                          width: { xs: "230px", sm: "210px" },
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                    >
+                      {ageGroups.map((age) => (
+                        <MenuItem key={age} value={age}>
+                          {age}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Box>
+                </Box>
+              </Box> */}
+
+              {/*               
+              <Grid
+                container
+                spacing={2}
+                sx={{
+                  mb: { xs: 1.5, sm: 2 },
+                }}
+              >
+                <Grid item xs={12} sm={6}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Date of Birth *
+                  </InputLabel>
+
+                
+                  <DatePicker
+                    value={formData.dateOfBirth}
+                    onChange={handleDateChange}
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        required: true,
+                        fullWidth: true,
+                        sx: {
+                          maxWidth: { xs: "230px", sm: "210px" },
+                          margin: { xs: "0 auto", sm: "0" },
+                          "& .MuiInputBase-root": {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        },
+                      },
+                    }}
+                    maxDate={new Date()}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6} >
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    Age Group *
+                  </InputLabel>
+
+               
                   <TextField
-                    fullWidth
+                    select
+                    disabled
+                    
                     size="small"
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    disabled={formData.ageGroup === "<13"}
+                    name="ageGroup"
+                    value={formData.ageGroup}
+                    required
                     onChange={handleChange}
-                    required={formData.ageGroup !== "<13"}
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px", md: "467px" },
+                    sx={{
+                      maxWidth: { xs: "230px", sm: "210px" },
+                      margin: { xs: "0 auto", sm: "0" },
+                      "& .MuiInputBase-root": {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
                       },
                     }}
-                  />
-                </Box>
+                    fullWidth
+                  >
+                    {ageGroups.map((age) => (
+                      <MenuItem key={age} value={age}>
+                        {age}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid> */}
+
+              {/* Email */}
+              {formData.ageGroup !== "<13" && (
+                <Grid
+                  container
+                  spacing={0}
+                  sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                >
+                  {/* LABEL */}
+                  <Grid item xs={12}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                        width: "100%",
+                      }}
+                    >
+                      Email {formData.ageGroup === "<13" ? "(Optional)" : "*"}
+                    </InputLabel>
+                  </Grid>
+
+                  {/* TEXTFIELD */}
+                  <Grid item xs={12} sm={8} md={6}>
+                    <TextField
+                      size="small"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      disabled={formData.ageGroup === "<13"}
+                      onChange={handleChange}
+                      required={formData.ageGroup !== "<13"}
+                      InputProps={{
+                        sx: {
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
               )}
 
               {/* Mobile */}
               {formData.ageGroup !== "<13" && (
-                <Box sx={{ mb: 2 }}>
-                  <InputLabel
-                    sx={{
-                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    Mobile Number *
-                  </InputLabel>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={(e) => {
-                      let v = e.target.value;
+                <Grid
+                  container
+                  spacing={0}
+                  sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                >
+                  {/* LABEL */}
+                  <Grid item xs={12}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                        width: "100%",
+                      }}
+                    >
+                      Mobile Number *
+                    </InputLabel>
+                  </Grid>
 
-                      // Always start with +91
-                      if (!v.startsWith("+91 ")) {
-                        v = "+91 " + v.replace("+91", "").replace(" ", "");
-                      }
+                  {/* TEXTFIELD */}
+                  <Grid item xs={12} sm={8} md={6}>
+                    <TextField
+                      size="small"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={(e) => {
+                        let v = e.target.value;
 
-                      setFormData({ ...formData, mobile: v });
-                    }}
-                    placeholder="+1234567890"
-                    required
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px", md: "467px" },
-                        height: { xs: 30, sm: 42 },
-                        fontSize: { xs: "15px", sm: "17px" },
-                      },
-                    }}
-                  />
-                </Box>
+                        // Always start with +91
+                        if (!v.startsWith("+91 ")) {
+                          v = "+91 " + v.replace("+91", "").replace(" ", "");
+                        }
+
+                        setFormData({ ...formData, mobile: v });
+                      }}
+                      placeholder="+1234567890"
+                      required
+                      InputProps={{
+                        sx: {
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                      fullWidth
+                    />
+                  </Grid>
+                </Grid>
               )}
 
               {/* Username */}
@@ -1547,7 +1841,14 @@ const Register = () => {
                 formData.ageGroup === "13-14" ||
                 formData.ageGroup === "15-17") && (
                 <>
-                  <Box sx={{ mb: 2 }}>
+                  {/* <Box
+                    sx={{
+                      mb: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <InputLabel
                       sx={{
                         fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1556,23 +1857,74 @@ const Register = () => {
                     >
                       Parent/Guardian Name *
                     </InputLabel>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      name="parentName"
-                      required
-                      onChange={handleChange}
-                      InputProps={{
-                        sx: {
-                          width: { xs: "230px", sm: "440px", md: "467px" },
-                          height: { xs: 30, sm: 42 },
-                          fontSize: { xs: "15px", sm: "17px" },
-                        },
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: { xs: "center", sm: "flex-start" },
+                        width: "100%",
                       }}
-                    />
-                  </Box>
+                    >
+                      <TextField
+                        // fullWidth
+                        size="small"
+                        name="parentName"
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            width: { xs: "230px", sm: "440px", md: "467px" },
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box> */}
 
-                  <Box sx={{ mb: 2 }}>
+                  <Grid
+                    container
+                    spacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent/Guardian Name *
+                      </InputLabel>
+                    </Grid>
+
+                    {/* TEXTFIELD */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentName"
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* <Box
+                    sx={{
+                      mb: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <InputLabel
                       sx={{
                         fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1581,24 +1933,76 @@ const Register = () => {
                     >
                       Parent Email *
                     </InputLabel>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      name="parentEmail"
-                      value={formData.parentEmail}
-                      required
-                      onChange={handleChange}
-                      InputProps={{
-                        sx: {
-                          width: { xs: "230px", sm: "440px", md: "467px" },
-                          height: { xs: 30, sm: 42 },
-                          fontSize: { xs: "15px", sm: "17px" },
-                        },
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: { xs: "center", sm: "flex-start" },
+                        width: "100%",
                       }}
-                    />
-                  </Box>
+                    >
+                      <TextField
+                        // fullWidth
+                        size="small"
+                        name="parentEmail"
+                        value={formData.parentEmail}
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            width: { xs: "230px", sm: "440px", md: "467px" },
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box> */}
 
-                  <Box sx={{ mb: 2 }}>
+                  <Grid
+                    container
+                    spacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent Email *
+                      </InputLabel>
+                    </Grid>
+
+                    {/* TEXTFIELD */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentEmail"
+                        value={formData.parentEmail}
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* <Box
+                    sx={{
+                      mb: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
                     <InputLabel
                       sx={{
                         fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1607,36 +2011,94 @@ const Register = () => {
                     >
                       Parent Mobile *
                     </InputLabel>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      name="parentMobile"
-                      value={formData.parentMobile}
-                      required
-                      // onChange={handleChange}
-                      onChange={(e) => {
-                        let v = e.target.value;
-
-                        if (!v.startsWith("+91 ")) {
-                          v = "+91 " + v.replace("+91", "").replace(" ", "");
-                        }
-
-                        setFormData({ ...formData, parentMobile: v });
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: { xs: "center", sm: "flex-start" },
+                        width: "100%",
                       }}
-                      InputProps={{
-                        sx: {
-                          width: { xs: "230px", sm: "440px", md: "467px" },
-                          height: { xs: 30, sm: 42 },
-                          fontSize: { xs: "15px", sm: "17px" },
-                        },
-                      }}
-                    />
-                  </Box>
+                    >
+                      <TextField
+                        // fullWidth
+                        size="small"
+                        name="parentMobile"
+                        value={formData.parentMobile}
+                        required
+                        // onChange={handleChange}
+                        onChange={(e) => {
+                          let v = e.target.value;
+
+                          if (!v.startsWith("+91 ")) {
+                            v = "+91 " + v.replace("+91", "").replace(" ", "");
+                          }
+
+                          setFormData({ ...formData, parentMobile: v });
+                        }}
+                        InputProps={{
+                          sx: {
+                            width: { xs: "230px", sm: "440px", md: "467px" },
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                      />
+                    </Box>
+                  </Box> */}
+                  <Grid
+                    containerspacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent Mobile *
+                      </InputLabel>
+                    </Grid>
+
+                    {/* TEXTFIELD */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentMobile"
+                        value={formData.parentMobile}
+                        required
+                        onChange={(e) => {
+                          let v = e.target.value;
+
+                          if (!v.startsWith("+91 ")) {
+                            v = "+91 " + v.replace("+91", "").replace(" ", "");
+                          }
+
+                          setFormData({ ...formData, parentMobile: v });
+                        }}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
+                  </Grid>
                 </>
               )}
 
               {/* Subscription Plan */}
-              <Box sx={{ mb: 2 }}>
+              {/* <Box
+                sx={{
+                  mb: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                }}
+              >
                 <InputLabel
                   sx={{
                     fontSize: { xs: "17px", sm: "19px", md: "19px" },
@@ -1645,103 +2107,179 @@ const Register = () => {
                 >
                   Subscription Plan *
                 </InputLabel>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  name="subscriptionPlan"
-                  value={formData.subscriptionPlan}
-                  onChange={handleChange}
-                  required
+                <Box
                   sx={{
-                    width: { xs: "230px", sm: "440px", md: "467px" },
-                    height: { xs: 30, sm: 42 },
-                    fontSize: { xs: "15px", sm: "17px" },
+                    display: "flex",
+                    justifyContent: { xs: "center", sm: "flex-start" },
+                    width: "100%",
                   }}
                 >
-                  {subscriptionPlans.map((p) => (
-                    <MenuItem key={p} value={p}>
-                      {p}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
-
-              {/* Sub Options */}
-              {formData.subscriptionPlan && (
-                <Box sx={{ mb: 2 }}>
-                  <InputLabel
-                    sx={{
-                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                      fontFamily: "Calibri, sans-serif",
-                    }}
-                  >
-                    Plan Option *
-                  </InputLabel>
                   <TextField
                     select
                     fullWidth
                     size="small"
-                    name="childPlan"
-                    value={formData.childPlan}
+                    name="subscriptionPlan"
+                    value={formData.subscriptionPlan}
                     onChange={handleChange}
                     required
-                    InputProps={{
-                      sx: {
-                        width: { xs: "230px", sm: "440px", md: "467px" },
-                        height: { xs: 30, sm: 42 },
-                        fontSize: { xs: "15px", sm: "17px" },
-                      },
+                    sx={{
+                      width: { xs: "230px", sm: "440px", md: "467px" },
+                      height: { xs: 30, sm: 42 },
+                      fontSize: { xs: "15px", sm: "17px" },
                     }}
                   >
-                    {(formData.subscriptionPlan === "Nova"
-                      ? novaOptions
-                      : superNovaOptions
-                    ).map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {item}
+                    {subscriptionPlans.map((p) => (
+                      <MenuItem key={p} value={p}>
+                        {p}
                       </MenuItem>
                     ))}
                   </TextField>
                 </Box>
+              </Box> */}
+              <Grid
+                container
+                spacing={1}
+                sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+              >
+                {/* LABEL */}
+                <Grid item xs={12}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                      width: "100%",
+                    }}
+                  >
+                    Subscription Plan *
+                  </InputLabel>
+                </Grid>
+
+                <Grid item xs={12} sm={8} md={6}>
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
+                    name="subscriptionPlan"
+                    value={formData.subscriptionPlan}
+                    onChange={handleChange}
+                    required
+                    sx={{
+                      height: { xs: 30, sm: 42 },
+                      fontSize: { xs: "15px", sm: "17px" },
+                    }}
+                  >
+                    {subscriptionPlans.map((p) => (
+                      <MenuItem key={p} value={p}>
+                        {p}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+
+              {/* Sub Options */}
+              {formData.subscriptionPlan && (
+                <Grid
+                  container
+                  spacing={1}
+                  sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                >
+                  {/* LABEL */}
+                  <Grid item xs={12}>
+                    <InputLabel
+                      sx={{
+                        fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                        fontFamily: "Calibri, sans-serif",
+                        width: "100%",
+                      }}
+                    >
+                      Plan Option *
+                    </InputLabel>
+                  </Grid>
+
+                  <Grid item xs={12} sm={8} md={6}>
+                    <TextField
+                      select
+                      size="small"
+                      name="childPlan"
+                      value={formData.childPlan}
+                      onChange={handleChange}
+                      required
+                      InputProps={{
+                        sx: {
+                          height: { xs: 30, sm: 42 },
+                          fontSize: { xs: "15px", sm: "17px" },
+                        },
+                      }}
+                      fullWidth
+                    >
+                      {(formData.subscriptionPlan === "Nova"
+                        ? novaOptions
+                        : superNovaOptions
+                      ).map((item) => (
+                        <MenuItem key={item} value={item}>
+                          {item}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                </Grid>
               )}
 
               {/* Subscription Type */}
-              <Box sx={{ mb: 2 }}>
-                <InputLabel
-                  sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                    fontFamily: "Calibri, sans-serif",
-                  }}
-                >
-                  Subscription Type *
-                </InputLabel>
-                <TextField
-                  select
-                  fullWidth
-                  size="small"
-                  name="subscriptionType"
-                  value={formData.subscriptionType}
-                  onChange={handleChange}
-                  required
-                  InputProps={{
-                    sx: {
-                      width: { xs: "230px", sm: "440px", md: "467px" },
-                      height: { xs: 30, sm: 42 },
-                      fontSize: { xs: "15px", sm: "17px" },
-                    },
-                  }}
-                >
-                  {subscriptionTypes.map((t) => (
-                    <MenuItem key={t} value={t}>
-                      {t}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
+              <Grid
+                container
+                spacing={1}
+                sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+              >
+                {/* LABEL */}
+                <Grid item xs={12}>
+                  <InputLabel
+                    sx={{
+                      fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                      fontFamily: "Calibri, sans-serif",
+                      width: "100%",
+                    }}
+                  >
+                    Subscription Type *
+                  </InputLabel>
+                </Grid>
+
+                <Grid item xs={12} sm={8} md={6}>
+                  <TextField
+                    select
+                    // fullWidth
+                    size="small"
+                    name="subscriptionType"
+                    value={formData.subscriptionType}
+                    onChange={handleChange}
+                    required
+                    InputProps={{
+                      sx: {
+                        height: { xs: 30, sm: 42 },
+                        fontSize: { xs: "15px", sm: "17px" },
+                      },
+                    }}
+                    fullWidth
+                  >
+                    {subscriptionTypes.map((t) => (
+                      <MenuItem key={t} value={t}>
+                        {t}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
 
               {/* Consent Checkbox */}
-              <Box sx={{ display: "flex", alignItems: "center", mb: 0 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  // justifyContent: { xs: "center", sm: "flex-start" },
+                  mb: 0,
+                }}
+              >
                 <Checkbox
                   checked={formData.agree}
                   onChange={(e) =>
@@ -1750,11 +2288,11 @@ const Register = () => {
                 />
                 <Typography
                   sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontSize: { xs: "13px", sm: "16px", md: "17px" },
                     fontFamily: "Calibri, sans-serif",
                   }}
                 >
-                  I consent the above information is correct *
+                  I consent the above information is correct.
                 </Typography>
               </Box>
 
@@ -1762,6 +2300,7 @@ const Register = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
+                  // justifyContent: { xs: "center", sm: "flex-start" },
                   mb: "-6px",
                   cursor: "pointer",
                 }}
@@ -1775,7 +2314,7 @@ const Register = () => {
                 />
                 <Typography
                   sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontSize: { xs: "13px", sm: "16px", md: "17px" },
                     fontFamily: "Calibri, sans-serif",
                   }}
                 >
@@ -1784,7 +2323,14 @@ const Register = () => {
               </Box>
 
               {/* New Activation Consent */}
-              <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  // justifyContent: { xs: "center", sm: "flex-start" },
+                  mt: 0,
+                }}
+              >
                 <Checkbox
                   checked={formData.agreeActivation}
                   onChange={(e) =>
@@ -1796,7 +2342,7 @@ const Register = () => {
                 />
                 <Typography
                   sx={{
-                    fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                    fontSize: { xs: "13px", sm: "16px", md: "17px" },
                     fontFamily: "Calibri, sans-serif",
                   }}
                 >
@@ -1804,23 +2350,59 @@ const Register = () => {
                 </Typography>
               </Box>
 
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
+              <Box
                 sx={{
-                  mt: { xs: 1, sm: 2 },
-                  mb: { xs: 1, sm: 2, md: 1 },
-                  fontSize: { xs: "14px", sm: "16px" },
-                  padding: { xs: "10px", sm: "14px" },
-                  width: { xs: "230px", sm: "440px", md: "100%" },
-                  height: { xs: 36, sm: 42 },
+                  display: "flex",
+                  alignItems: "center",
+                  // justifyContent: { xs: "center", sm: "flex-start" },
+                  mt: 1,
                 }}
-                disabled={loading}
-                size="large"
               >
-                {loading ? <CircularProgress size={24} /> : "Make Payment"}
-              </Button>
+                <Checkbox
+                  checked={formData.agreepermission}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      agreepermission: e.target.checked,
+                    })
+                  }
+                />
+                <Typography
+                  sx={{
+                    fontSize: { xs: "13px", sm: "16px", md: "17px" },
+                    fontFamily: "Calibri, sans-serif",
+                  }}
+                >
+                  I am the parent/guardian of the User and I’m giving consent to
+                  their use of WrdsAI.
+                </Typography>
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: { xs: "center", sm: "flex-start" },
+                  width: "100%",
+                }}
+              >
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{
+                    mt: { xs: 1, sm: 2 },
+                    mb: { xs: 1, sm: 2, md: 1 },
+                    fontSize: { xs: "14px", sm: "16px" },
+                    padding: { xs: "10px", sm: "14px" },
+                    width: { xs: "230px", sm: "440px", md: "100%" },
+                    height: { xs: 36, sm: 42 },
+                  }}
+                  disabled={loading}
+                  size="large"
+                >
+                  {loading ? <CircularProgress size={24} /> : "Make Payment"}
+                </Button>
+              </Box>
 
               {/* <Button
                 variant="outlined"
@@ -1938,7 +2520,37 @@ const Register = () => {
               replace teachers, schools, or professional guidance. <br />
               <br />
               <strong>10. Contact Information</strong> <br />
-              For questions or support, please contact us at: support@wrdsai.com
+              For questions or support, please contact us at: support@wrdsai.com{" "}
+              <br />
+              <br />
+              <strong>11. Data Collection and Use</strong> <br />
+              We collect only your name, email address, and mobile number for
+              account creation, authentication, and service delivery purposes.
+              This personal data is stored securely and used solely to: <br />
+              • Verify your identity and manage your account <br />• Deliver
+              login credentials and important service notifications <br />
+              • Provide customer support when requested <br />
+              <br />
+              We do not and will not: <br />
+              • Profile, track, or monitor your behavior or your child’s
+              behavior <br />
+              • Use your data for targeted advertising or share it with
+              advertisers <br />
+              • Sell, rent, or disclose your personal data to third parties for
+              marketing purposes <br />
+              • Process data in any manner that could harm your child’s
+              well-being <br />
+              <br />
+              For users under 18, we require verifiable parental consent. Login
+              credentials are sent exclusively to the parent’s email address to
+              ensure parental oversight and control. Parents may withdraw
+              consent and request account deletion at any time by contacting
+              support@wrdsai.com <br />
+              <br />
+              Your data is retained only as long as your account is active or as
+              required by law. We implement appropriate technical and
+              organizational security measures to protect your information in
+              accordance with the Digital Personal Data Protection Act, 2023.
             </Typography>
 
             {/* Checkbox inside Modal */}
@@ -1966,7 +2578,7 @@ const Register = () => {
             </Button>
           </Box>
         </Modal>
-      </>
+      </Box>
     </LocalizationProvider>
   );
 };

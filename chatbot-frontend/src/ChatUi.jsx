@@ -3071,7 +3071,7 @@ const ChatUI = () => {
                 />
 
                 {/* Logo */}
-                <img src={Wrds} height={48} width={110} alt="Logo" />
+                <img src={Wrds} height={41} width={110} alt="Logo" />
               </Box>
 
               {/* DROPDOWN MOVED HERE ONLY FOR XS */}
@@ -3589,7 +3589,7 @@ const ChatUI = () => {
                 />
 
                 {/* Logo */}
-                <img src={Wrds} height={50} width={129} alt="Logo" />
+                <img src={Wrds} height={47} width={129} alt="Logo" />
               </Box>
 
               {/* Hamburger Menu */}
@@ -3966,7 +3966,7 @@ const ChatUI = () => {
                 onClick={() => setOpenSidebar(true)}
               />
 
-              <img src={Wrds} height={55} width={135} alt="Logo" />
+              <img src={Wrds} height={48} width={135} alt="Logo" />
 
               {/* Wrds AI Components - Only show for chat/smartAi views */}
               {/* {(activeView === "chat" || activeView === "smartAi") && (
