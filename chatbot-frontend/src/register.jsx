@@ -930,6 +930,9 @@ const Register = () => {
   const [priceINR, setPriceINR] = useState(0);
   const [openTerms, setOpenTerms] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [childPlanDisabled, setChildPlanDisabled] = useState(false);
+  const [subscriptionTypeDisabled, setSubscriptionTypeDisabled] =
+    useState(false);
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -947,16 +950,37 @@ const Register = () => {
     "Other",
   ];
   const ageGroups = ["<13", "13-14", "15-17", "18+"];
-  const subscriptionPlans = ["Nova", "Supernova"];
+  const subscriptionPlans = ["Nova", "Supernova", "Free Trial"];
   const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
   const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
-  const subscriptionTypes = ["Monthly", "Yearly"];
+  const subscriptionTypes = ["Monthly", "Yearly", "One Time"];
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    // If user selects subscriptionPlan -> update UI state for free trial
+    if (name === "subscriptionPlan") {
+      if (value === "Free Trial") {
+        // disable childPlan and set type = 'One Time'
+        setFormData((prev) => ({
+          ...prev,
+          subscriptionPlan: value,
+          childPlan: "", // clear child plan
+          subscriptionType: "One Time",
+        }));
+        setChildPlanDisabled(true);
+        setSubscriptionTypeDisabled(true);
+      } else {
+        setFormData((prev) => ({ ...prev, subscriptionPlan: value }));
+        setChildPlanDisabled(false);
+        setSubscriptionTypeDisabled(false);
+      }
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -1025,7 +1049,12 @@ const Register = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    return res.json();
+    const data = await res.json();
+    if (data.success) {
+      window.location.href = "/login"; // <-- REDIRECT HERE
+    }
+
+    return data;
   };
 
   const openRazorpayCheckout = async (order) => {
@@ -1042,12 +1071,12 @@ const Register = () => {
           ...response,
           email: paymentEmail, // Pass email for password generation
         });
-        if (verifyResult && verifyResult.success) {
-          alert("Payment successful and verified!");
-          navigate("/login");
-        } else {
-          alert("Payment verification failed. Please contact support.");
-        }
+        // if (verifyResult && verifyResult.success) {
+        //   alert("Payment successful and verified!");
+        //   navigate("/login");
+        // } else {
+        //   alert("Payment verification failed. Please contact support.");
+        // }
       },
       modal: {
         ondismiss: function () {
@@ -1100,7 +1129,7 @@ const Register = () => {
       !formData.dateOfBirth ||
       // !formData.ageGroup ||
       !formData.subscriptionPlan ||
-      !formData.childPlan ||
+      // !formData.childPlan ||
       !formData.subscriptionType
     ) {
       toast.error("Please fill all required fields!");
@@ -1109,7 +1138,11 @@ const Register = () => {
     }
 
     // EMAIL VALIDATION
-    if (formData.ageGroup !== "<13" && !formData.email) {
+    // if (formData.ageGroup !== "<13" && !formData.email) {
+    if (
+      !["<13", "13-14", "15-17"].includes(formData.ageGroup) &&
+      !formData.email
+    ) {
       toast.error("Email is required for users aged 13 or above.");
       setLoading(false);
       return;
@@ -1168,11 +1201,46 @@ const Register = () => {
         ? formData.dateOfBirth.toISOString().split("T")[0]
         : null,
       subscriptionPlan: formData.subscriptionPlan, // 🔥 ENSURE it's included
-      childPlan: formData.childPlan, // 🔥 ENSURE it's included
+      childPlan: formData.childPlan || null, // 🔥 ENSURE it's included
       subscriptionType: formData.subscriptionType, // 🔥 ENSURE it's included
     };
 
     try {
+      // If Free Trial -> direct register, skip payment
+      if (submitData.subscriptionPlan === "Free Trial") {
+        const res = await axios.post(
+          `${apiBaseUrl}/api/ai/register`,
+          submitData
+        );
+        console.log("free trial dataaa :::::", res);
+        toast.success("Free Trial activated! Check email for password.");
+
+        // Form reset
+        setFormData({
+          firstName: "",
+          lastName: "",
+          email: "",
+          mobile: "",
+          dateOfBirth: null,
+          ageGroup: "",
+          parentName: "",
+          parentEmail: "",
+          parentMobile: "",
+          subscriptionPlan: "",
+          childPlan: "",
+          subscriptionType: "",
+          agree: false,
+          agreeActivation: false,
+          agreepermission: false,
+        });
+
+        // data returned should contain remainingTokens etc.
+        // Reset form or redirect to login
+        // optional: navigate("/login");
+        setLoading(false);
+        return;
+      }
+
       const res = await axios.post(`${apiBaseUrl}/api/ai/register`, submitData);
       console.log(res);
       // ✅ Success toaster
@@ -1702,7 +1770,8 @@ const Register = () => {
               </Grid> */}
 
               {/* Email */}
-              {formData.ageGroup !== "<13" && (
+              {/* {formData.ageGroup !== "<13" && ( */}
+              {!["<13", "13-14", "15-17"].includes(formData.ageGroup) && (
                 <Grid
                   container
                   spacing={0}
@@ -1744,7 +1813,8 @@ const Register = () => {
               )}
 
               {/* Mobile */}
-              {formData.ageGroup !== "<13" && (
+              {/* {formData.ageGroup !== "<13" && ( */}
+              {!["<13", "13-14", "15-17"].includes(formData.ageGroup) && (
                 <Grid
                   container
                   spacing={0}
@@ -2204,6 +2274,7 @@ const Register = () => {
                       name="childPlan"
                       value={formData.childPlan}
                       onChange={handleChange}
+                      disabled={childPlanDisabled}
                       required
                       InputProps={{
                         sx: {
@@ -2253,6 +2324,7 @@ const Register = () => {
                     name="subscriptionType"
                     value={formData.subscriptionType}
                     onChange={handleChange}
+                    // disabled={subscriptionTypeDisabled}
                     required
                     InputProps={{
                       sx: {
