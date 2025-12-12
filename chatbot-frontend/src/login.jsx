@@ -266,6 +266,7 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import Words2 from "././assets/words2.png"; // path adjust karo
 import { useTheme, useMediaQuery } from "@mui/material";
+import { useGrok } from "./context/GrokContext";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -277,6 +278,7 @@ const Login = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { sessionRemainingTokens, setSessionRemainingTokens } = useGrok();
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -313,6 +315,12 @@ const Login = () => {
       };
       localStorage.setItem("user", JSON.stringify(userData));
 
+      setSessionRemainingTokens(res.data.data.remainingTokens);
+      localStorage.setItem(
+        "globalRemainingTokens",
+        res.data.data.remainingTokens
+      );
+
       //  navigate to home after success
       navigate("/");
     } catch (err) {
@@ -324,7 +332,6 @@ const Login = () => {
 
   return (
     <>
-      
       {/* Header */}
       <Box
         sx={{

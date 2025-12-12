@@ -14,6 +14,7 @@ import { grokSearchResults } from "./controller/groksearchController.js";
 import { grokUserSearchHistory } from "./controller/groksearchController.js";
 // import { createUPIPayment } from "./controller/paymentController.js";
 import paymentRoutes from "./controller/paymentController.js";
+import nodemailer from "nodemailer";
 
 // Load environment variables first
 dotenv.config();
@@ -44,7 +45,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 
 app.use("/api/ai", aiRoutes);
-app.use("/api/payments", paymentRoutes);// ✅ New AI Search Routes
+app.use("/api/payments", paymentRoutes); // ✅ New AI Search Routes
 // app.use("/api", searchRoutes);
 
 app.post("/search", getAISearchResults);
@@ -53,6 +54,34 @@ app.post("/userTokenStats", getUserTokenStats); // combined chat+search token st
 
 app.post("/grokSearch", grokSearchResults); // changed to POST
 app.post("/grokSearchhistory", grokUserSearchHistory); // changed to POST
+
+// app.use(express.static("public"));
+app.use('/assets', express.static('assets'));
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER || "your-email@gmail.com", // Set in .env file
+    pass: process.env.EMAIL_PASS || "your-app-password", // Gmail App Password
+  },
+});
+
+app.get("/test-mail", async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: "your-test-email@gmail.com",
+      subject: "SMTP Test",
+      text: "If you receive this, Gmail SMTP works!",
+    });
+    res.send("Mail sent!");
+  } catch (err) {
+    console.log("SMTP ERROR:", err);
+    res.send("SMTP error: " + err.message);
+  }
+});
 
 // app.post("/api/create-upi", createUPIPayment);
 

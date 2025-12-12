@@ -170,7 +170,7 @@ export const registerUser = async (req, res) => {
       !dateOfBirth ||
       // !ageGroup ||
       !subscriptionPlan ||
-      !childPlan ||
+      // !childPlan ||
       !subscriptionType
     ) {
       return res.status(400).json({ error: "All fields are required" });
@@ -197,6 +197,88 @@ export const registerUser = async (req, res) => {
       return res
         .status(400)
         .json({ error: "Account already exists with this email" });
+    }
+
+    if (subscriptionPlan === "Free Trial") {
+      try {
+        // generate password (same as paid success logic)
+        const cleanName = (firstName || "").replace(/\s+/g, "").toLowerCase();
+        const passwordPart =
+          cleanName.length >= 4
+            ? cleanName.slice(0, 4)
+            : cleanName.padEnd(4, cleanName[0] || "x");
+        const year = dateOfBirth
+          ? new Date(dateOfBirth).getFullYear()
+          : new Date().getFullYear();
+        const generatedPassword = `${passwordPart}@${year}`;
+
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+        const user = new User({
+          firstName,
+          lastName,
+          email: finalEmail,
+          mobile: finalMobile || null,
+          dateOfBirth: new Date(dateOfBirth),
+          ageGroup: finalAgeGroup,
+          parentName: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+            ? parentName
+            : null,
+          parentEmail: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+            ? parentEmail
+            : null,
+          parentMobile: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+            ? parentMobile
+            : null,
+          country: "India",
+
+          subscriptionPlan: "Free Trial",
+          childPlan: null,
+          subscriptionType: "One Time",
+
+          basePriceINR: 0,
+          gstAmount: 0,
+          totalPriceINR: 0,
+          currency: "INR",
+          subscriptionStatus: "active",
+          isActive: true,
+
+          password: hashedPassword,
+          remainingTokens: 3000,
+        });
+
+        await user.save();
+
+        const recipientEmail = ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+          ? parentEmail
+          : finalEmail;
+        const recipientName = ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+          ? parentName
+          : firstName;
+
+        await sendPasswordMail(
+          recipientEmail,
+          recipientName,
+          generatedPassword
+        );
+
+        return res.status(201).json({
+          success: true,
+          message: "Free Trial activated. Password sent to email.",
+          loginEmail: finalEmail,
+          remainingTokens: 3000,
+          user: {
+            id: user._id,
+            subscription: { priceINR: 0, plan: "Free Trial" },
+          },
+        });
+      } catch (err) {
+        console.error("Free trial registration error:", err);
+        return res.status(500).json({
+          error: "Free trial registration failed",
+          details: err.message,
+        });
+      }
     }
 
     // Get USD price

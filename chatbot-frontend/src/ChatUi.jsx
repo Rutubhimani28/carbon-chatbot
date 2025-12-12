@@ -239,6 +239,13 @@ const ChatUI = () => {
   };
 
   useEffect(() => {
+    const saved = localStorage.getItem("globalRemainingTokens");
+    if (saved) {
+      setSessionRemainingTokens(Number(saved));
+    }
+  }, []);
+
+  useEffect(() => {
     const lastSessionId = localStorage.getItem("lastChatSessionId");
     if (lastSessionId) {
       setSelectedChatId(lastSessionId);
@@ -3559,7 +3566,7 @@ const ChatUI = () => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 width: "100%",
-                height:"100vh",
+                height: "100vh",
                 mb: 1,
                 mt: 0,
               }}
@@ -3570,7 +3577,7 @@ const ChatUI = () => {
                   // justifyContent: "space-between",
                   alignItems: "center",
                   // width: "100%",
-                  gap:1,
+                  gap: 1,
                 }}
               >
                 <MenuIcon
@@ -8134,7 +8141,7 @@ const ChatUI = () => {
               Tokens Remaining :
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-              {sessionRemainingTokens}
+              {sessionRemainingTokens || 0}
             </Typography>
           </Box>
 

@@ -175,7 +175,8 @@ import User from "../model/User.js";
 import bcrypt from "bcryptjs";
 import sendPasswordMail from "../middleware/sendPasswordMail.js";
 import sendReceiptMail from "../middleware/mailWithAttachment.js";
-import generateReceipt from "../utils/generateReceipt.js";
+// import generateReceipt from "../utils/generateReceipt.js";
+import { generateReceipt } from "../middleware/generateReceipt.js";
 
 const router = express.Router();
 
@@ -186,6 +187,150 @@ const razorpay = new Razorpay({
 
 // Parse JSON bodies for normal routes
 router.use(bodyParser.json());
+
+// ----------------- Number → Words Helper -----------------
+function numberToWords(num) {
+  const a = [
+    "",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
+    "twelve",
+    "thirteen",
+    "fourteen",
+    "fifteen",
+    "sixteen",
+    "seventeen",
+    "eighteen",
+    "nineteen",
+  ];
+
+  const b = [
+    "",
+    "",
+    "twenty",
+    "thirty",
+    "forty",
+    "fifty",
+    "sixty",
+    "seventy",
+    "eighty",
+    "ninety",
+  ];
+
+  function integerToWords(n) {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+    if (n < 1000)
+      return (
+        a[Math.floor(n / 100)] +
+        " hundred" +
+        (n % 100 ? " " + integerToWords(n % 100) : "")
+      );
+    if (n < 1000000) {
+      const thousands = Math.floor(n / 1000);
+      const rem = n % 1000;
+      return (
+        integerToWords(thousands) +
+        " thousand" +
+        (rem ? " " + integerToWords(rem) : "")
+      );
+    }
+    return n.toString();
+  }
+
+  if (typeof num !== "number" || Number.isNaN(num)) return "zero";
+  if (num === 0) return "zero";
+
+  // split integer & decimal
+  const parts = num.toString().split(".");
+  const integerPart = parseInt(parts[0]);
+  const decimalPart = parts[1] ? parts[1].slice(0, 2) : null; // upto 2 digits
+
+  let words = integerToWords(integerPart);
+
+  if (decimalPart && parseInt(decimalPart) > 0) {
+    words += " point";
+    for (const digit of decimalPart) {
+      words += " " + a[parseInt(digit)];
+    }
+  }
+
+  return words;
+}
+
+// 2) After successful UPI payment → verify → generate PDF → send email
+router.post("/create-upi", async (req, res) => {
+  try {
+    const {
+      email,
+      fullName,
+      planName,
+      subscriptionType,
+      amount,
+      gst,
+      total,
+      paymentMethod,
+      transactionId,
+      date,
+      amountInWords,
+    } = req.body;
+
+    if (!email || !transactionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and Transaction ID are required",
+      });
+    }
+
+    // const amountInWords = numberToWords(Number(total));
+
+    // --------- 1️⃣ Generate PDF Receipt ---------
+    const receiptData = {
+      receiptNo: `RCP-${Date.now()}`,
+      date: date || new Date().toISOString().split("T")[0],
+      fullName,
+      planName,
+      subscriptionType,
+      amount,
+      gst,
+      total,
+      paymentMethod,
+      transactionId,
+      amountInWords,
+    };
+    console.log("receiptData **************", receiptData);
+
+    const pdfPath = await generateReceipt(receiptData);
+
+    // --------- 2️⃣ Send PDF via Email ---------
+    await sendReceiptMail(email, fullName, pdfPath);
+
+    console.log("📩 PDF SENT SUCCESSFULLY TO::::::::::", email);
+    console.log("📄 PDF PATH:", pdfPath);
+
+    // --------- 3️⃣ Send response to frontend ---------
+    res.status(200).json({
+      success: true,
+      message: "UPI Payment Verified & Receipt Sent to Email",
+      pdf: pdfPath,
+    });
+  } catch (err) {
+    console.error("create-upi Error:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
 
 // 1) Create Order (frontend calls this to get order.id)
 router.post("/create-order", async (req, res) => {
@@ -282,46 +427,68 @@ router.post("/verify-payment", async (req, res) => {
             )
               ? user.parentName
               : user.firstName;
-            // await sendPasswordMail(
-            //   recipientEmail,
-            //   recipientName,
-            //   generatedPassword
-            // );
-            // console.log(
-            //   `Password generated and email sent to ${recipientEmail}`
-            // );
+            await sendPasswordMail(
+              recipientEmail,
+              recipientName,
+              generatedPassword
+            );
+            console.log(
+              `Password generated and email sent to ${recipientEmail}`
+            );
 
             // ---- Send Receipt Email ----
             // const pdfPath = "C:/Users/AAC/OneDrive/Desktop/Meeral/chatbot_carbon/RECEIPT-1 (1).pdf";
 
             // ⏳ DELAY EMAIL BY 4 MINUTES
             // --------------------------------------------------
-            setTimeout(async () => {
-              try {
-                // SEND PASSWORD MAIL
-                await sendPasswordMail(
-                  recipientEmail,
-                  recipientName,
-                  generatedPassword
-                );
-                console.log(
-                  `📩 Password email sent after 4 min → ${recipientEmail}`
-                );
-              } catch (err) {
-                console.error("4 min delayed email error:", err);
-              }
-            }, 120000); // 4 minutes = 240000ms
+            // setTimeout(async () => {
+            //   try {
+            //     // SEND PASSWORD MAIL
+            //     await sendPasswordMail(
+            //       recipientEmail,
+            //       recipientName,
+            //       generatedPassword
+            //     );
+            //     console.log(
+            //       `📩 Password email sent after 4 min → ${recipientEmail}`
+            //     );
+            //   } catch (err) {
+            //     console.error("4 min delayed email error:", err);
+            //   }
+            // }, 120000); // 4 minutes = 240000ms
             // }, 43200000); // 12 hours
 
+            // const receiptData = {
+            //   transactionId: razorpay_payment_id,
+            //   date: new Date().toLocaleDateString(),
+            //   customerName: `${user.firstName} ${user.lastName}`,
+            //   email: recipientEmail,
+            //   planName: `${user.subscriptionPlan} - ${user.childPlan}`,
+            //   amount: user.totalPriceINR || "N/A", // Ensure this field exists or fetch from payment details
+            //   currency: "INR",
+            // };
+            const amountInWords = numberToWords(
+              Number(user.totalPriceINR || 0)
+            );
+
+            console.log("user::::", user);
+
             const receiptData = {
-              transactionId: razorpay_payment_id,
-              date: new Date().toLocaleDateString(),
-              customerName: `${user.firstName} ${user.lastName}`,
-              email: recipientEmail,
+              receiptNo: `RCP-${Date.now()}`,
+              date: new Date().toISOString().split("T")[0],
+              fullName: `${user.firstName} ${user.lastName}`,
               planName: `${user.subscriptionPlan} - ${user.childPlan}`,
-              amount: user.totalPriceINR || "N/A", // Ensure this field exists or fetch from payment details
-              currency: "INR",
+              subscriptionType: user.subscriptionType,
+              amount: user.basePriceINR || 0,
+              // gst: ((user.totalPriceINR * 18) / 100).toFixed(2),
+              gst: user.gstAmount || 0,
+              // total: (user.totalPriceINR * 1.18).toFixed(2),
+              total: user.totalPriceINR || 0,
+              paymentMethod: "Online",
+              transactionId: razorpay_payment_id,
+              amountInWords: amountInWords, // later fix
             };
+            console.log("receiptData ::::::::::", receiptData);
 
             const dynamicPdfPath = await generateReceipt(receiptData);
             await sendReceiptMail(
