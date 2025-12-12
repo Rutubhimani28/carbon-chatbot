@@ -7588,7 +7588,8 @@ const ChatUI = () => {
               </Typography>
 
               {/* WrdsAI */}
-              {User?.subscriptionPlan === "Nova" && (
+              {(User?.subscriptionPlan === "Nova" ||
+                User?.subscriptionPlan === "Free Trial") && (
                 <Typography
                   sx={{
                     fontSize: 18,
