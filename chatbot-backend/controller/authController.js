@@ -188,8 +188,8 @@ export const registerUser = async (req, res) => {
     const isMinor = ["<13", "13-14", "15-17"].includes(finalAgeGroup);
 
     // Final login email (for <13, parent email is used)
-    const finalEmail = finalAgeGroup === "<13" ? parentEmail : email;
-    const finalMobile = finalAgeGroup === "<13" ? parentMobile : mobile;
+    const finalEmail = isMinor ? parentEmail : email;
+    const finalMobile = isMinor ? parentMobile : mobile;
 
     // Check duplicate email
     const existingUser = await User.findOne({ email: finalEmail });

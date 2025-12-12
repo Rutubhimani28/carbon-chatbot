@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     gstAmount: { type: Number, required: false },
     totalPriceINR: { type: Number, required: false },
     password: { type: String, required: false },
-    remainingTokens: { type: Number, default: 50000 },
+    remainingTokens: { type: Number },
   },
   { timestamps: true }
 );

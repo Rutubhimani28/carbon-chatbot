@@ -1138,7 +1138,11 @@ const Register = () => {
     }
 
     // EMAIL VALIDATION
-    if (formData.ageGroup !== "<13" && !formData.email) {
+    // if (formData.ageGroup !== "<13" && !formData.email) {
+    if (
+      !["<13", "13-14", "15-17"].includes(formData.ageGroup) &&
+      !formData.email
+    ) {
       toast.error("Email is required for users aged 13 or above.");
       setLoading(false);
       return;
@@ -1766,7 +1770,8 @@ const Register = () => {
               </Grid> */}
 
               {/* Email */}
-              {formData.ageGroup !== "<13" && (
+              {/* {formData.ageGroup !== "<13" && ( */}
+              {!["<13", "13-14", "15-17"].includes(formData.ageGroup) && (
                 <Grid
                   container
                   spacing={0}
@@ -1808,7 +1813,8 @@ const Register = () => {
               )}
 
               {/* Mobile */}
-              {formData.ageGroup !== "<13" && (
+              {/* {formData.ageGroup !== "<13" && ( */}
+              {!["<13", "13-14", "15-17"].includes(formData.ageGroup) && (
                 <Grid
                   container
                   spacing={0}
