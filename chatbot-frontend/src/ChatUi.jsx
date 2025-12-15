@@ -813,6 +813,34 @@ const ChatUI = () => {
       //   );
       // }
 
+      // 🛑 INPUT TOKEN LIMIT (Prompt + Files > 5000)
+      if (
+        response.status === 400 &&
+        data?.error === "INPUT_TOKEN_LIMIT_EXCEEDED"
+      ) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Token Limit Exceeded",
+          text:
+            data.message ||
+            "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+          confirmButtonText: "OK",
+        });
+
+        return {
+          response:
+            "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+          sessionId: currentSessionId,
+          botName:
+            isSmartAI || activeView === "smartAi"
+              ? "Wrds AI"
+              : isSmartAIPro || activeView === "wrds AiPro"
+              ? "Wrds AiPro"
+              : selectedBot,
+          isError: true,
+        };
+      }
+
       // 🛑 Check for “Not enough tokens” here (works 100%)
       if (data?.message === "Not enough tokens") {
         await Swal.fire({

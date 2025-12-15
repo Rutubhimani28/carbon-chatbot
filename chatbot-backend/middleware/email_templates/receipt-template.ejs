@@ -130,7 +130,7 @@
         display: flex;
         justify-content: flex-start;
         align-items: center;
-        margin-bottom: 5px;
+        margin-bottom: 3px;
       }
 
       .header img {
@@ -143,14 +143,14 @@
         width: 100%;
         height: 1.5px;
         background-color: #000; /* black line */
-        margin: 10px 0 25px 0;
+        margin: 10px 0 20px 0;
       }
 
       .title {
         text-align: center;
         font-size: 26px;
         font-weight: bold;
-        margin-bottom: 25px;
+        margin-bottom: 20px;
       }
 
       .section-title {
@@ -210,8 +210,10 @@
 
     <div class="row"><span class="label">Date:</span> <%= date %></div>
 
+    <div class="row"><span class="label">GST No.:</span> 27ABNCS5951R1Z8</div>
+
     <div class="row">
-      <span class="label">Received From : </span> <%= fullName %>
+      <span class="label">Received From : </span> <%= fullName.toUpperCase() %>
     </div>
 
     <div class="section-title">Payment Details</div>
@@ -258,9 +260,13 @@
     <div class="section-title">Acknowledgement</div>
     <p>
       We hereby confirm receipt of the above payment towards
-      <b>WrdsAI</b> access for your students. Access will remain active for the
-      duration of the purchased term from the date of the receipt.
+      <b>WrdsAI</b> access. Access will remain active for the duration of the
+      purchased term from the date of the receipt.
     </p>
+
+    <div class="row" style="margin-top: 25px">
+      <strong>Note:</strong> Payment once made is not refundable.
+    </div>
 
     <div class="row" style="margin-top: 25px">
       For any queries, please contact –
