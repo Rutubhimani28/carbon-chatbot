@@ -260,6 +260,7 @@ import {
   CircularProgress,
   InputLabel,
   IconButton,
+  Grid ,
   InputAdornment,
 } from "@mui/material";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -267,6 +268,7 @@ import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import Words2 from "././assets/words2.png"; // path adjust karo
 import { useTheme, useMediaQuery } from "@mui/material";
 import { useGrok } from "./context/GrokContext";
+import Wrds from "././assets/Wrds White.webp";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -331,7 +333,14 @@ const Login = () => {
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -348,16 +357,17 @@ const Login = () => {
           left: 0,
           // height: isSmallScreen
           //   ? "auto"
-          height: { xs: "80px", sm: "85px", lg: "102px" },
-          minHeight: isSmallScreen ? "75px" : "102px",
+          height: { xs: "66px", sm: "63px", md: "84px", lg: "84px" },
+          minHeight: { xs: "50px", sm: "55px", lg: "60px" },
           boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
           py: isSmallScreen ? 1 : 0,
         }}
       >
         {/* HEADER CONTENT */}
-        <img src={Words2} height={90} width={180} alt="Logo" />
+        <img src={Wrds} height={53} width={155} alt="Logo" />
       </Box>
-      <Box
+
+      {/* <Box
         sx={{
           marginTop: { xs: 1, sm: 4, md: 2 },
           display: "flex",
@@ -368,7 +378,6 @@ const Login = () => {
           width: "100vw",
           maxWidth: "100%",
           minHeight: "100vh",
-          // overflow: "visible",
           pt: { xs: "0px", sm: "0px", md: "0px" }, // compensate header height
         }}
       >
@@ -402,7 +411,6 @@ const Login = () => {
             onSubmit={handleSubmit}
             style={{ width: "100%", marginTop: 16 }}
           >
-            {/* Username */}
             <InputLabel sx={{ mt: 2 }}>
               Email <span style={{ color: "red" }}>*</span>
             </InputLabel>
@@ -418,7 +426,6 @@ const Login = () => {
               onChange={handleChange}
             />
 
-            {/* Password */}
             <InputLabel sx={{ mt: 2 }}>
               Password <span style={{ color: "red" }}>*</span>
             </InputLabel>
@@ -426,7 +433,6 @@ const Login = () => {
               size="small"
               fullWidth
               name="password"
-              // type="password"
               type={showPassword ? "text" : "password"} // 👁️ show/hide
               id="password"
               autoComplete="current-password"
@@ -451,7 +457,6 @@ const Login = () => {
               }}
             />
 
-            {/* Submit Button */}
             <Button
               type="submit"
               fullWidth
@@ -480,8 +485,129 @@ const Login = () => {
             </Link>
           </Box>
         </Box>
-      </Box>
-    </>
+      </Box> */}
+      <Grid
+        container
+        justifyContent="center"
+        alignItems="center"
+        sx={{
+          // mt: { xs: 1, sm: 4, md: 2 },
+          p: { xs: 5, sm: 10, md: 2 },
+          width: "100vw",
+          minHeight: "100vh",
+          backgroundColor: "#f5f5f5", // optional
+        }}
+      >
+        <Grid size={{ xs: 12, sm: 8, md: 4 }}>
+          <Grid
+            container
+            direction="column"
+            alignItems="center"
+            sx={{
+              p: 4,
+              borderRadius: 4,
+              bgcolor: "white",
+              boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.35)",
+            }}
+          >
+            {/* Heading */}
+            <Typography component="h1" variant="h5">
+              Sign In
+            </Typography>
+
+            {/* Message */}
+            {message && (
+              <Alert
+                severity={message.includes("failed") ? "error" : "success"}
+                sx={{ mt: 2, width: "100%" }}
+              >
+                {message}
+              </Alert>
+            )}
+
+            {/* Form */}
+            <Grid size={{ width: "100%", mt: 2 }}>
+              <form onSubmit={handleSubmit}>
+                {/* Email */}
+                <InputLabel sx={{ mt: 2 }}>
+                  Email <span style={{ color: "red" }}>*</span>
+                </InputLabel>
+                <TextField
+                  size="small"
+                  required
+                  fullWidth
+                  name="email"
+                  autoComplete="email"
+                  autoFocus
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+
+                {/* Password */}
+                <InputLabel sx={{ mt: 2 }}>
+                  Password <span style={{ color: "red" }}>*</span>
+                </InputLabel>
+                <TextField
+                  size="small"
+                  fullWidth
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                          edge="end"
+                        >
+                          {showPassword ? (
+                            <VisibilityOffOutlinedIcon />
+                          ) : (
+                            <VisibilityOutlinedIcon />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  sx={{ mt: 3, mb: 2 }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={24} color="inherit" />
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+              </form>
+            </Grid>
+
+            {/* Sign Up Link */}
+            <Grid size={{ textAlign: "center", mt: 1 }}>
+              <span>Don't have an account?</span>
+              <Link
+                component={RouterLink}
+                to="/register"
+                variant="body2"
+                underline="hover"
+                sx={{ cursor: "pointer" }}
+              >
+                {" Sign Up"}
+              </Link>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

@@ -101,7 +101,7 @@ const sendPasswordMail = async (email, firstName, password) => {
       password,
       // loginUrl: "http://localhost:5173/login",
       loginUrl: "https://carbon-chatbot-kappa.vercel.app/login",
-      // logoUrl: "http://localhost:5173/assets/Msg_logo.png",
+      // logoUrl: "http://localhost:5173/assets/words1.png",
       loginUrl: "https://carbon-chatbot-kappa.vercel.app/assets/words1.png",
     });
 

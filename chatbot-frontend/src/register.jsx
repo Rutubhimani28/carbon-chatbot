@@ -903,6 +903,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Words2 from "././assets/words2.png"; // path adjust karo
 import { useTheme, useMediaQuery } from "@mui/material";
 import PaymentModal from "./PaymentModal";
+import Wrds from "././assets/Wrds White.webp";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -1113,9 +1114,12 @@ const Register = () => {
     }
   };
 
+  const parentAgeGroups = ["<13", "13-14", "15-17"];
+
   // final email (auto handles parent email if <13)
-  const paymentEmail =
-    formData.ageGroup === "<13" ? formData.parentEmail : formData.email;
+  const paymentEmail = parentAgeGroups.includes(formData.ageGroup)
+    ? formData.parentEmail
+    : formData.email;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1177,10 +1181,11 @@ const Register = () => {
       return;
     }
 
-    if (!formData.agreepermission) {
-      toast.error(
-        "Please agree that your account will be activated within 24 hours."
-      );
+    if (
+      ["<13", "13-14", "15-17"].includes(formData.ageGroup) &&
+      !formData.agreepermission
+    ) {
+      toast.error("Parent/guardian consent is required for users under 18.");
       setLoading(false);
       return;
     }
@@ -1303,9 +1308,10 @@ const Register = () => {
         <Box
           sx={{
             display: "flex",
-            flexDirection: isSmallScreen ? "column" : "row",
-            alignItems: isSmallScreen ? "flex-start" : "center",
+            // flexDirection: isSmallScreen ? "column" : "row",
+            alignItems: "center",
             justifyContent: "space-between",
+            // alignItems:"center", 
             px: { xs: 1, sm: 2, md: 2, lg: 2 },
             flexShrink: 0,
             bgcolor: "#1268fb",
@@ -1314,15 +1320,16 @@ const Register = () => {
             position: "fixed",
             top: 0,
             left: 0,
-            height: { xs: "80px", sm: "85px", lg: "84px" },
-            minHeight: isSmallScreen ? "75px" : "60px",
+            height: { xs: "66px", sm: "63px", md: "84px", lg: "84px" },
+            minHeight: { xs: "50px", sm: "55px", lg: "60px" },
             boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
             py: isSmallScreen ? 1 : 0,
           }}
         >
           {/* HEADER CONTENT */}
-          <img src={Words2} height={90} width={180} alt="Logo" />
+          <img src={Wrds} height={53} width={155} alt="Logo" />
         </Box>
+        {/* height={48} width={135} */}
 
         {/* Scrollable Content Area */}
         <Box
@@ -1786,7 +1793,10 @@ const Register = () => {
                         width: "100%",
                       }}
                     >
-                      Email {formData.ageGroup === "<13" ? "(Optional)" : "*"}
+                      Email{" "}
+                      {["<13", "13-14", "15-17"].includes(formData.ageGroup)
+                        ? "(Optional)"
+                        : "*"}
                     </InputLabel>
                   </Grid>
 
@@ -1797,9 +1807,15 @@ const Register = () => {
                       type="email"
                       name="email"
                       value={formData.email}
-                      disabled={formData.ageGroup === "<13"}
+                      // disabled={formData.ageGroup === "<13"}
+                      disabled={["<13", "13-14", "15-17"].includes(
+                        formData.ageGroup
+                      )}
                       onChange={handleChange}
-                      required={formData.ageGroup !== "<13"}
+                      // required={formData.ageGroup !== "<13"}
+                      required={
+                        !["<13", "13-14", "15-17"].includes(formData.ageGroup)
+                      }
                       InputProps={{
                         sx: {
                           height: { xs: 30, sm: 42 },
@@ -2422,33 +2438,35 @@ const Register = () => {
                 </Typography>
               </Box>
 
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  // justifyContent: { xs: "center", sm: "flex-start" },
-                  mt: 1,
-                }}
-              >
-                <Checkbox
-                  checked={formData.agreepermission}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      agreepermission: e.target.checked,
-                    })
-                  }
-                />
-                <Typography
+              {["<13", "13-14", "15-17"].includes(formData.ageGroup) && (
+                <Box
                   sx={{
-                    fontSize: { xs: "13px", sm: "16px", md: "17px" },
-                    fontFamily: "Calibri, sans-serif",
+                    display: "flex",
+                    alignItems: "center",
+                    // justifyContent: { xs: "center", sm: "flex-start" },
+                    mt: 1,
                   }}
                 >
-                  I am the parent/guardian of the User and I’m giving consent to
-                  their use of WrdsAI.
-                </Typography>
-              </Box>
+                  <Checkbox
+                    checked={formData.agreepermission}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        agreepermission: e.target.checked,
+                      })
+                    }
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: { xs: "13px", sm: "16px", md: "17px" },
+                      fontFamily: "Calibri, sans-serif",
+                    }}
+                  >
+                    I am the parent/guardian of the User and I’m giving consent
+                    to their use of WrdsAI.
+                  </Typography>
+                </Box>
+              )}
 
               <Box
                 sx={{

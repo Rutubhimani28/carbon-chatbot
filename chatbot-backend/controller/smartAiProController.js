@@ -41,7 +41,7 @@ export const handleTokens = async (sessions, session, payload) => {
 
   const promptTokens = await countTokens(payload.prompt, tokenizerModel);
 
-  const responseTokens = await countTokens(payload.response, payload.botName);
+  const responseTokens = await countTokens(payload.response, tokenizerModel);
 
   const promptWords = countWords(payload.prompt);
   const responseWords = countWords(payload.response);
@@ -53,8 +53,24 @@ export const handleTokens = async (sessions, session, payload) => {
   if (payload.files && payload.files.length > 0) {
     for (const f of payload.files) {
       fileWordCount += f.wordCount || countWords(f.content || "");
-      fileTokenCount += await countTokens(f.content || "", payload.botName);
+      fileTokenCount += await countTokens(f.content || "", tokenizerModel);
     }
+  }
+
+  // 🔴 INPUT TOKEN LIMIT CHECK (Prompt + Files only)
+  const MAX_INPUT_TOKENS = 5000;
+  const inputTokens = promptTokens + fileTokenCount;
+
+  if (inputTokens > MAX_INPUT_TOKENS) {
+    const err = new Error("Prompt + uploaded files exceed 5000 token limit");
+    err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
+    err.details = {
+      promptTokens,
+      fileTokenCount,
+      inputTokens,
+      maxAllowed: MAX_INPUT_TOKENS,
+    };
+    throw err;
   }
 
   const totalWords = promptWords + responseWords + fileWordCount;
@@ -136,96 +152,248 @@ export const handleTokens = async (sessions, session, payload) => {
   };
 };
 
-export async function processFile(file, modelName = "gpt-4o-mini") {
+// export async function processFile(file, modelName = "gpt-4o-mini") {
+//   const ext = path.extname(file.originalname).toLowerCase();
+//   let content = "";
+
+//   try {
+//     switch (ext) {
+//       case ".txt": {
+//         let text;
+//         if (file.path.startsWith("http")) {
+//           const res = await fetch(file.path);
+//           if (!res.ok) throw new Error("Failed to fetch TXT file");
+//           text = await res.text();
+//         } else {
+//           text = fs.readFileSync(file.path, "utf-8");
+//         }
+//         content = text;
+//         break;
+//       }
+
+//       case ".docx": {
+//         let buffer;
+//         if (file.path.startsWith("http")) {
+//           const res = await fetch(file.path);
+//           if (!res.ok) throw new Error("Failed to fetch DOCX file");
+//           buffer = Buffer.from(await res.arrayBuffer());
+//         } else {
+//           buffer = fs.readFileSync(file.path);
+//         }
+
+//         const result = await mammoth.extractRawText({ buffer });
+//         content = result.value || "";
+
+//         // OCR fallback
+//         if (!content.trim()) {
+//           const { data } = await Tesseract.recognize(file.path, "eng");
+//           content = data.text || "[No text found in DOCX]";
+//         }
+//         break;
+//       }
+
+//       case ".pdf": {
+//         let arrayBuffer;
+
+//         if (file.path.startsWith("http")) {
+//           const res = await fetch(file.path);
+//           if (!res.ok) throw new Error("Failed to fetch PDF file");
+//           arrayBuffer = await res.arrayBuffer();
+//         } else {
+//           arrayBuffer = fs.readFileSync(file.path);
+//         }
+
+//         const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+//         let pdfText = "";
+
+//         for (let i = 1; i <= pdf.numPages; i++) {
+//           const page = await pdf.getPage(i);
+//           const textContent = await page.getTextContent();
+//           const pageText = textContent.items
+//             .map((item) => item.str)
+//             .join(" ")
+//             .trim();
+
+//           if (pageText) {
+//             pdfText += pageText + " ";
+//           } else {
+//             // OCR fallback: convert page to image
+//             const converter = fromPath(file.path, {
+//               density: 150,
+//               saveFilename: `page_${i}`,
+//               savePath: "./temp",
+//               format: "png",
+//             });
+//             const image = await converter(i);
+//             const { data } = await Tesseract.recognize(image.path, "eng");
+//             pdfText += data.text + " ";
+//           }
+//         }
+//         content = pdfText.trim() || "[No readable text found in PDF]";
+//         break;
+//       }
+
+//       default:
+//         content = `[Unsupported file type: ${file.originalname}]`;
+//         break;
+//     }
+
+//     // Clean content and calculate word/token counts
+//     const cleanedContent = content.replace(/\s+/g, " ").trim();
+//     const wordCount = countWords(cleanedContent);
+//     const tokenCount = await countTokens(cleanedContent, modelName);
+
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: cleanedContent,
+//       wordCount,
+//       tokenCount,
+//     };
+//   } catch (err) {
+//     return {
+//       filename: file.originalname,
+//       extension: ext,
+//       cloudinaryUrl: file.path,
+//       content: `[Error processing file: ${err.message}]`,
+//       wordCount: 0,
+//       tokenCount: 0,
+//     };
+//   }
+// }
+
+function cleanText(text = "") {
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/[^\x20-\x7E]/g, "")
+    .trim();
+}
+function ensureTempDir() {
+  const tempDir = path.join(process.cwd(), "temp");
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  return tempDir;
+}
+
+export async function processFile(file, tokenizerModel = "gpt-4o-mini") {
   const ext = path.extname(file.originalname).toLowerCase();
+  const isRemote = file.path.startsWith("http");
   let content = "";
+  let tempPdfPath = null;
 
   try {
-    switch (ext) {
-      case ".txt": {
-        let text;
-        if (file.path.startsWith("http")) {
-          const res = await fetch(file.path);
-          if (!res.ok) throw new Error("Failed to fetch TXT file");
-          text = await res.text();
-        } else {
-          text = fs.readFileSync(file.path, "utf-8");
-        }
-        content = text;
-        break;
+    /* ================= TEXT ================= */
+    if (ext === ".txt") {
+      content = isRemote
+        ? await (await fetch(file.path)).text()
+        : fs.readFileSync(file.path, "utf8");
+    } else if (ext === ".docx") {
+      /* ================= DOCX ================= */
+      const buffer = isRemote
+        ? Buffer.from(await (await fetch(file.path)).arrayBuffer())
+        : fs.readFileSync(file.path);
+
+      const result = await mammoth.extractRawText({ buffer });
+      content = result.value || "";
+    } else if ([".xlsx", ".xls", ".csv"].includes(ext)) {
+      /* ================= EXCEL / CSV ================= */
+      const buffer = isRemote
+        ? Buffer.from(await (await fetch(file.path)).arrayBuffer())
+        : fs.readFileSync(file.path);
+
+      const workbook = XLSX.read(buffer, { type: "buffer" });
+      content = workbook.SheetNames.map((name) =>
+        XLSX.utils.sheet_to_csv(workbook.Sheets[name])
+      ).join(" ");
+    } else if ([".pptx", ".ppt"].includes(ext)) {
+      /* ================= PPT ================= */
+      const buffer = isRemote
+        ? Buffer.from(await (await fetch(file.path)).arrayBuffer())
+        : fs.readFileSync(file.path);
+
+      const zip = await JSZip.loadAsync(buffer);
+      const slides = Object.keys(zip.files).filter(
+        (n) => n.startsWith("ppt/slides/slide") && n.endsWith(".xml")
+      );
+
+      for (const slide of slides) {
+        const xml = await zip.file(slide).async("string");
+        const matches = [...xml.matchAll(/<a:t[^>]*>(.*?)<\/a:t>/g)];
+        content += matches.map((m) => m[1]).join(" ") + " ";
+      }
+    } else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
+      /* ================= IMAGE OCR ================= */
+      const imageInput = isRemote
+        ? Buffer.from(await (await fetch(file.path)).arrayBuffer())
+        : file.path;
+
+      const { data } = await Tesseract.recognize(imageInput, "eng");
+      content = data.text || "";
+    } else if (ext === ".pdf") {
+      /* ================= PDF ================= */
+      const pdfBuffer = isRemote
+        ? Buffer.from(await (await fetch(file.path)).arrayBuffer())
+        : fs.readFileSync(file.path);
+
+      if (isRemote) {
+        // tempPdfPath = path.join("./temp", `${Date.now()}-${file.originalname}`);
+        // fs.writeFileSync(tempPdfPath, pdfBuffer);
+
+        const tempDir = ensureTempDir();
+
+        tempPdfPath = path.join(
+          tempDir,
+          `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`
+        );
+
+        fs.writeFileSync(tempPdfPath, pdfBuffer);
       }
 
-      case ".docx": {
-        let buffer;
-        if (file.path.startsWith("http")) {
-          const res = await fetch(file.path);
-          if (!res.ok) throw new Error("Failed to fetch DOCX file");
-          buffer = Buffer.from(await res.arrayBuffer());
+      const pdf = await pdfjs.getDocument({ data: pdfBuffer }).promise;
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((i) => i.str)
+          .join(" ")
+          .trim();
+
+        if (pageText) {
+          content += pageText + " ";
         } else {
-          buffer = fs.readFileSync(file.path);
-        }
+          // OCR fallback
+          const tempDir = ensureTempDir();
 
-        const result = await mammoth.extractRawText({ buffer });
-        content = result.value || "";
-
-        // OCR fallback
-        if (!content.trim()) {
-          const { data } = await Tesseract.recognize(file.path, "eng");
-          content = data.text || "[No text found in DOCX]";
+          const converter = fromPath(isRemote ? tempPdfPath : file.path, {
+            density: 150,
+            saveFilename: `page_${i}`,
+            // savePath: "./temp",
+            savePath: tempDir,
+            format: "png",
+          });
+          const image = await converter(i);
+          const { data } = await Tesseract.recognize(image.path, "eng");
+          content += data.text + " ";
         }
-        break;
       }
-
-      case ".pdf": {
-        let arrayBuffer;
-
-        if (file.path.startsWith("http")) {
-          const res = await fetch(file.path);
-          if (!res.ok) throw new Error("Failed to fetch PDF file");
-          arrayBuffer = await res.arrayBuffer();
-        } else {
-          arrayBuffer = fs.readFileSync(file.path);
-        }
-
-        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-        let pdfText = "";
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items
-            .map((item) => item.str)
-            .join(" ")
-            .trim();
-
-          if (pageText) {
-            pdfText += pageText + " ";
-          } else {
-            // OCR fallback: convert page to image
-            const converter = fromPath(file.path, {
-              density: 150,
-              saveFilename: `page_${i}`,
-              savePath: "./temp",
-              format: "png",
-            });
-            const image = await converter(i);
-            const { data } = await Tesseract.recognize(image.path, "eng");
-            pdfText += data.text + " ";
-          }
-        }
-        content = pdfText.trim() || "[No readable text found in PDF]";
-        break;
-      }
-
-      default:
-        content = `[Unsupported file type: ${file.originalname}]`;
-        break;
+    } else {
+      throw new Error("Unsupported file type");
     }
 
-    // Clean content and calculate word/token counts
-    const cleanedContent = content.replace(/\s+/g, " ").trim();
+    /* ================= CLEAN + COUNT ================= */
+    const cleanedContent = cleanText(content);
     const wordCount = countWords(cleanedContent);
-    const tokenCount = await countTokens(cleanedContent, modelName);
+    const tokenCount = await countTokens(cleanedContent, tokenizerModel);
+
+    /* ================= TOKEN LIMIT (PDF + IMAGE) ================= */
+    // if ([".pdf", ".jpg", ".jpeg", ".png"].includes(ext) && tokenCount > 5000) {
+    //   const err = new Error("Upload small file");
+    //   err.code = "TOKEN_LIMIT_EXCEEDED";
+    //   throw err;
+    // }
 
     return {
       filename: file.originalname,
@@ -235,15 +403,10 @@ export async function processFile(file, modelName = "gpt-4o-mini") {
       wordCount,
       tokenCount,
     };
-  } catch (err) {
-    return {
-      filename: file.originalname,
-      extension: ext,
-      cloudinaryUrl: file.path,
-      content: `[Error processing file: ${err.message}]`,
-      wordCount: 0,
-      tokenCount: 0,
-    };
+  } finally {
+    if (tempPdfPath && fs.existsSync(tempPdfPath)) {
+      fs.unlinkSync(tempPdfPath);
+    }
   }
 }
 
@@ -2433,7 +2596,17 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       })),
     });
   } catch (err) {
-    console.error(err);
+    console.error("Outer catch error:", err.message, err.code);
+
+    if (err.code === "INPUT_TOKEN_LIMIT_EXCEEDED") {
+      return res.status(400).json({
+        message:
+          "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+        error: err.code,
+        allowed: false,
+        ...err.details,
+      });
+    }
     res
       .status(500)
       .json({ message: "Internal Server Error", error: err.message });
