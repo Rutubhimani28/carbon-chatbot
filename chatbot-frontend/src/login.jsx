@@ -492,7 +492,7 @@ const Login = () => {
         alignItems="center"
         sx={{
           // mt: { xs: 1, sm: 4, md: 2 },
-          p: { xs: 5, sm: 10, md: 2 },
+          p: { xs: 5, sm: 10, md: 1 , lg: 44},
           width: "100vw",
           minHeight: "100vh",
           backgroundColor: "#f5f5f5", // optional
