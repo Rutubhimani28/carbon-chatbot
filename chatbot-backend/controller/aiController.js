@@ -21,6 +21,14 @@ import {
 } from "../utils/tokenLimit.js";
 import translate from "@vitalets/google-translate-api";
 import { Messages } from "openai/resources/beta/threads/messages.mjs";
+import { getTokenLimit, getInputTokenLimit } from "../utils/planTokens.js";
+
+const __dirname = path.resolve();
+
+pdfjs.GlobalWorkerOptions.standardFontDataUrl = path.join(
+  __dirname,
+  "node_modules/pdfjs-dist/standard_fonts/"
+);
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -59,11 +67,23 @@ export const handleTokens = async (sessions, session, payload) => {
   }
 
   // 🔴 INPUT TOKEN LIMIT CHECK (Prompt + Files only)
-  const MAX_INPUT_TOKENS = 5000;
+  // ✅ Get user's plan-based input token limit
+  const userForInputLimit = await User.findOne({ email: session.email });
+  const MAX_INPUT_TOKENS = userForInputLimit
+    ? getInputTokenLimit({
+        subscriptionPlan: userForInputLimit.subscriptionPlan,
+        childPlan: userForInputLimit.childPlan,
+      })
+    : 5000; // fallback for users without plan
+
   const inputTokens = promptTokens + fileTokenCount;
 
   if (inputTokens > MAX_INPUT_TOKENS) {
-    const err = new Error("Prompt + uploaded files exceed 5000 token limit");
+    const err = new Error(
+      `Prompt + uploaded files exceed ${
+        MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
+      } token limit`
+    );
     err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
     err.details = {
       promptTokens,
@@ -86,13 +106,20 @@ export const handleTokens = async (sessions, session, payload) => {
     return totalSum + sessionTotal;
   }, 0);
 
-  // const sessionTotalBefore = session.history.reduce(
-  //   (sum, msg) => sum + (msg.tokensUsed || 0),
-  //   0
-  // );
+  // ✅ Get user's plan-based token limit
+  const user = await User.findOne({ email: session.email });
+  const userTokenLimit = user
+    ? getTokenLimit({
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      })
+    : 0;
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(
+    0,
+    userTokenLimit - grandTotalTokensUsed
+  );
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
@@ -2131,8 +2158,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
 
     if (err.code === "INPUT_TOKEN_LIMIT_EXCEEDED") {
       return res.status(400).json({
-        message:
-          "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+        message: err.message, // ✅ Use dynamic error message
         error: err.code,
         allowed: false,
         ...err.details,

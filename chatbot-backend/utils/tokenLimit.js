@@ -1,8 +1,20 @@
 import ChatSession from "../model/ChatSession.js";
 import SearchHistory from "../model/SearchHistory.js";
+import User from "../model/User.js";
+import { getTokenLimit } from "./planTokens.js";
 
 // ✅ Single source of truth: Calculate global token stats (same logic as getUserTokenStats)
-export const getGlobalTokenStats = async (email, limit = 50000) => {
+export const getGlobalTokenStats = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new Error("User not found");
+
+  // ✅ Get dynamic token limit based on user's subscription plan
+  const limit = getTokenLimit({
+    subscriptionPlan: user.subscriptionPlan,
+    childPlan: user.childPlan,
+  });
+
+
   // Chat tokens: sum of tokensUsed across all session messages
   const chatSessions = await ChatSession.find({ email });
   const chatTokensUsed = chatSessions.reduce((sum, session) => {
@@ -29,6 +41,7 @@ export const getGlobalTokenStats = async (email, limit = 50000) => {
   const remainingTokens = Math.max(0, limit - totalTokensUsed);
 
   return {
+    limit,
     chatTokensUsed,
     searchTokensUsed,
     totalTokensUsed,
@@ -41,9 +54,8 @@ export const getGlobalTokenStats = async (email, limit = 50000) => {
 export const checkGlobalTokenLimit = async (
   email,
   newTokens = 0,
-  limit = 50000
 ) => {
-  const stats = await getGlobalTokenStats(email, limit);
+  const stats = await getGlobalTokenStats(email);
   const remaining = Math.max(0, stats.remainingTokens - newTokens);
 
   if (remaining <= 0) {

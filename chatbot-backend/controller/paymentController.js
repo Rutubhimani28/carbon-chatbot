@@ -332,6 +332,28 @@ router.post("/create-upi", async (req, res) => {
   }
 });
 
+router.post("/upgrade-plan", async (req, res) => {
+  const { email, subscriptionPlan, childPlan, subscriptionType } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const price =
+    BASE_PRICES_INR[subscriptionPlan][childPlan][subscriptionType];
+
+  // ❌ do NOT create new user
+  // ❌ do NOT send password mail
+
+  res.json({
+    success: true,
+    amount: price,
+    userId: user._id,
+  });
+});
+
+
 // 1) Create Order (frontend calls this to get order.id)
 router.post("/create-order", async (req, res) => {
   try {
@@ -354,6 +376,7 @@ router.post("/create-order", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // 2) Verify Payment (frontend posts payload returned by Razorpay handler)
 router.post("/verify-payment", async (req, res) => {
@@ -402,6 +425,14 @@ router.post("/verify-payment", async (req, res) => {
         try {
           const user = await User.findOne({ email });
           if (user) {
+
+              if (req.body.isUpgrade) {
+    user.subscriptionPlan = req.body.subscriptionPlan;
+    user.childPlan = req.body.childPlan;
+    user.subscriptionType = req.body.subscriptionType;
+    user.planStartDate = new Date();
+  }
+  
             // -------- Generate Password --------
             const cleanName = user.firstName.replace(/\s+/g, "").toLowerCase();
             const passwordPart =
@@ -414,6 +445,8 @@ router.post("/verify-payment", async (req, res) => {
             const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
             user.password = hashedPassword;
+
+            
             await user.save();
 
             // ---- Send Email ----

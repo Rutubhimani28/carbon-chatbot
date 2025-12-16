@@ -19,6 +19,7 @@ import {
 } from "../utils/tokenLimit.js";
 import translate from "@vitalets/google-translate-api";
 import { Messages } from "openai/resources/beta/threads/messages.mjs";
+import { getTokenLimit, getInputTokenLimit } from "../utils/planTokens.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_FREE_API_KEY,
@@ -57,11 +58,21 @@ export const handleTokens = async (sessions, session, payload) => {
   }
 
   // 🔴 INPUT TOKEN LIMIT CHECK (Prompt + Files only)
-  const MAX_INPUT_TOKENS = 5000;
+  // ✅ Get user's plan-based input token limit
+  const userForInputLimit = await User.findOne({ email: session.email });
+  const MAX_INPUT_TOKENS = userForInputLimit
+    ? getInputTokenLimit({
+      subscriptionPlan: userForInputLimit.subscriptionPlan,
+      childPlan: userForInputLimit.childPlan,
+    })
+    : 5000; // fallback for users without plan
+
   const inputTokens = promptTokens + fileTokenCount;
 
   if (inputTokens > MAX_INPUT_TOKENS) {
-    const err = new Error("Prompt + uploaded files exceed 5000 token limit");
+    const err = new Error(
+      `Prompt + uploaded files exceed ${MAX_INPUT_TOKENS === Infinity ? 'no' : MAX_INPUT_TOKENS} token limit`
+    );
     err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
     err.details = {
       promptTokens,
@@ -84,13 +95,17 @@ export const handleTokens = async (sessions, session, payload) => {
     return totalSum + sessionTotal;
   }, 0);
 
-  // const sessionTotalBefore = session.history.reduce(
-  //   (sum, msg) => sum + (msg.tokensUsed || 0),
-  //   0
-  // );
+  // ✅ Get user's plan-based token limit
+  const user = await User.findOne({ email: session.email });
+  const userTokenLimit = user
+    ? getTokenLimit({
+      subscriptionPlan: user.subscriptionPlan,
+      childPlan: user.childPlan,
+    })
+    : 0;
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
-  const remainingTokensBefore = Math.max(0, 50000 - grandTotalTokensUsed);
+  const remainingTokensBefore = Math.max(0, userTokenLimit - grandTotalTokensUsed);
   const remainingTokensAfter = Math.max(0, remainingTokensBefore - tokensUsed);
 
   const totalTokensUsed = tokensUsed;
@@ -1767,12 +1782,12 @@ export const getSmartAIResponse = async (req, res) => {
         botName === "chatgpt-5-mini"
           ? "gpt-4o-mini"
           : botName === "grok"
-          ? "grok-4-1-fast-non-reasoning"
-          : botName === "claude-3-haiku"
-          ? "claude-3-haiku-20240307"
-          : botName === "mistral"
-          ? "mistral-small-2506"
-          : undefined;
+            ? "grok-4-1-fast-non-reasoning"
+            : botName === "claude-3-haiku"
+              ? "claude-3-haiku-20240307"
+              : botName === "mistral"
+                ? "mistral-small-2506"
+                : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
 
@@ -2070,8 +2085,8 @@ Strict: No explanation. No extra words.`,
     const keywordContext =
       conversationKeywords.length > 0
         ? `\nKey concepts from conversation: ${conversationKeywords
-            .slice(0, 10)
-            .join(", ")}`
+          .slice(0, 10)
+          .join(", ")}`
         : "";
 
     if (related) {
@@ -2286,7 +2301,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch {}
+        } catch { }
 
         const apiError = errJson?.error || errJson;
 
@@ -2323,30 +2338,30 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         const fallbackPayload =
           fallback === "claude-3-haiku"
             ? {
-                model: modelName,
-                max_tokens: maxWords * 2,
-                system: messages[0].content,
-                messages: [{ role: "user", content: combinedPrompt }],
-              }
+              model: modelName,
+              max_tokens: maxWords * 2,
+              system: messages[0].content,
+              messages: [{ role: "user", content: combinedPrompt }],
+            }
             : {
-                model: modelName,
-                messages,
-                temperature: 0.7,
-                max_tokens: maxWords * 2,
-              };
+              model: modelName,
+              messages,
+              temperature: 0.7,
+              max_tokens: maxWords * 2,
+            };
 
         // Build fallback headers
         const fallbackHeaders =
           fallback === "claude-3-haiku"
             ? {
-                "Content-Type": "application/json",
-                "x-api-key": apiKey,
-                "anthropic-version": "2023-06-01",
-              }
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            }
             : {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-              };
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            };
 
         // Retry with fallback model
         const fbRes = await fetch(apiUrl, {
@@ -2424,8 +2439,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")}</code></pre>
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2433,8 +2448,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")}</code></pre>
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2565,8 +2580,9 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
 
     if (err.code === "INPUT_TOKEN_LIMIT_EXCEEDED") {
       return res.status(400).json({
-        message:
-          "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+        // message:
+        //   "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+        message: err.message,
         error: err.code,
         allowed: false,
         ...err.details,

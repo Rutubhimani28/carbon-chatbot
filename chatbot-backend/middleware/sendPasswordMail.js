@@ -113,8 +113,12 @@ const sendPasswordMail = async (email, firstName, password) => {
     };
 
     // console.log("📩 Email sent successfully!");
-    await transporter.sendMail(mailOptions);
-    console.log("📩 Password Email sent successfully!");
+    // await transporter.sendMail(mailOptions);
+    // console.log("📩 Password Email sent successfully!");
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log("📩 Password Email sent successfully:", info.messageId);
   } catch (error) {
     console.log("Email sending error:", error);
   }
