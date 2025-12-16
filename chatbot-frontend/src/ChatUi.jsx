@@ -135,6 +135,7 @@ const ChatUI = () => {
   const [selectOpen, setSelectOpen] = useState(false);
   const selectRef = useRef(null);
   const disabled = true; // or false
+  // const navigate = useNavigate();
 
   const {
     loading,
@@ -242,6 +243,16 @@ const ChatUI = () => {
     const saved = localStorage.getItem("globalRemainingTokens");
     if (saved) {
       setSessionRemainingTokens(Number(saved));
+    }
+
+    // ✅ Refresh User state from localStorage to get latest subscription data
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (error) {
+        console.error("Error parsing user data from localStorage:", error);
+      }
     }
   }, []);
 
@@ -555,6 +566,27 @@ const ChatUI = () => {
   //   }
   // }
 
+  const handleUpgradePlan = () => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    navigate("/register", {
+      state: {
+        isUpgrade: true, // 🔑 important flag
+        userData: {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          dateOfBirth: user.dateOfBirth,
+          ageGroup: user.ageGroup,
+          email: user.email,
+          mobile: user.mobile,
+          parentName: user.parentName,
+          parentEmail: user.parentEmail,
+          parentMobile: user.parentMobile,
+        },
+      },
+    });
+  };
+
   const handleSearch = async (searchQuery) => {
     const finalQuery = searchQuery || query; // ✅ use passed query if available
     console.log("finalQuery:::====", finalQuery);
@@ -813,23 +845,25 @@ const ChatUI = () => {
       //   );
       // }
 
-      // 🛑 INPUT TOKEN LIMIT (Prompt + Files > 5000)
+      // 🛑 INPUT TOKEN LIMIT (Prompt + Files exceeded)
       if (
         response.status === 400 &&
         data?.error === "INPUT_TOKEN_LIMIT_EXCEEDED"
       ) {
+        // ✅ Use backend's dynamic error message
+        const errorMessage =
+          data.message ||
+          "Prompt + uploaded files exceed token limit. Please reduce prompt or upload smaller files.";
+
         await Swal.fire({
           icon: "warning",
           title: "Token Limit Exceeded",
-          text:
-            data.message ||
-            "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+          text: errorMessage,
           confirmButtonText: "OK",
         });
 
         return {
-          response:
-            "Prompt + uploaded files exceed 5000 token limit. Please reduce prompt or upload smaller files.",
+          response: errorMessage,
           sessionId: currentSessionId,
           botName:
             isSmartAI || activeView === "smartAi"
@@ -7616,8 +7650,8 @@ const ChatUI = () => {
               </Typography>
 
               {/* WrdsAI */}
-              {(User?.subscriptionPlan === "Nova" ||
-                User?.subscriptionPlan === "Free Trial") && (
+              {(User?.subscription?.subscriptionPlan === "Nova" ||
+                User?.subscription?.subscriptionPlan === "Free Trial") && (
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -7663,7 +7697,7 @@ const ChatUI = () => {
               )}
 
               {/* WrdsAI Pro */}
-              {User?.subscriptionPlan === "Supernova" && (
+              {User?.subscription?.subscriptionPlan === "Supernova" && (
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -7831,7 +7865,7 @@ const ChatUI = () => {
               )}
 
               {/* AI Browsing */}
-              {User?.subscriptionPlan === "Supernova" && (
+              {User?.subscription?.subscriptionPlan === "Supernova" && (
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -7867,6 +7901,30 @@ const ChatUI = () => {
                   </CustomTooltip>
                 </Typography>
               )}
+
+              <Typography
+                sx={{
+                  fontSize: 18,
+                  cursor: "pointer",
+                  px: 1.5,
+                  py: 0.7,
+                  borderRadius: "6px",
+                  display: "inline-block",
+                  transition: "0.25s",
+                  backgroundColor:
+                    activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
+                  color: activeView === "wrds AiPro" ? "#000" : "#000",
+                  fontWeight: activeView === "wrds AiPro" ? 600 : 400,
+
+                  "&:hover": {
+                    backgroundColor:
+                      activeView === "wrds AiPro" ? "#eaeaea" : "#eaeaea",
+                  },
+                }}
+                onClick={handleUpgradePlan}
+              >
+                Upgrade Your Plan
+              </Typography>
 
               <MenuItem
                 onClick={() => setShowSessionPanel((prev) => !prev)}
@@ -8117,9 +8175,31 @@ const ChatUI = () => {
               Plan :
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-              {User.subscriptionPlan || "No Plan"}
+              {User.subscription?.subscriptionPlan ||
+                User.subscriptionPlan ||
+                "No Plan"}
             </Typography>
           </Box>
+
+          {/* Child Plan */}
+          {(User.subscription?.childPlan || User.childPlan) && (
+            <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  display: "block",
+                  fontWeight: "medium",
+                  fontSize: "17px",
+                }}
+              >
+                Child Plan :
+              </Typography>
+              <Typography variant="body1" sx={{ fontWeight: "medium" }}>
+                {User.subscription?.childPlan || User.childPlan}
+              </Typography>
+            </Box>
+          )}
 
           <Box sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
             <Typography
@@ -8134,7 +8214,9 @@ const ChatUI = () => {
               Subscription Type :
             </Typography>
             <Typography variant="body1" sx={{ fontWeight: "medium" }}>
-              {User.subscriptionType || "No Type"}
+              {User.subscription?.subscriptionType ||
+                User.subscriptionType ||
+                "No Type"}
             </Typography>
           </Box>
 

@@ -875,7 +875,7 @@
 
 // export default Register;
 
-import React, { useState } from "react";
+import React, { useState , useEffect } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
@@ -904,6 +904,7 @@ import Words2 from "././assets/words2.png"; // path adjust karo
 import { useTheme, useMediaQuery } from "@mui/material";
 import PaymentModal from "./PaymentModal";
 import Wrds from "././assets/Wrds White.webp";
+import { useLocation } from "react-router-dom";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -934,6 +935,9 @@ const Register = () => {
   const [childPlanDisabled, setChildPlanDisabled] = useState(false);
   const [subscriptionTypeDisabled, setSubscriptionTypeDisabled] =
     useState(false);
+  const location = useLocation();
+  const isUpgrade = location.state?.isUpgrade;
+  const userData = location.state?.userData;
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
@@ -959,26 +963,54 @@ const Register = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
+  useEffect(() => {
+    if (isUpgrade && userData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...userData,
+        dateOfBirth: userData.dateOfBirth
+          ? new Date(userData.dateOfBirth)
+          : null,
+      }));
+    }
+  }, [isUpgrade, userData]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     // If user selects subscriptionPlan -> update UI state for free trial
+    // if (name === "subscriptionPlan") {
+    //   if (value === "Free Trial") {
+    //     // disable childPlan and set type = 'One Time'
+    //     setFormData((prev) => ({
+    //       ...prev,
+    //       subscriptionPlan: value,
+    //       childPlan: "", // clear child plan
+    //       subscriptionType: "One Time",
+    //     }));
+    //     setChildPlanDisabled(true);
+    //     setSubscriptionTypeDisabled(true);
+    //   } else {
+    //     setFormData((prev) => ({
+    //       ...prev,
+    //       subscriptionPlan: value,
+    //       subscriptionType: "",
+    //     }));
+    //     setChildPlanDisabled(false);
+    //     setSubscriptionTypeDisabled(false);
+    //   }
+    //   return;
+    // }
     if (name === "subscriptionPlan") {
-      if (value === "Free Trial") {
-        // disable childPlan and set type = 'One Time'
-        setFormData((prev) => ({
-          ...prev,
-          subscriptionPlan: value,
-          childPlan: "", // clear child plan
-          subscriptionType: "One Time",
-        }));
-        setChildPlanDisabled(true);
-        setSubscriptionTypeDisabled(true);
-      } else {
-        setFormData((prev) => ({ ...prev, subscriptionPlan: value }));
-        setChildPlanDisabled(false);
-        setSubscriptionTypeDisabled(false);
-      }
+      setFormData((prev) => ({
+        ...prev,
+        subscriptionPlan: value,
+        subscriptionType: "", // ❌ no auto select
+      }));
+
+      // optional: child plan logic
+      setChildPlanDisabled(value === "Free Trial");
+
       return;
     }
 
@@ -1069,9 +1101,24 @@ const Register = () => {
       handler: async function (response) {
         // Response contains razorpay_order_id, razorpay_payment_id, razorpay_signature
         const verifyResult = await verifyPaymentOnServer({
-          ...response,
-          email: paymentEmail, // Pass email for password generation
+          // ...response,
+          // email: paymentEmail, // Pass email for password generation
+
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature,
+
+          email: paymentEmail,
+
+          // 🔑 THIS IS THE KEY
+          isUpgrade: isUpgrade === true,
+
+          // 🔑 ONLY needed for upgrade
+          subscriptionPlan: formData.subscriptionPlan,
+          childPlan: formData.childPlan || null,
+          subscriptionType: formData.subscriptionType,
         });
+
         // if (verifyResult && verifyResult.success) {
         //   alert("Payment successful and verified!");
         //   navigate("/login");
@@ -1125,6 +1172,43 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setAgreeTerms(false);
+
+    // upgrade plan flow
+    if (isUpgrade) {
+      try {
+        // 🔹 Only plan related validation
+        if (!formData.subscriptionPlan || !formData.subscriptionType) {
+          toast.error("Please select subscription plan and type!");
+          setLoading(false);
+          return;
+        }
+
+        // 🔹 Call upgrade API (NO re-registration)
+        const res = await axios.post(
+          `${apiBaseUrl}/api/payments/upgrade-plan`,
+          {
+            email: formData.email, // existing user email
+            subscriptionPlan: formData.subscriptionPlan,
+            childPlan: formData.childPlan || null,
+            subscriptionType: formData.subscriptionType,
+          }
+        );
+
+        // 🔹 Start Razorpay payment
+        setPriceINR(res.data.amount);
+        await handleRazorpay(res.data.amount);
+
+        toast.success("Plan upgrade initiated successfully!");
+      } catch (err) {
+        toast.error(
+          err.response?.data?.error || "Plan upgrade failed. Please try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+
+      return; // ⛔ stop further execution
+    }
 
     // Validation
     if (
@@ -1311,7 +1395,7 @@ const Register = () => {
             // flexDirection: isSmallScreen ? "column" : "row",
             alignItems: "center",
             justifyContent: "space-between",
-            // alignItems:"center", 
+            // alignItems:"center",
             px: { xs: 1, sm: 2, md: 2, lg: 2 },
             flexShrink: 0,
             bgcolor: "#1268fb",
@@ -1390,6 +1474,7 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     InputProps={{
+                      readOnly: isUpgrade,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1417,6 +1502,7 @@ const Register = () => {
                     onChange={handleChange}
                     required
                     InputProps={{
+                      readOnly: isUpgrade,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1452,6 +1538,7 @@ const Register = () => {
                         fullWidth: true,
                         required: true,
                         InputProps: {
+                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -1484,6 +1571,7 @@ const Register = () => {
                     required
                     onChange={handleChange}
                     InputProps={{
+                      readOnly: isUpgrade,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1817,6 +1905,7 @@ const Register = () => {
                         !["<13", "13-14", "15-17"].includes(formData.ageGroup)
                       }
                       InputProps={{
+                        readOnly: isUpgrade,
                         sx: {
                           height: { xs: 30, sm: 42 },
                           fontSize: { xs: "15px", sm: "17px" },
@@ -1868,6 +1957,7 @@ const Register = () => {
                       placeholder="+1234567890"
                       required
                       InputProps={{
+                        readOnly: isUpgrade,
                         sx: {
                           height: { xs: 30, sm: 42 },
                           fontSize: { xs: "15px", sm: "17px" },
@@ -1993,6 +2083,7 @@ const Register = () => {
                         required
                         onChange={handleChange}
                         InputProps={{
+                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -2071,6 +2162,7 @@ const Register = () => {
                         required
                         onChange={handleChange}
                         InputProps={{
+                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -2164,6 +2256,7 @@ const Register = () => {
                           setFormData({ ...formData, parentMobile: v });
                         }}
                         InputProps={{
+                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -2350,9 +2443,27 @@ const Register = () => {
                     }}
                     fullWidth
                   >
-                    {subscriptionTypes.map((t) => (
-                      <MenuItem key={t} value={t}>
-                        {t}
+                    {subscriptionTypes.map((type) => (
+                      <MenuItem
+                        key={type}
+                        value={type}
+                        // disabled={
+                        //   ["Nova", "Supernova"].includes(
+                        //     formData.subscriptionPlan
+                        //   ) && type === "One Time"
+                        // }
+                        disabled={
+                          // 🔴 Nova / Supernova → One Time disabled
+                          (["Nova", "Supernova"].includes(
+                            formData.subscriptionPlan
+                          ) &&
+                            type === "One Time") ||
+                          // 🔴 Free Trial → Monthly & Yearly disabled
+                          (formData.subscriptionPlan === "Free Trial" &&
+                            (type === "Monthly" || type === "Yearly"))
+                        }
+                      >
+                        {type}
                       </MenuItem>
                     ))}
                   </TextField>

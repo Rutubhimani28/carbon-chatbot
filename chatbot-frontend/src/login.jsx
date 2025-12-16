@@ -260,7 +260,7 @@ import {
   CircularProgress,
   InputLabel,
   IconButton,
-  Grid ,
+  Grid,
   InputAdornment,
 } from "@mui/material";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
@@ -298,30 +298,32 @@ const Login = () => {
 
     try {
       const res = await axios.post(`${apiBaseUrl}/api/ai/login`, formData);
+
+      const userData = res.data.data;
       setMessage(res.data.message);
 
-      setUser(res.data.data);
-      localStorage.setItem("user", JSON.stringify(res.data.data));
+      setUser(userData);
+      // localStorage.setItem("user", JSON.stringify(res.data.data));
 
-      const userData = {
-        id: res.data.data.id,
-        firstName: res.data.data.firstName,
-        lastName: res.data.data.lastName,
-        // username: res.data.data.username,
-        email: res.data.data.email,
-        remainingTokens: res.data.data.remainingTokens,
-        subscriptionPlan: res.data.data.subscriptionPlan,
-        childPlans: res.data.data.childPlans,
-        subscriptionType: res.data.data.subscriptionType,
-        // Add any other fields you need
-      };
+      // const userData = {
+      //   id: res.data.data.id,
+      //   firstName: res.data.data.firstName,
+      //   lastName: res.data.data.lastName,
+      //   // username: res.data.data.username,
+      //   email: res.data.data.email,
+      //   remainingTokens: res.data.data.remainingTokens,
+      //   subscriptionPlan: res.data.data.subscriptionPlan,
+      //   childPlans: res.data.data.childPlans,
+      //   subscriptionType: res.data.data.subscriptionType,
+      //   // Add any other fields you need
+      // };
+
       localStorage.setItem("user", JSON.stringify(userData));
 
-      setSessionRemainingTokens(res.data.data.remainingTokens);
-      localStorage.setItem(
-        "globalRemainingTokens",
-        res.data.data.remainingTokens
-      );
+      const remainingTokens = userData.subscription?.remainingTokens || 0;
+
+      setSessionRemainingTokens(remainingTokens);
+      localStorage.setItem("globalRemainingTokens", remainingTokens);
 
       //  navigate to home after success
       navigate("/");
@@ -492,7 +494,7 @@ const Login = () => {
         alignItems="center"
         sx={{
           // mt: { xs: 1, sm: 4, md: 2 },
-          p: { xs: 5, sm: 10, md: 1 , lg: 44},
+          p: { xs: 5, sm: 10, md: 2, lg: 2 },
           width: "100vw",
           minHeight: "100vh",
           backgroundColor: "#f5f5f5", // optional

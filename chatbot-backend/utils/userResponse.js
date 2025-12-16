@@ -1,0 +1,47 @@
+import { getTokenLimit } from "./planTokens.js";
+
+export const buildUserResponseByAgeGroup = (user) => {
+  const isMinor = ["<13", "13-14", "15-17"].includes(user.ageGroup);
+
+  // ✅ Calculate remainingTokens based on selected plan
+  const remainingTokens = getTokenLimit({
+    subscriptionPlan: user.subscriptionPlan,
+    childPlan: user.childPlan,
+  });
+
+  return {
+    id: user._id,
+
+    firstName: user.firstName,
+    lastName: user.lastName,
+    dateOfBirth: user.dateOfBirth,
+    ageGroup: user.ageGroup,
+
+    // 🔑 Email & Mobile (age based)
+    email: isMinor ? user.parentEmail : user.email,
+    mobile: isMinor ? user.parentMobile : user.mobile,
+
+    // 🔑 Parent details only if minor
+    parentDetails: isMinor
+      ? {
+        parentName: user.parentName,
+        parentEmail: user.parentEmail,
+        parentMobile: user.parentMobile,
+      }
+      : null,
+
+    // 🔑 Subscription
+    subscription: {
+      subscriptionPlan: user.subscriptionPlan,
+      childPlan: user.childPlan,
+      subscriptionType: user.subscriptionType,
+      status: user.subscriptionStatus,
+      isActive: user.isActive,
+      remainingTokens: remainingTokens, // ✅ Dynamically calculated
+      basePriceINR: user.basePriceINR,
+      gstAmount: user.gstAmount,
+      totalPriceINR: user.totalPriceINR,
+      currency: user.currency,
+    },
+  };
+};

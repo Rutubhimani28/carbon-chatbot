@@ -75,6 +75,8 @@ import bcrypt from "bcryptjs";
 import User from "../model/User.js";
 // import { sendPasswordMail } from "../services/mailService.js";
 import sendPasswordMail from "../middleware/sendPasswordMail.js";
+import { getTokenLimit } from "../utils/planTokens.js";
+import { buildUserResponseByAgeGroup } from "../utils/userResponse.js";
 
 // Plan Options
 const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
@@ -97,14 +99,14 @@ const subscriptionTypes = ["Monthly", "Yearly"];
 
 const BASE_PRICES_INR = {
   Nova: {
-    "Glow Up": { Monthly: 99, Yearly: 999 },
+    "Glow Up": { Monthly: 99, Yearly: 1089 },
     "Level Up": { Monthly: 199, Yearly: 1999 },
     "Rise Up": { Monthly: 399, Yearly: 3999 },
   },
   Supernova: {
-    "Step Up": { Monthly: 299, Yearly: 2999 },
-    "Speed Up": { Monthly: 499, Yearly: 4999 },
-    "Scale Up": { Monthly: 899, Yearly: 8999 },
+    "Step Up": { Monthly: 499, Yearly: 5489 },
+    "Speed Up": { Monthly: 899, Yearly: 8999 },
+    "Scale Up": { Monthly: 1599, Yearly: 15999 },
   },
 };
 
@@ -199,9 +201,94 @@ export const registerUser = async (req, res) => {
         .json({ error: "Account already exists with this email" });
     }
 
+    // if (subscriptionPlan === "Free Trial") {
+    //   try {
+    //     const cleanName = (firstName || "").replace(/\s+/g, "").toLowerCase();
+    //     const passwordPart =
+    //       cleanName.length >= 4
+    //         ? cleanName.slice(0, 4)
+    //         : cleanName.padEnd(4, cleanName[0] || "x");
+    //     const year = dateOfBirth
+    //       ? new Date(dateOfBirth).getFullYear()
+    //       : new Date().getFullYear();
+    //     const generatedPassword = `${passwordPart}@${year}`;
+
+    //     const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+    //     const user = new User({
+    //       firstName,
+    //       lastName,
+    //       email: finalEmail,
+    //       mobile: finalMobile || null,
+    //       dateOfBirth: new Date(dateOfBirth),
+    //       ageGroup: finalAgeGroup,
+    //       parentName: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+    //         ? parentName
+    //         : null,
+    //       parentEmail: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+    //         ? parentEmail
+    //         : null,
+    //       parentMobile: ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+    //         ? parentMobile
+    //         : null,
+    //       country: "India",
+
+    //       subscriptionPlan: "Free Trial",
+    //       childPlan: null,
+    //       subscriptionType: "One Time",
+
+    //       basePriceINR: 0,
+    //       gstAmount: 0,
+    //       totalPriceINR: 0,
+    //       currency: "INR",
+    //       subscriptionStatus: "active",
+    //       isActive: true,
+
+    //       password: hashedPassword,
+    //       remainingTokens: 3000,
+    //     });
+
+    //     await user.save();
+
+    //     const recipientEmail = ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+    //       ? parentEmail
+    //       : finalEmail;
+    //     const recipientName = ["<13", "13-14", "15-17"].includes(finalAgeGroup)
+    //       ? parentName
+    //       : firstName;
+
+    //     await sendPasswordMail(
+    //       recipientEmail,
+    //       recipientName,
+    //       generatedPassword
+    //     );
+
+    //     console.log(
+    //   `Free Trial password email sent to ${recipientEmail} → ${generatedPassword}`
+    // );
+
+    //     return res.status(201).json({
+    //       success: true,
+    //       message: "Free Trial activated. Password sent to email.",
+    //       loginEmail: finalEmail,
+    //       remainingTokens: 3000,
+    //       user: {
+    //         id: user._id,
+    //         subscription: { priceINR: 0, plan: "Free Trial" },
+    //       },
+    //     });
+    //   } catch (err) {
+    //     console.error("Free trial registration error:", err);
+    //     return res.status(500).json({
+    //       error: "Free trial registration failed",
+    //       details: err.message,
+    //     });
+    //   }
+    // }
+
     if (subscriptionPlan === "Free Trial") {
       try {
-        // generate password (same as paid success logic)
+        // 1️⃣ Generate password
         const cleanName = (firstName || "").replace(/\s+/g, "").toLowerCase();
         const passwordPart =
           cleanName.length >= 4
@@ -212,8 +299,14 @@ export const registerUser = async (req, res) => {
           : new Date().getFullYear();
         const generatedPassword = `${passwordPart}@${year}`;
 
+        // 2️⃣ Hash password
         const hashedPassword = await bcrypt.hash(generatedPassword, 10);
 
+        const tokenLimit = getTokenLimit({
+          subscriptionPlan: "Free Trial",
+        });
+
+        // 3️⃣ Create user
         const user = new User({
           firstName,
           lastName,
@@ -244,11 +337,12 @@ export const registerUser = async (req, res) => {
           isActive: true,
 
           password: hashedPassword,
-          remainingTokens: 3000,
+          remainingTokens: tokenLimit,
         });
 
         await user.save();
 
+        // 4️⃣ Send password email immediately
         const recipientEmail = ["<13", "13-14", "15-17"].includes(finalAgeGroup)
           ? parentEmail
           : finalEmail;
@@ -262,15 +356,21 @@ export const registerUser = async (req, res) => {
           generatedPassword
         );
 
+        console.log(
+          `Free Trial password email sent to ${recipientEmail} → ${generatedPassword}`
+        );
+
+        // 5️⃣ Return response
         return res.status(201).json({
           success: true,
           message: "Free Trial activated. Password sent to email.",
           loginEmail: finalEmail,
-          remainingTokens: 3000,
-          user: {
-            id: user._id,
-            subscription: { priceINR: 0, plan: "Free Trial" },
-          },
+          remainingTokens: tokenLimit,
+          // user: {
+          //   id: user._id,
+          //   subscription: { priceINR: 0, plan: "Free Trial" },
+          // },
+          user: buildUserResponseByAgeGroup(user),
         });
       } catch (err) {
         console.error("Free trial registration error:", err);
@@ -317,6 +417,11 @@ export const registerUser = async (req, res) => {
 
     // const totalAmountINR = 100; // 1 INR in paise
 
+    const tokenLimit = getTokenLimit({
+      subscriptionPlan,
+      childPlan,
+    });
+
     // Create user (password will be set after payment)
     const user = new User({
       firstName,
@@ -340,6 +445,8 @@ export const registerUser = async (req, res) => {
       subscriptionPlan,
       childPlan,
       subscriptionType,
+
+      remainingTokens: tokenLimit, // ✅ AA J JAGYA
       // priceUSD,
       // exchangeRateUsed: usdToInrRate,
       basePriceINR: priceINR,
@@ -366,12 +473,14 @@ export const registerUser = async (req, res) => {
         gst: `₹${gstAmount} (18%)`,
         total: `₹${totalAmountINR / 100}`,
       },
-      user: {
-        id: user._id,
-        subscription: {
-          priceINR: totalAmountINR / 100,
-        },
-      },
+
+      user: buildUserResponseByAgeGroup(user),
+      // user: {
+      //   id: user._id,
+      //   subscription: {
+      //     priceINR: totalAmountINR / 100,
+      //   },
+      // },
     });
   } catch (err) {
     console.error("Registration error:", err);
@@ -565,21 +674,22 @@ export const loginUser = async (req, res) => {
     res.json({
       status: 200,
       message: "Login successful",
-      data: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        mobile: user.mobile,
-        dateOfBirth: user.dateOfBirth,
-        remainingTokens: user.remainingTokens,
-        subscriptionPlan: user.subscriptionPlan,
-        childPlan: user.childPlan,
-        subscriptionType: user.subscriptionType,
-        // subscriptionStatus: user.subscriptionStatus,
-        // isActive: user.isActive,
-        // totalPriceINR: user.totalPriceINR,
-      },
+      data: buildUserResponseByAgeGroup(user),
+      // data: {
+      //   id: user._id,
+      //   firstName: user.firstName,
+      //   lastName: user.lastName,
+      //   email: user.email,
+      //   mobile: user.mobile,
+      //   dateOfBirth: user.dateOfBirth,
+      //   remainingTokens: user.remainingTokens,
+      //   subscriptionPlan: user.subscriptionPlan,
+      //   childPlan: user.childPlan,
+      //   subscriptionType: user.subscriptionType,
+      //   // subscriptionStatus: user.subscriptionStatus,
+      //   // isActive: user.isActive,
+      //   // totalPriceINR: user.totalPriceINR,
+      // },
     });
   } catch (err) {
     res.status(500).json({ error: "Login failed", details: err.message });
