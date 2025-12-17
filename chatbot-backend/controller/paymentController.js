@@ -332,6 +332,20 @@ router.post("/create-upi", async (req, res) => {
   }
 });
 
+// ✅ Price constants (same as authController.js)
+const BASE_PRICES_INR = {
+  Nova: {
+    "Glow Up": { Monthly: 99, Yearly: 1089 },
+    "Level Up": { Monthly: 199, Yearly: 1999 },
+    "Rise Up": { Monthly: 399, Yearly: 3999 },
+  },
+  Supernova: {
+    "Step Up": { Monthly: 499, Yearly: 5489 },
+    "Speed Up": { Monthly: 899, Yearly: 8999 },
+    "Scale Up": { Monthly: 1599, Yearly: 15999 },
+  },
+};
+
 router.post("/upgrade-plan", async (req, res) => {
   const { email, subscriptionPlan, childPlan, subscriptionType } = req.body;
 
@@ -340,19 +354,37 @@ router.post("/upgrade-plan", async (req, res) => {
     return res.status(404).json({ error: "User not found" });
   }
 
-  const price =
-    BASE_PRICES_INR[subscriptionPlan][childPlan][subscriptionType];
+  // const basePrice =
+  //   BASE_PRICES_INR[subscriptionPlan][childPlan][subscriptionType];
+
+  const priceINR =
+    BASE_PRICES_INR[subscriptionPlan]?.[childPlan]?.[subscriptionType];
+
+  if (!priceINR) {
+    return res.status(400).json({ error: "Invalid plan selection" });
+  }
+
+  // const gstAmount = Math.round(basePrice * 0.18);
+  // const totalAmount = basePrice + gstAmount;
+
+  // ✅ GST 18%
+  const gstAmount = Math.round(priceINR * 0.18 * 100) / 100;
+
+  // ✅ Total in paise (for Razorpay)
+  const totalAmountINR = Math.round((priceINR + gstAmount) * 100);
 
   // ❌ do NOT create new user
   // ❌ do NOT send password mail
 
   res.json({
     success: true,
-    amount: price,
+    basePrice: priceINR, // ₹
+    gstAmount, // ₹
+    totalAmount: totalAmountINR / 100, // ₹ (frontend display)
+    totalAmountPaise: totalAmountINR, // 💳 Razorpay
     userId: user._id,
   });
 });
-
 
 // 1) Create Order (frontend calls this to get order.id)
 router.post("/create-order", async (req, res) => {
@@ -376,7 +408,6 @@ router.post("/create-order", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 // 2) Verify Payment (frontend posts payload returned by Razorpay handler)
 router.post("/verify-payment", async (req, res) => {
@@ -425,31 +456,7 @@ router.post("/verify-payment", async (req, res) => {
         try {
           const user = await User.findOne({ email });
           if (user) {
-
-              if (req.body.isUpgrade) {
-    user.subscriptionPlan = req.body.subscriptionPlan;
-    user.childPlan = req.body.childPlan;
-    user.subscriptionType = req.body.subscriptionType;
-    user.planStartDate = new Date();
-  }
-  
-            // -------- Generate Password --------
-            const cleanName = user.firstName.replace(/\s+/g, "").toLowerCase();
-            const passwordPart =
-              cleanName.length >= 4
-                ? cleanName.slice(0, 4)
-                : cleanName.padEnd(4, cleanName[0]);
-            const year = new Date(user.dateOfBirth).getFullYear();
-            const generatedPassword = `${passwordPart}@${year}`;
-
-            const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-            user.password = hashedPassword;
-
-            
-            await user.save();
-
-            // ---- Send Email ----
+            // ✅ Determine recipient email/name (needed for both new \u0026 upgrade)
             const recipientEmail = ["<13", "13-14", "15-17"].includes(
               user.ageGroup
             )
@@ -460,16 +467,79 @@ router.post("/verify-payment", async (req, res) => {
             )
               ? user.parentName
               : user.firstName;
-            await sendPasswordMail(
-              recipientEmail,
-              recipientName,
-              generatedPassword
-            );
-            console.log(
-              `Password generated and email sent to ${recipientEmail}`
-            );
 
-            // ---- Send Receipt Email ----
+            // ✅ Update subscription details if upgrade
+            if (req.body.isUpgrade) {
+              // const basePrice =
+              //   BASE_PRICES_INR[req.body.subscriptionPlan][req.body.childPlan][
+              //     req.body.subscriptionType
+              //   ];
+
+              // const gstAmount = Math.round(basePrice * 0.18);
+              // const totalAmount = basePrice + gstAmount;
+
+              const priceINR =
+                BASE_PRICES_INR[req.body.subscriptionPlan]?.[
+                  req.body.childPlan
+                ]?.[req.body.subscriptionType];
+
+              if (!priceINR) {
+                return res
+                  .status(400)
+                  .json({ error: "Invalid plan selection" });
+              }
+
+              // ✅ GST 18%
+              const gstAmount = Math.round(priceINR * 0.18 * 100) / 100;
+
+              // ✅ Total in paise
+              const totalAmountINR = Math.round((priceINR + gstAmount) * 100);
+
+              user.subscriptionPlan = req.body.subscriptionPlan;
+              user.childPlan = req.body.childPlan;
+              user.subscriptionType = req.body.subscriptionType;
+
+              user.basePriceINR = priceINR;
+              user.gstAmount = gstAmount;
+              user.totalPriceINR = totalAmountINR / 100;
+
+              user.planStartDate = new Date();
+              user.subscriptionStatus = "active";
+              user.isActive = true;
+
+              await user.save();
+              console.log(`✅ Plan upgraded for ${email}`);
+            } else {
+              // ❌ Only generate password for NEW registrations (not upgrades)
+              // -------- Generate Password --------
+              const cleanName = user.firstName
+                .replace(/\s+/g, "")
+                .toLowerCase();
+              const passwordPart =
+                cleanName.length >= 4
+                  ? cleanName.slice(0, 4)
+                  : cleanName.padEnd(4, cleanName[0]);
+              const year = new Date(user.dateOfBirth).getFullYear();
+              const generatedPassword = `${passwordPart}@${year}`;
+
+              const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+              user.password = hashedPassword;
+              user.subscriptionStatus = "active";
+              user.isActive = true;
+
+              await user.save();
+
+              // ---- Send Password Email (NEW users only) ----
+              await sendPasswordMail(
+                recipientEmail,
+                recipientName,
+                generatedPassword
+              );
+              console.log(`📧 Password email sent to ${recipientEmail}`);
+            }
+
+            // ---- Send Receipt Email (BOTH new \u0026 upgrade) ----
             // const pdfPath = "C:/Users/AAC/OneDrive/Desktop/Meeral/chatbot_carbon/RECEIPT-1 (1).pdf";
 
             // ⏳ DELAY EMAIL BY 4 MINUTES

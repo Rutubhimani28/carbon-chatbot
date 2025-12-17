@@ -71,17 +71,16 @@ export const handleTokens = async (sessions, session, payload) => {
   const userForInputLimit = await User.findOne({ email: session.email });
   const MAX_INPUT_TOKENS = userForInputLimit
     ? getInputTokenLimit({
-        subscriptionPlan: userForInputLimit.subscriptionPlan,
-        childPlan: userForInputLimit.childPlan,
-      })
+      subscriptionPlan: userForInputLimit.subscriptionPlan,
+      childPlan: userForInputLimit.childPlan,
+    })
     : 5000; // fallback for users without plan
 
   const inputTokens = promptTokens + fileTokenCount;
 
   if (inputTokens > MAX_INPUT_TOKENS) {
     const err = new Error(
-      `Prompt + uploaded files exceed ${
-        MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
+      `Prompt + uploaded files exceed ${MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
       } token limit`
     );
     err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
@@ -110,9 +109,9 @@ export const handleTokens = async (sessions, session, payload) => {
   const user = await User.findOne({ email: session.email });
   const userTokenLimit = user
     ? getTokenLimit({
-        subscriptionPlan: user.subscriptionPlan,
-        childPlan: user.childPlan,
-      })
+      subscriptionPlan: user.subscriptionPlan,
+      childPlan: user.childPlan,
+    })
     : 0;
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
@@ -1317,6 +1316,32 @@ const restrictions = {
   ],
 };
 
+// utils/checkMediaPrompt.js (optional) OR aiController.js upar
+
+const isImageOrVideoPrompt = (text = "") => {
+  const keywords = [
+    "generate image",
+    "create image",
+    "make image",
+    "draw image",
+    "image generation",
+    "ai image",
+    "generate video",
+    "create video",
+    "make video",
+    "video generation",
+    "make ai video",
+    "make animation video",
+    "make animated video",
+    "generate ai video",
+    "generate animation video",
+    "generate animated video",
+  ];
+
+  const lowerText = text.toLowerCase();
+  return keywords.some((k) => lowerText.includes(k));
+};
+
 export const getAIResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
@@ -1363,6 +1388,17 @@ export const getAIResponse = async (req, res) => {
       return res.status(400).json({ message: "botName is required" });
 
     if (!email) return res.status(400).json({ message: "email is required" });
+
+    // 🚫 IMAGE / VIDEO GENERATION BLOCK (AI call pehla)
+
+    // if (isImageOrVideoPrompt(prompt)) {
+    if (isImageOrVideoPrompt(prompt)) {
+      return res.status(400).json({
+        success: false,
+        error: "MEDIA_GENERATION_NOT_ALLOWED",
+        message: "Generating images and videos is not allowed",
+      });
+    }
 
     // ✅ AGE-BASED CONTENT RESTRICTION LOGIC
 
@@ -1417,12 +1453,12 @@ export const getAIResponse = async (req, res) => {
           botName === "chatgpt-5-mini"
             ? "gpt-4o-mini"
             : botName === "grok"
-            ? "grok-3-mini"
-            : botName === "claude-3-haiku"
-            ? "claude-3-haiku-20240307"
-            : botName === "mistral"
-            ? "mistral-small-2506"
-            : undefined;
+              ? "grok-3-mini"
+              : botName === "claude-3-haiku"
+                ? "claude-3-haiku-20240307"
+                : botName === "mistral"
+                  ? "mistral-small-2506"
+                  : undefined;
 
         const fileData = await processFile(file, modelForTokenCount);
 
@@ -1732,8 +1768,8 @@ Strict: No explanation. No extra words.`,
     const keywordContext =
       conversationKeywords.length > 0
         ? `\nKey concepts from conversation: ${conversationKeywords
-            .slice(0, 10)
-            .join(", ")}`
+          .slice(0, 10)
+          .join(", ")}`
         : "";
 
     if (related) {
@@ -1886,7 +1922,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch {}
+        } catch { }
 
         const apiError = errJson?.error || errJson;
 
@@ -2004,8 +2040,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")}</code></pre>
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2013,8 +2049,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")}</code></pre>
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
