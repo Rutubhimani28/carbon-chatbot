@@ -845,6 +845,26 @@ const ChatUI = () => {
       //   );
       // }
 
+      // ❌ IMAGE / VIDEO GENERATION BLOCK
+      if (
+        response.status === 400 &&
+        data?.error === "MEDIA_GENERATION_NOT_ALLOWED"
+      ) {
+        await Swal.fire({
+          icon: "error",
+          title: "Not Allowed 🚫",
+          text: data.message || "Generating images and videos is not allowed",
+          confirmButtonText: "OK",
+        });
+
+        return {
+          response: data.message,
+          sessionId: currentSessionId,
+          isError: true,
+          botName: selectedBot,
+        };
+      }
+
       // 🛑 INPUT TOKEN LIMIT (Prompt + Files exceeded)
       if (
         response.status === 400 &&
@@ -5483,8 +5503,17 @@ const ChatUI = () => {
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <IconButton
                           component="label"
+                          disabled={
+                            User?.subscription?.subscriptionPlan ===
+                            "Free Trial"
+                          }
                           sx={{
-                            color: "#1268fb",
+                            // color: "#1268fb",
+                            color:
+                              User?.subscription?.subscriptionPlan ===
+                              "Free Trial"
+                                ? "#9e9e9e"
+                                : "#1268fb",
                             // position: "absolute",
                             // left: "10px",
 
@@ -5492,9 +5521,21 @@ const ChatUI = () => {
                             borderRadius: "50%",
                             width: isXS ? "25px" : "32px",
                             height: isXS ? "25px" : "32px",
-                            backgroundColor: "rgba(47, 103, 246, 0.1)",
+                            // backgroundColor: "rgba(47, 103, 246, 0.1)",
+                            // "&:hover": {
+                            //   backgroundColor: "rgba(47,103,246,0.2)",
+                            // },
+                            backgroundColor:
+                              User?.subscription?.subscriptionPlan ===
+                              "Free Trial"
+                                ? "rgba(0,0,0,0.05)"
+                                : "rgba(47, 103, 246, 0.1)",
                             "&:hover": {
-                              backgroundColor: "rgba(47,103,246,0.2)",
+                              backgroundColor:
+                                User?.subscription?.subscriptionPlan ===
+                                "Free Trial"
+                                  ? "rgba(0,0,0,0.05)"
+                                  : "rgba(47,103,246,0.2)",
                             },
                           }}
                         >
@@ -5502,6 +5543,10 @@ const ChatUI = () => {
                             type="file"
                             hidden
                             multiple
+                            disabled={
+                              User?.subscription?.subscriptionPlan ===
+                              "Free Trial"
+                            }
                             accept=".txt,.pdf,.doc,.docx,.jpg,.jpeg,.png,.pptx,.xlsx,.csv"
                             onChange={(e) => {
                               const files = Array.from(e.target.files);
