@@ -875,7 +875,7 @@
 
 // export default Register;
 
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
@@ -936,7 +936,8 @@ const Register = () => {
   const [subscriptionTypeDisabled, setSubscriptionTypeDisabled] =
     useState(false);
   const location = useLocation();
-  const isUpgrade = location.state?.isUpgrade;
+  // const isUpgrade = location.state?.isUpgrade;
+  const isUpgrade = Boolean(location.state?.isUpgrade);
   const userData = location.state?.userData;
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -971,6 +972,9 @@ const Register = () => {
         dateOfBirth: userData.dateOfBirth
           ? new Date(userData.dateOfBirth)
           : null,
+        parentName: userData.parentName || "",
+        parentEmail: userData.parentEmail || "",
+        parentMobile: userData.parentMobile || "",
       }));
     }
   }, [isUpgrade, userData]);
@@ -1195,8 +1199,8 @@ const Register = () => {
         );
 
         // 🔹 Start Razorpay payment
-        setPriceINR(res.data.amount);
-        await handleRazorpay(res.data.amount);
+        setPriceINR(res.data.totalAmount);
+        await handleRazorpay(res.data.totalAmount);
 
         toast.success("Plan upgrade initiated successfully!");
       } catch (err) {
@@ -1472,6 +1476,7 @@ const Register = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
+                    disabled={isUpgrade}
                     required
                     InputProps={{
                       readOnly: isUpgrade,
@@ -1500,6 +1505,7 @@ const Register = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
+                    disabled={isUpgrade}
                     required
                     InputProps={{
                       readOnly: isUpgrade,
@@ -1532,6 +1538,7 @@ const Register = () => {
                   <DatePicker
                     value={formData.dateOfBirth}
                     onChange={handleDateChange}
+                    disabled={isUpgrade}
                     slotProps={{
                       textField: {
                         size: "small",
@@ -1896,16 +1903,16 @@ const Register = () => {
                       name="email"
                       value={formData.email}
                       // disabled={formData.ageGroup === "<13"}
-                      disabled={["<13", "13-14", "15-17"].includes(
-                        formData.ageGroup
-                      )}
+                      disabled={
+                        // isUpgrade ||
+                        ["<13", "13-14", "15-17"].includes(formData.ageGroup)
+                      }
                       onChange={handleChange}
                       // required={formData.ageGroup !== "<13"}
                       required={
                         !["<13", "13-14", "15-17"].includes(formData.ageGroup)
                       }
                       InputProps={{
-                        readOnly: isUpgrade,
                         sx: {
                           height: { xs: 30, sm: 42 },
                           fontSize: { xs: "15px", sm: "17px" },
@@ -1944,6 +1951,7 @@ const Register = () => {
                       size="small"
                       name="mobile"
                       value={formData.mobile}
+                      disabled={isUpgrade}
                       onChange={(e) => {
                         let v = e.target.value;
 
@@ -1957,7 +1965,6 @@ const Register = () => {
                       placeholder="+1234567890"
                       required
                       InputProps={{
-                        readOnly: isUpgrade,
                         sx: {
                           height: { xs: 30, sm: 42 },
                           fontSize: { xs: "15px", sm: "17px" },
@@ -2080,10 +2087,11 @@ const Register = () => {
                       <TextField
                         size="small"
                         name="parentName"
+                        value={formData.parentName}
+                        disabled={isUpgrade}
                         required
                         onChange={handleChange}
                         InputProps={{
-                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -2159,10 +2167,10 @@ const Register = () => {
                         size="small"
                         name="parentEmail"
                         value={formData.parentEmail}
+                        // disabled={isUpgrade}
                         required
                         onChange={handleChange}
                         InputProps={{
-                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -2245,6 +2253,7 @@ const Register = () => {
                         size="small"
                         name="parentMobile"
                         value={formData.parentMobile}
+                        disabled={isUpgrade}
                         required
                         onChange={(e) => {
                           let v = e.target.value;
@@ -2256,7 +2265,6 @@ const Register = () => {
                           setFormData({ ...formData, parentMobile: v });
                         }}
                         InputProps={{
-                          readOnly: isUpgrade,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },

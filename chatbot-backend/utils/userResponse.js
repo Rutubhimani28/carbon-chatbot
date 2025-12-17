@@ -21,14 +21,10 @@ export const buildUserResponseByAgeGroup = (user) => {
     email: isMinor ? user.parentEmail : user.email,
     mobile: isMinor ? user.parentMobile : user.mobile,
 
-    // 🔑 Parent details only if minor
-    parentDetails: isMinor
-      ? {
-        parentName: user.parentName,
-        parentEmail: user.parentEmail,
-        parentMobile: user.parentMobile,
-      }
-      : null,
+    // 🔑 Parent details at root level (for frontend auto-fill)
+    parentName: isMinor ? user.parentName : null,
+    parentEmail: isMinor ? user.parentEmail : null,
+    parentMobile: isMinor ? user.parentMobile : null,
 
     // 🔑 Subscription
     subscription: {
