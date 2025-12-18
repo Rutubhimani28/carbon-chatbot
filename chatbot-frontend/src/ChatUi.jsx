@@ -854,6 +854,7 @@ const ChatUI = () => {
           icon: "error",
           title: "Not Allowed 🚫",
           text: data.message || "Generating images and videos is not allowed",
+          confirmButtonColor: "#1268fb",
           confirmButtonText: "OK",
         });
 
@@ -861,7 +862,12 @@ const ChatUI = () => {
           response: data.message,
           sessionId: currentSessionId,
           isError: true,
-          botName: selectedBot,
+          botName:
+            isSmartAI || activeView === "smartAi"
+              ? "Wrds AI"
+              : isSmartAIPro || activeView === "wrds AiPro"
+              ? "Wrds AiPro"
+              : selectedBot,
         };
       }
 
@@ -7968,7 +7974,7 @@ const ChatUI = () => {
                 }}
                 onClick={handleUpgradePlan}
               >
-                Upgrade Your Plan
+                Upgrade/ Renew Plan
               </Typography>
 
               <MenuItem
