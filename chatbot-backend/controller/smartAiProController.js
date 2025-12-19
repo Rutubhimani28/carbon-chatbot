@@ -1684,6 +1684,68 @@ function getFallbackModel(model) {
   return fallbackModels[model] || null;
 }
 
+const isImageOrVideoPrompt = (text = "") => {
+  const t = text.toLowerCase().trim();
+
+  /* 1️⃣ Direct image / video generation pattern */
+  const directPattern =
+    /(generate|create|make|draw|design|produce)\s+(an?\s+)?(ai\s+)?(image|picture|photo|art|illustration|drawing|video|clip|animation|animated|movie|film|reel)/i;
+
+  /* 2️⃣ Direct image / video keywords */
+  const directKeywords = [
+    "image generation",
+    "video generation",
+    "ai image",
+    "ai video",
+    "text to image",
+    "text to video",
+    "animation video",
+    "animated video",
+    "cinematic video",
+    "photo generation",
+    "picture generation",
+  ];
+
+  /* 3️⃣ Creation verbs (for VIEW-based prompts) */
+  const creationVerbs = [
+    "create",
+    "generate",
+    "make",
+    "render",
+    "design",
+    "build",
+    "produce",
+  ];
+
+  /* 4️⃣ View / visual indicators (ONLY for view creation) */
+  const viewIndicators = [
+    "view",
+    "scene",
+    "3d",
+    "3d view",
+    "3d render",
+    "isometric",
+    "isometric view",
+    "cinematic view",
+    "top view",
+    "side view",
+    "front view",
+    "rendered view",
+  ];
+
+  // ✅ Case 1: Direct image / video generation
+  if (directPattern.test(text)) return true;
+  if (directKeywords.some((k) => t.includes(k))) return true;
+
+  // ✅ Case 2: ONLY create/generate + view based prompts
+  const hasCreationVerb = creationVerbs.some((v) => t.includes(v));
+  const hasViewIndicator = viewIndicators.some((v) => t.includes(v));
+
+  if (hasCreationVerb && hasViewIndicator) return true;
+
+  return false;
+};
+
 export const getSmartAIProResponse = async (req, res) => {
   try {
     const isMultipart = req.headers["content-type"]?.includes(
@@ -1735,6 +1797,14 @@ export const getSmartAIProResponse = async (req, res) => {
     //   return res.status(400).json({ message: "botName is required" });
 
     if (!email) return res.status(400).json({ message: "email is required" });
+
+    if (isImageOrVideoPrompt(prompt)) {
+      return res.status(400).json({
+        success: false,
+        error: "MEDIA_GENERATION_NOT_ALLOWED",
+        message: "Generating images and videos is not allowed",
+      });
+    }
 
     // ✅ AGE-BASED CONTENT RESTRICTION LOGIC
 

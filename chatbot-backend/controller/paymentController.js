@@ -177,6 +177,8 @@ import sendPasswordMail from "../middleware/sendPasswordMail.js";
 import sendReceiptMail from "../middleware/mailWithAttachment.js";
 // import generateReceipt from "../utils/generateReceipt.js";
 import { generateReceipt } from "../middleware/generateReceipt.js";
+import { calculatePlanExpiry } from "../utils/dateUtils.js";
+import { getTokenLimit } from "../utils/planTokens.js";
 
 const router = express.Router();
 
@@ -410,6 +412,222 @@ router.post("/create-order", async (req, res) => {
 });
 
 // 2) Verify Payment (frontend posts payload returned by Razorpay handler)
+// router.post("/verify-payment", async (req, res) => {
+//   try {
+//     const {
+//       razorpay_order_id,
+//       razorpay_payment_id,
+//       razorpay_signature,
+//       email,
+//       isUpgrade,
+//       subscriptionPlan,
+//       childPlan,
+//       subscriptionType,
+//     } = req.body;
+
+//     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+//       return res.status(400).json({ success: false, error: "invalid payload" });
+//     }
+
+//     const shasum = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+//     shasum.update(razorpay_order_id + "|" + razorpay_payment_id);
+//     const generated_signature = shasum.digest("hex");
+
+//     if (generated_signature === razorpay_signature) {
+//       // payment verified
+//       // TODO: update order status in your DB here
+
+//       // Save transaction to DB
+//       try {
+//         // Fetch payment details to get amount
+//         const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+//         const newTransaction = new Transaction({
+//           razorpay_order_id,
+//           razorpay_payment_id,
+//           amount: payment.amount / 100, // amount in paise
+//           currency: payment.currency,
+//           status: "success",
+//         });
+
+//         await newTransaction.save();
+//         console.log("Transaction saved:", newTransaction);
+//       } catch (dbError) {
+//         console.error("Error saving transaction:", dbError);
+//         // Continue as payment is verified
+//       }
+
+//       // Update user password and send email
+//       if (email) {
+//         try {
+//           const user = await User.findOne({ email });
+//           if (user) {
+//             // ✅ Determine recipient email/name (needed for both new \u0026 upgrade)
+//             const recipientEmail = ["<13", "13-14", "15-17"].includes(
+//               user.ageGroup
+//             )
+//               ? user.parentEmail
+//               : email;
+//             const recipientName = ["<13", "13-14", "15-17"].includes(
+//               user.ageGroup
+//             )
+//               ? user.parentName
+//               : user.firstName;
+
+//             // ✅ Update subscription details if upgrade
+//             if (req.body.isUpgrade) {
+//               // const basePrice =
+//               //   BASE_PRICES_INR[req.body.subscriptionPlan][req.body.childPlan][
+//               //     req.body.subscriptionType
+//               //   ];
+
+//               // const gstAmount = Math.round(basePrice * 0.18);
+//               // const totalAmount = basePrice + gstAmount;
+
+//               const priceINR =
+//                 BASE_PRICES_INR[req.body.subscriptionPlan]?.[
+//                   req.body.childPlan
+//                 ]?.[req.body.subscriptionType];
+
+//               if (!priceINR) {
+//                 return res
+//                   .status(400)
+//                   .json({ error: "Invalid plan selection" });
+//               }
+
+//               // ✅ GST 18%
+//               const gstAmount = Math.round(priceINR * 0.18 * 100) / 100;
+
+//               // ✅ Total in paise
+//               const totalAmountINR = Math.round((priceINR + gstAmount) * 100);
+
+//               user.subscriptionPlan = req.body.subscriptionPlan;
+//               user.childPlan = req.body.childPlan;
+//               user.subscriptionType = req.body.subscriptionType;
+
+//               user.basePriceINR = priceINR;
+//               user.gstAmount = gstAmount;
+//               user.totalPriceINR = totalAmountINR / 100;
+
+//               user.planStartDate = new Date();
+//               user.subscriptionStatus = "active";
+//               user.isActive = true;
+
+//               await user.save();
+//               console.log(`✅ Plan upgraded for ${email}`);
+//             } else {
+//               // ❌ Only generate password for NEW registrations (not upgrades)
+//               // -------- Generate Password --------
+//               const cleanName = user.firstName
+//                 .replace(/\s+/g, "")
+//                 .toLowerCase();
+//               const passwordPart =
+//                 cleanName.length >= 4
+//                   ? cleanName.slice(0, 4)
+//                   : cleanName.padEnd(4, cleanName[0]);
+//               const year = new Date(user.dateOfBirth).getFullYear();
+//               const generatedPassword = `${passwordPart}@${year}`;
+
+//               const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+
+//               user.password = hashedPassword;
+//               user.subscriptionStatus = "active";
+//               user.isActive = true;
+
+//               await user.save();
+
+//               // ---- Send Password Email (NEW users only) ----
+//               await sendPasswordMail(
+//                 recipientEmail,
+//                 recipientName,
+//                 generatedPassword
+//               );
+//               console.log(`📧 Password email sent to ${recipientEmail}`);
+//             }
+
+//             // ---- Send Receipt Email (BOTH new \u0026 upgrade) ----
+//             // const pdfPath = "C:/Users/AAC/OneDrive/Desktop/Meeral/chatbot_carbon/RECEIPT-1 (1).pdf";
+
+//             // ⏳ DELAY EMAIL BY 4 MINUTES
+//             // --------------------------------------------------
+//             // setTimeout(async () => {
+//             //   try {
+//             //     // SEND PASSWORD MAIL
+//             //     await sendPasswordMail(
+//             //       recipientEmail,
+//             //       recipientName,
+//             //       generatedPassword
+//             //     );
+//             //     console.log(
+//             //       `📩 Password email sent after 4 min → ${recipientEmail}`
+//             //     );
+//             //   } catch (err) {
+//             //     console.error("4 min delayed email error:", err);
+//             //   }
+//             // }, 120000); // 4 minutes = 240000ms
+//             // }, 43200000); // 12 hours
+
+//             // const receiptData = {
+//             //   transactionId: razorpay_payment_id,
+//             //   date: new Date().toLocaleDateString(),
+//             //   customerName: `${user.firstName} ${user.lastName}`,
+//             //   email: recipientEmail,
+//             //   planName: `${user.subscriptionPlan} - ${user.childPlan}`,
+//             //   amount: user.totalPriceINR || "N/A", // Ensure this field exists or fetch from payment details
+//             //   currency: "INR",
+//             // };
+//             const amountInWords = numberToWords(
+//               Number(user.totalPriceINR || 0)
+//             );
+
+//             console.log("user::::", user);
+
+//             const receiptData = {
+//               receiptNo: `RCP-${Date.now()}`,
+//               date: new Date().toISOString().split("T")[0],
+//               fullName: `${user.firstName} ${user.lastName}`,
+//               planName: `${user.subscriptionPlan} - ${user.childPlan}`,
+//               subscriptionType: user.subscriptionType,
+//               amount: user.basePriceINR || 0,
+//               // gst: ((user.totalPriceINR * 18) / 100).toFixed(2),
+//               gst: user.gstAmount || 0,
+//               // total: (user.totalPriceINR * 1.18).toFixed(2),
+//               total: user.totalPriceINR || 0,
+//               paymentMethod: "Online",
+//               transactionId: razorpay_payment_id,
+//               amountInWords: amountInWords, // later fix
+//             };
+//             console.log("receiptData ::::::::::", receiptData);
+
+//             const dynamicPdfPath = await generateReceipt(receiptData);
+//             await sendReceiptMail(
+//               recipientEmail,
+//               recipientName,
+//               dynamicPdfPath
+//             );
+//             console.log(`Receipt email sent to ${recipientEmail}`);
+//           }
+//         } catch (userError) {
+//           console.error("Error updating user password:", userError);
+//         }
+//       }
+
+//       return res.json({
+//         success: true,
+//         message: "Payment verified",
+//         transactionId: razorpay_payment_id,
+//       });
+//     } else {
+//       return res
+//         .status(400)
+//         .json({ success: false, error: "Invalid signature" });
+//     }
+//   } catch (err) {
+//     console.error("verify-payment err:", err);
+//     res.status(500).json({ success: false, error: err.message });
+//   }
+// });
+
 router.post("/verify-payment", async (req, res) => {
   try {
     const {
@@ -417,208 +635,126 @@ router.post("/verify-payment", async (req, res) => {
       razorpay_payment_id,
       razorpay_signature,
       email,
+      isUpgrade,
+      subscriptionPlan,
+      childPlan,
+      subscriptionType,
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ success: false, error: "invalid payload" });
+      return res.status(400).json({ error: "Invalid payload" });
     }
 
+    // 🔐 Verify Razorpay signature
     const shasum = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     shasum.update(razorpay_order_id + "|" + razorpay_payment_id);
-    const generated_signature = shasum.digest("hex");
+    const digest = shasum.digest("hex");
 
-    if (generated_signature === razorpay_signature) {
-      // payment verified
-      // TODO: update order status in your DB here
-
-      // Save transaction to DB
-      try {
-        // Fetch payment details to get amount
-        const payment = await razorpay.payments.fetch(razorpay_payment_id);
-
-        const newTransaction = new Transaction({
-          razorpay_order_id,
-          razorpay_payment_id,
-          amount: payment.amount / 100, // amount in paise
-          currency: payment.currency,
-          status: "success",
-        });
-
-        await newTransaction.save();
-        console.log("Transaction saved:", newTransaction);
-      } catch (dbError) {
-        console.error("Error saving transaction:", dbError);
-        // Continue as payment is verified
-      }
-
-      // Update user password and send email
-      if (email) {
-        try {
-          const user = await User.findOne({ email });
-          if (user) {
-            // ✅ Determine recipient email/name (needed for both new \u0026 upgrade)
-            const recipientEmail = ["<13", "13-14", "15-17"].includes(
-              user.ageGroup
-            )
-              ? user.parentEmail
-              : email;
-            const recipientName = ["<13", "13-14", "15-17"].includes(
-              user.ageGroup
-            )
-              ? user.parentName
-              : user.firstName;
-
-            // ✅ Update subscription details if upgrade
-            if (req.body.isUpgrade) {
-              // const basePrice =
-              //   BASE_PRICES_INR[req.body.subscriptionPlan][req.body.childPlan][
-              //     req.body.subscriptionType
-              //   ];
-
-              // const gstAmount = Math.round(basePrice * 0.18);
-              // const totalAmount = basePrice + gstAmount;
-
-              const priceINR =
-                BASE_PRICES_INR[req.body.subscriptionPlan]?.[
-                  req.body.childPlan
-                ]?.[req.body.subscriptionType];
-
-              if (!priceINR) {
-                return res
-                  .status(400)
-                  .json({ error: "Invalid plan selection" });
-              }
-
-              // ✅ GST 18%
-              const gstAmount = Math.round(priceINR * 0.18 * 100) / 100;
-
-              // ✅ Total in paise
-              const totalAmountINR = Math.round((priceINR + gstAmount) * 100);
-
-              user.subscriptionPlan = req.body.subscriptionPlan;
-              user.childPlan = req.body.childPlan;
-              user.subscriptionType = req.body.subscriptionType;
-
-              user.basePriceINR = priceINR;
-              user.gstAmount = gstAmount;
-              user.totalPriceINR = totalAmountINR / 100;
-
-              user.planStartDate = new Date();
-              user.subscriptionStatus = "active";
-              user.isActive = true;
-
-              await user.save();
-              console.log(`✅ Plan upgraded for ${email}`);
-            } else {
-              // ❌ Only generate password for NEW registrations (not upgrades)
-              // -------- Generate Password --------
-              const cleanName = user.firstName
-                .replace(/\s+/g, "")
-                .toLowerCase();
-              const passwordPart =
-                cleanName.length >= 4
-                  ? cleanName.slice(0, 4)
-                  : cleanName.padEnd(4, cleanName[0]);
-              const year = new Date(user.dateOfBirth).getFullYear();
-              const generatedPassword = `${passwordPart}@${year}`;
-
-              const hashedPassword = await bcrypt.hash(generatedPassword, 10);
-
-              user.password = hashedPassword;
-              user.subscriptionStatus = "active";
-              user.isActive = true;
-
-              await user.save();
-
-              // ---- Send Password Email (NEW users only) ----
-              await sendPasswordMail(
-                recipientEmail,
-                recipientName,
-                generatedPassword
-              );
-              console.log(`📧 Password email sent to ${recipientEmail}`);
-            }
-
-            // ---- Send Receipt Email (BOTH new \u0026 upgrade) ----
-            // const pdfPath = "C:/Users/AAC/OneDrive/Desktop/Meeral/chatbot_carbon/RECEIPT-1 (1).pdf";
-
-            // ⏳ DELAY EMAIL BY 4 MINUTES
-            // --------------------------------------------------
-            // setTimeout(async () => {
-            //   try {
-            //     // SEND PASSWORD MAIL
-            //     await sendPasswordMail(
-            //       recipientEmail,
-            //       recipientName,
-            //       generatedPassword
-            //     );
-            //     console.log(
-            //       `📩 Password email sent after 4 min → ${recipientEmail}`
-            //     );
-            //   } catch (err) {
-            //     console.error("4 min delayed email error:", err);
-            //   }
-            // }, 120000); // 4 minutes = 240000ms
-            // }, 43200000); // 12 hours
-
-            // const receiptData = {
-            //   transactionId: razorpay_payment_id,
-            //   date: new Date().toLocaleDateString(),
-            //   customerName: `${user.firstName} ${user.lastName}`,
-            //   email: recipientEmail,
-            //   planName: `${user.subscriptionPlan} - ${user.childPlan}`,
-            //   amount: user.totalPriceINR || "N/A", // Ensure this field exists or fetch from payment details
-            //   currency: "INR",
-            // };
-            const amountInWords = numberToWords(
-              Number(user.totalPriceINR || 0)
-            );
-
-            console.log("user::::", user);
-
-            const receiptData = {
-              receiptNo: `RCP-${Date.now()}`,
-              date: new Date().toISOString().split("T")[0],
-              fullName: `${user.firstName} ${user.lastName}`,
-              planName: `${user.subscriptionPlan} - ${user.childPlan}`,
-              subscriptionType: user.subscriptionType,
-              amount: user.basePriceINR || 0,
-              // gst: ((user.totalPriceINR * 18) / 100).toFixed(2),
-              gst: user.gstAmount || 0,
-              // total: (user.totalPriceINR * 1.18).toFixed(2),
-              total: user.totalPriceINR || 0,
-              paymentMethod: "Online",
-              transactionId: razorpay_payment_id,
-              amountInWords: amountInWords, // later fix
-            };
-            console.log("receiptData ::::::::::", receiptData);
-
-            const dynamicPdfPath = await generateReceipt(receiptData);
-            await sendReceiptMail(
-              recipientEmail,
-              recipientName,
-              dynamicPdfPath
-            );
-            console.log(`Receipt email sent to ${recipientEmail}`);
-          }
-        } catch (userError) {
-          console.error("Error updating user password:", userError);
-        }
-      }
-
-      return res.json({
-        success: true,
-        message: "Payment verified",
-        transactionId: razorpay_payment_id,
-      });
-    } else {
-      return res
-        .status(400)
-        .json({ success: false, error: "Invalid signature" });
+    if (digest !== razorpay_signature) {
+      return res.status(400).json({ error: "Invalid signature" });
     }
+
+    // 💳 Fetch payment info
+    const payment = await razorpay.payments.fetch(razorpay_payment_id);
+
+    // 🧾 Save transaction
+    await Transaction.create({
+      razorpay_order_id,
+      razorpay_payment_id,
+      amount: payment.amount / 100,
+      currency: payment.currency,
+      status: "success",
+    });
+
+    // 👤 Find user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // 📆 SET PLAN DATES (NEW + UPGRADE BOTH)
+    user.planStartDate = new Date();
+    user.planExpiryDate = calculatePlanExpiry(subscriptionType);
+    user.planExpiryEmailSent = false;
+    user.subscriptionStatus = "active";
+    user.isActive = true;
+
+    // 🔁 Upgrade case
+    if (isUpgrade) {
+      user.subscriptionPlan = subscriptionPlan;
+      user.childPlan = childPlan;
+      user.subscriptionType = subscriptionType;
+
+      // ✅ Update Tokens using utility
+      const newTokenLimit = getTokenLimit({ subscriptionPlan, childPlan });
+      user.remainingTokens = newTokenLimit;
+      user.tokensConsumed = 0; // Reset consumed
+    } else {
+      // ✅ New User - Ensure tokens are set based on registration data
+      const tokenLimit = getTokenLimit({
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      });
+      user.remainingTokens = tokenLimit;
+      user.tokensConsumed = 0;
+    }
+
+    // 🔐 New user → generate password
+    if (!isUpgrade && !user.password) {
+      const clean = user.firstName.toLowerCase().slice(0, 4);
+      const year = new Date(user.dateOfBirth).getFullYear();
+      const password = `${clean}@${year}`;
+      user.password = await bcrypt.hash(password, 10);
+
+      const sendTo = ["<13", "13-14", "15-17"].includes(user.ageGroup)
+        ? user.parentEmail
+        : user.email;
+
+      const sendName = ["<13", "13-14", "15-17"].includes(user.ageGroup)
+        ? user.parentName
+        : user.firstName;
+
+      await sendPasswordMail(sendTo, sendName, password);
+    }
+
+    await user.save();
+    const amountInWords = numberToWords(Number(user.totalPriceINR || 0));
+
+    // 📄 Generate receipt
+    const receiptData = {
+      receiptNo: `RCP-${Date.now()}`,
+      date: new Date().toISOString().split("T")[0],
+      fullName: `${user.firstName} ${user.lastName}`,
+      planName: `${user.subscriptionPlan} - ${user.childPlan}`,
+      subscriptionType: user.subscriptionType,
+      amount: user.basePriceINR,
+      gst: user.gstAmount,
+      total: user.totalPriceINR,
+      paymentMethod: "Online",
+      transactionId: razorpay_payment_id,
+      amountInWords: amountInWords,
+    };
+
+    const pdfPath = await generateReceipt(receiptData);
+
+    // 📧 Send receipt mail
+    const recipientEmail = ["<13", "13-14", "15-17"].includes(user.ageGroup)
+      ? user.parentEmail
+      : user.email;
+
+    const recipientName = ["<13", "13-14", "15-17"].includes(user.ageGroup)
+      ? user.parentName
+      : user.firstName;
+
+    await sendReceiptMail(recipientEmail, recipientName, pdfPath);
+
+    res.json({
+      success: true,
+      message: "Payment verified, plan activated & receipt sent",
+      expiryDate: user.planExpiryDate,
+      transactionId: razorpay_payment_id,
+    });
   } catch (err) {
-    console.error("verify-payment err:", err);
-    res.status(500).json({ success: false, error: err.message });
+    console.error("verify-payment error:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 

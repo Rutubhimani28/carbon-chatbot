@@ -1,13 +1,8 @@
 import { getTokenLimit } from "./planTokens.js";
+import { checkPlanExpiry } from "./dateUtils.js";
 
 export const buildUserResponseByAgeGroup = (user) => {
   const isMinor = ["<13", "13-14", "15-17"].includes(user.ageGroup);
-
-  // ✅ Calculate remainingTokens based on selected plan
-  const remainingTokens = getTokenLimit({
-    subscriptionPlan: user.subscriptionPlan,
-    childPlan: user.childPlan,
-  });
 
   return {
     id: user._id,
@@ -33,11 +28,15 @@ export const buildUserResponseByAgeGroup = (user) => {
       subscriptionType: user.subscriptionType,
       status: user.subscriptionStatus,
       isActive: user.isActive,
-      remainingTokens: remainingTokens, // ✅ Dynamically calculated
+      remainingTokens: user.remainingTokens, // ✅ From DB (Balance)
       basePriceINR: user.basePriceINR,
       gstAmount: user.gstAmount,
       totalPriceINR: user.totalPriceINR,
       currency: user.currency,
+
+      // ✅ Plan Validity
+      planExpiryDate: user.planExpiryDate,
+      isPlanExpired: checkPlanExpiry(user),
     },
   };
 };

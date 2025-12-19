@@ -75,10 +75,90 @@ import bcrypt from "bcryptjs";
 import User from "../model/User.js";
 // import { sendPasswordMail } from "../services/mailService.js";
 import sendPasswordMail from "../middleware/sendPasswordMail.js";
+import sendPlanExpiredMail from "../middleware/sendPlanExpiredMail.js";
 import { getTokenLimit } from "../utils/planTokens.js";
 import { buildUserResponseByAgeGroup } from "../utils/userResponse.js";
+import { checkPlanExpiry } from "../utils/dateUtils.js";
 
-// Plan Options
+// ... (existing imports and constants) ...
+
+// ... (registerUser function - no changes needed there as verify-payment handles user creation mostly,
+//      except for Free Trial if that logic remains, but sticking to requested scope) ...
+
+export const loginUser = async (req, res) => {
+  try {
+    let { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email & Password required" });
+    }
+
+    email = email.trim().toLowerCase(); // 💡 Prevents case mismatch
+
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (!user.password) {
+      return res.status(400).json({
+        error:
+          "Password not set for this account. Please reset or register again.",
+      });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid)
+      return res.status(400).json({ error: "Incorrect Password" });
+
+    // ✅ Check Plan Expiry
+    const isPlanExpired = checkPlanExpiry(user);
+    // if (isPlanExpired && !user.planExpiryEmailSent) {
+    //   // Send email
+    //   const recipientName = ["<13", "13-14", "15-17"].includes(user.ageGroup) ? user.parentName : user.firstName;
+    //   await sendPlanExpiredMail(user.email, recipientName || user.firstName);
+
+    //   user.planExpiryEmailSent = true;
+    //   await user.save();
+    //   console.log(`Plan expired for ${user.email}. Email sent.`);
+    // }
+    if (isPlanExpired) {
+      if (!user.planExpiryEmailSent) {
+        const recipientName = ["<13", "13-14", "15-17"].includes(user.ageGroup)
+          ? user.parentName
+          : user.firstName;
+
+        console.log("dateOfBirth:::::", user.dateOfBirth);
+        console.log("ageGroup:::::", user.ageGroup);
+
+        await sendPlanExpiredMail(user.email, recipientName || user.firstName, {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          dateOfBirth: user.dateOfBirth,
+          email: user.email,
+          mobile: user.mobile,
+          ageGroup: user.ageGroup,
+          parentName: user.parentName,
+          parentEmail: user.parentEmail,
+          parentMobile: user.parentMobile,
+        });
+        user.planExpiryEmailSent = true;
+      }
+
+      user.subscriptionStatus = "expired";
+      user.isActive = false;
+      await user.save();
+    }
+
+    res.json({
+      status: 200,
+      message: "Login successful",
+      data: buildUserResponseByAgeGroup(user),
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Login failed", details: err.message });
+  }
+};
+
 const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
 const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
 const subscriptionTypes = ["Monthly", "Yearly"];
@@ -645,53 +725,3 @@ export const registerUser = async (req, res) => {
 //     });
 //   }
 // };
-
-export const loginUser = async (req, res) => {
-  try {
-    let { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email & Password required" });
-    }
-
-    email = email.trim().toLowerCase(); // 💡 Prevents case mismatch
-
-    const user = await User.findOne({ email });
-
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (!user.password) {
-      return res.status(400).json({
-        error:
-          "Password not set for this account. Please reset or register again.",
-      });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid)
-      return res.status(400).json({ error: "Incorrect Password" });
-
-    res.json({
-      status: 200,
-      message: "Login successful",
-      data: buildUserResponseByAgeGroup(user),
-      // data: {
-      //   id: user._id,
-      //   firstName: user.firstName,
-      //   lastName: user.lastName,
-      //   email: user.email,
-      //   mobile: user.mobile,
-      //   dateOfBirth: user.dateOfBirth,
-      //   remainingTokens: user.remainingTokens,
-      //   subscriptionPlan: user.subscriptionPlan,
-      //   childPlan: user.childPlan,
-      //   subscriptionType: user.subscriptionType,
-      //   // subscriptionStatus: user.subscriptionStatus,
-      //   // isActive: user.isActive,
-      //   // totalPriceINR: user.totalPriceINR,
-      // },
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Login failed", details: err.message });
-  }
-};
