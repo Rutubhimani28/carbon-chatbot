@@ -5388,7 +5388,15 @@ const ChatUI = () => {
                       size="small"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
+                      // onKeyDown={(e) => {
+                      //   if (e.key === "Enter" && !e.shiftKey) {
+                      //     e.preventDefault();
+                      //     handleSend();
+                      //   }
+                      // }}
                       onKeyDown={(e) => {
+                        if (User?.subscription?.isPlanExpired) return;
+
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
                           handleSend();
@@ -5642,16 +5650,29 @@ const ChatUI = () => {
 
                       {/* ➤ Send Button */}
                       <IconButton
-                        onClick={() => handleSend()}
+                        onClick={() => {
+                          if (User?.subscription?.isPlanExpired) return;
+                          handleSend();
+                        }}
                         // disabled={!input.trim() || isSending || isTypingResponse}
+                        disabled={User?.subscription?.isPlanExpired}
                         sx={{
-                          bgcolor: "#1268fb",
+                          // bgcolor: "#1268fb",
+                          bgcolor: User?.subscription?.isPlanExpired
+                            ? "#bdbdbd"
+                            : "#1268fb",
                           color: "white",
                           width: isXS ? "30px" : "40px",
                           height: isXS ? "30px" : "40px",
                           ml: 1,
-                          "&:hover": { bgcolor: "#204BC4" },
+                          // "&:hover": { bgcolor: "#204BC4" },
+                          "&:hover": {
+                            bgcolor: User?.subscription?.isPlanExpired
+                              ? "#bdbdbd"
+                              : "#204BC4",
+                          },
                           borderRadius: "50%",
+                          opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
                         }}
                       >
                         <SendIcon
@@ -7673,13 +7694,27 @@ const ChatUI = () => {
                   fontSize: 18,
                   px: 1.5,
                   py: 0.7,
-                  cursor: "pointer",
+                  // cursor: "pointer",
+                  cursor: User?.subscription?.isPlanExpired
+                    ? "not-allowed"
+                    : "pointer",
                   position: "relative",
                   fontWeight: activeView === "newChat" ? 600 : 400,
-                  color: activeView === "newChat" ? "#555" : "#000",
-                  "&:hover": { color: "#000" },
+                  color: User?.subscription?.isPlanExpired ? "#555" : "#000",
+                  // "&:hover": { color: "#000" },
+                  "&:hover": {
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
+                  },
+
+                  opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                  pointerEvents: User?.subscription?.isPlanExpired
+                    ? "none"
+                    : "auto",
                 }}
                 onClick={() => {
+                  if (User?.subscription?.isPlanExpired) return;
                   createNewChat();
                   setOpenSidebar(false);
                 }}
@@ -7706,23 +7741,46 @@ const ChatUI = () => {
                 <Typography
                   sx={{
                     fontSize: 18,
-                    cursor: "pointer",
+                    // cursor: "pointer",
+                    cursor: User?.subscription?.isPlanExpired
+                      ? "not-allowed"
+                      : "pointer",
                     px: 1.5,
                     py: 0.7,
                     borderRadius: "6px",
                     display: "inline-block",
                     transition: "0.25s",
+                    // backgroundColor:
+                    //   activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
                     backgroundColor:
-                      activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
-                    color: activeView === "smartAi" ? "#000" : "#000",
+                      activeView === "smartAi" &&
+                      !User?.subscription?.isPlanExpired
+                        ? "#e3e3e3ff"
+                        : "transparent",
+                    // color: activeView === "smartAi" ? "#000" : "#000",
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
                     fontWeight: activeView === "smartAi" ? 600 : 400,
 
+                    // "&:hover": {
+                    //   backgroundColor:
+                    //     activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
+                    // },
                     "&:hover": {
-                      backgroundColor:
-                        activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
+                      backgroundColor: User?.subscription?.isPlanExpired
+                        ? "transparent"
+                        : "#eaeaea",
                     },
+
+                    opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                    pointerEvents: User?.subscription?.isPlanExpired
+                      ? "none"
+                      : "auto",
                   }}
                   onClick={() => {
+                    if (User?.subscription?.isPlanExpired) return;
+
                     setActiveView("smartAi");
                     setIsSmartAI(false);
                     setOpenSidebar(false);
@@ -7752,23 +7810,43 @@ const ChatUI = () => {
                 <Typography
                   sx={{
                     fontSize: 18,
-                    cursor: "pointer",
+                    // cursor: "pointer",
+                    cursor: User?.subscription?.isPlanExpired
+                      ? "not-allowed"
+                      : "pointer",
                     px: 1.5,
                     py: 0.7,
                     borderRadius: "6px",
                     display: "inline-block",
                     transition: "0.25s",
+                    // backgroundColor:
+                    //   activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
                     backgroundColor:
-                      activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
-                    color: activeView === "wrds AiPro" ? "#000" : "#000",
+                      activeView === "wrds AiPro" &&
+                      !User?.subscription?.isPlanExpired
+                        ? "#e3e3e3ff"
+                        : "transparent",
+
+                    // color: activeView === "wrds AiPro" ? "#000" : "#000",
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
                     fontWeight: activeView === "wrds AiPro" ? 600 : 400,
 
                     "&:hover": {
-                      backgroundColor:
-                        activeView === "wrds AiPro" ? "#eaeaea" : "#eaeaea",
+                      backgroundColor: User?.subscription?.isPlanExpired
+                        ? "transparent"
+                        : "#eaeaea",
                     },
+
+                    opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                    pointerEvents: User?.subscription?.isPlanExpired
+                      ? "none"
+                      : "auto",
                   }}
                   onClick={() => {
+                    if (User?.subscription?.isPlanExpired) return;
+
                     setActiveView("wrds AiPro");
                     setIsSmartAIPro(false);
                     setOpenSidebar(false);
@@ -7829,6 +7907,7 @@ const ChatUI = () => {
               >
                 Chat
               </Typography> */}
+
               <Box
                 sx={{
                   display: "flex",
@@ -7837,13 +7916,33 @@ const ChatUI = () => {
                   px: 1.5,
                   py: 0.7,
                   borderRadius: "6px",
-                  cursor: "pointer",
+                  // cursor: "pointer",
+                  cursor: User?.subscription?.isPlanExpired
+                    ? "not-allowed"
+                    : "pointer",
+                  // backgroundColor:
+                  //   activeView === "chat" ? "#e3e3e3" : "transparent",
                   backgroundColor:
-                    activeView === "chat" ? "#e3e3e3" : "transparent",
+                    activeView === "chat" && !User?.subscription?.isPlanExpired
+                      ? "#e3e3e3"
+                      : "transparent",
+
                   transition: "0.2s",
-                  "&:hover": { backgroundColor: "#eaeaea" },
+                  // "&:hover": { backgroundColor: "#eaeaea" },
+                  "&:hover": {
+                    backgroundColor: User?.subscription?.isPlanExpired
+                      ? "transparent"
+                      : "#eaeaea",
+                  },
+
+                  opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                  pointerEvents: User?.subscription?.isPlanExpired
+                    ? "none"
+                    : "auto",
                 }}
                 onClick={() => {
+                  if (User?.subscription?.isPlanExpired) return;
+
                   setActiveView("chat");
                   setIsBotDropdownOpen((prev) => !prev); // toggle open/close
                   setSearchValue("");
@@ -7855,6 +7954,9 @@ const ChatUI = () => {
                     fontSize: 18,
                     fontWeight: activeView === "chat" ? 600 : 400,
                     fontFamily: "Calibri, sans-serif",
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
                   }}
                 >
                   Chat
@@ -7866,11 +7968,14 @@ const ChatUI = () => {
                     transform: isBotDropdownOpen
                       ? "rotate(180deg)"
                       : "rotate(0deg)",
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
                   }}
                 />
               </Box>
 
-              {isBotDropdownOpen && (
+              {!User?.subscription?.isPlanExpired && isBotDropdownOpen && (
                 <Box
                   sx={{
                     mt: 1,
@@ -7920,7 +8025,10 @@ const ChatUI = () => {
                 <Typography
                   sx={{
                     fontSize: 18,
-                    cursor: "pointer",
+                    // cursor: "pointer",
+                    cursor: User?.subscription?.isPlanExpired
+                      ? "not-allowed"
+                      : "pointer",
                     px: 1.5,
                     py: 0.7,
                     borderRadius: "6px",
@@ -7928,14 +8036,31 @@ const ChatUI = () => {
                     alignItems: "center",
                     justifyContent: "space-between",
                     transition: "0.25s",
+                    // backgroundColor:
+                    //   activeView === "search2" ? "#e3e3e3ff" : "transparent",
                     backgroundColor:
-                      activeView === "search2" ? "#e3e3e3ff" : "transparent",
+                      activeView === "search2" &&
+                      !User?.subscription?.isPlanExpired
+                        ? "#e3e3e3ff"
+                        : "transparent",
+
                     color: disabled ? "#7a7a7a" : "#000",
+                    //  color: User?.subscription?.isPlanExpired ? "#9e9e9e" : "#000",
                     fontWeight: activeView === "search2" ? 600 : 400,
+                    // "&:hover": {
+                    //   backgroundColor:
+                    //     activeView === "search2" ? "#eaeaea" : "#eaeaea",
+                    // },
                     "&:hover": {
-                      backgroundColor:
-                        activeView === "search2" ? "#eaeaea" : "#eaeaea",
+                      backgroundColor: User?.subscription?.isPlanExpired
+                        ? "transparent"
+                        : "#eaeaea",
                     },
+
+                    opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                    pointerEvents: User?.subscription?.isPlanExpired
+                      ? "none"
+                      : "auto",
                   }}
                 >
                   AI Browsing
@@ -7943,7 +8068,10 @@ const ChatUI = () => {
                     <InfoOutlinedIcon
                       sx={{
                         fontSize: 20,
-                        color: "#7a7a7a",
+                        // color: "#7a7a7a",
+                        color: User?.subscription?.isPlanExpired
+                          ? "#9e9e9e"
+                          : "#7a7a7a",
                         cursor: "pointer",
                         ml: 1,
                         "&:hover": { color: "#000" },

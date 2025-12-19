@@ -964,7 +964,105 @@ const Register = () => {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
+  const params = new URLSearchParams(location.search);
+  const isUpgradeFromUrl = params.get("isUpgrade") === "true";
+
+  // 🔥 SAME behaviour for Chat upgrade & Email upgrade
+  const isUpgradeMode = isUpgrade || isUpgradeFromUrl;
+
+  // useEffect(() => {
+  //   if (isUpgrade && userData) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       ...userData,
+  //       dateOfBirth: userData.dateOfBirth
+  //         ? new Date(userData.dateOfBirth)
+  //         : null,
+  //       parentName: userData.parentName || "",
+  //       parentEmail: userData.parentEmail || "",
+  //       parentMobile: userData.parentMobile || "",
+  //     }));
+  //   }
+  // }, [isUpgrade, userData]);
+
   useEffect(() => {
+    // 🔹 1. First priority: URL params (Email / direct link)
+    // const params = new URLSearchParams(location.search);
+    // const isUpgradeFromUrl = params.get("isUpgrade");
+
+    // if (isUpgradeFromUrl) {
+    //   const dobParam = params.get("dateOfBirth");
+    //   console.log("dobParam:::::::",dobParam);
+    //   const dobDate = dobParam ? new Date(dobParam) : null;
+
+    //   const calculatedAgeGroup = dobDate
+    //     ? calculateAgeGroup(dobDate)
+    //     : params.get("ageGroup") || "";
+
+    //   setFormData((prev) => ({
+    //     ...prev,
+    //     firstName: params.get("firstName") || "",
+    //     lastName: params.get("lastName") || "",
+    //     email: params.get("email") || "",
+    //     mobile: params.get("mobile") || "",
+    //     dateOfBirth: dobDate,
+    //     ageGroup: calculatedAgeGroup,
+
+    //     parentName: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+    //       ? params.get("parentName") || ""
+    //       : "",
+    //     parentEmail: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+    //       ? params.get("parentEmail") || ""
+    //       : "",
+    //     parentMobile: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+    //       ? params.get("parentMobile") || ""
+    //       : "",
+    //   }));
+
+    //   console.log("ageGroup*********",calculatedAgeGroup);
+
+    //   return; // ✅ stop here, no need to check state
+    // }
+
+    // 🔹 1. First priority: URL params (Email / direct link)
+    const params = new URLSearchParams(location.search);
+    const isUpgradeFromUrl = params.get("isUpgrade");
+
+    if (isUpgradeFromUrl) {
+      const dobParam = params.get("dateOfBirth");
+      console.log("dobParam:::::::", dobParam);
+
+      // ✅ Convert string → Date object
+      const dobDate = dobParam ? new Date(dobParam) : null;
+
+      // ✅ ALWAYS calculate age group from DOB (no fallback from param)
+      const calculatedAgeGroup = dobDate ? calculateAgeGroup(dobDate) : "";
+
+      setFormData((prev) => ({
+        ...prev,
+        firstName: params.get("firstName") || "",
+        lastName: params.get("lastName") || "",
+        email: params.get("email") || "",
+        mobile: params.get("mobile") || "",
+        dateOfBirth: dobDate, // ✅ DatePicker auto filled
+        ageGroup: calculatedAgeGroup, // ✅ DOB based age group
+
+        parentName: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+          ? params.get("parentName") || ""
+          : "",
+        parentEmail: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+          ? params.get("parentEmail") || ""
+          : "",
+        parentMobile: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
+          ? params.get("parentMobile") || ""
+          : "",
+      }));
+
+      console.log("ageGroup*********", calculatedAgeGroup);
+      return; // ✅ stop here, no need to check state
+    }
+
+    // 🔹 2. Fallback: ChatUI → navigate(state)
     if (isUpgrade && userData) {
       setFormData((prev) => ({
         ...prev,
@@ -977,7 +1075,7 @@ const Register = () => {
         parentMobile: userData.parentMobile || "",
       }));
     }
-  }, [isUpgrade, userData]);
+  }, [isUpgrade, userData, location.search]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -1476,10 +1574,10 @@ const Register = () => {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    disabled={isUpgrade}
+                    disabled={isUpgradeMode}
                     required
                     InputProps={{
-                      readOnly: isUpgrade,
+                      readOnly: isUpgradeMode,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1505,10 +1603,10 @@ const Register = () => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    disabled={isUpgrade}
+                    disabled={isUpgradeMode}
                     required
                     InputProps={{
-                      readOnly: isUpgrade,
+                      readOnly: isUpgradeMode,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1538,14 +1636,14 @@ const Register = () => {
                   <DatePicker
                     value={formData.dateOfBirth}
                     onChange={handleDateChange}
-                    disabled={isUpgrade}
+                    disabled={isUpgradeMode}
                     slotProps={{
                       textField: {
                         size: "small",
                         fullWidth: true,
                         required: true,
                         InputProps: {
-                          readOnly: isUpgrade,
+                          readOnly: isUpgradeMode,
                           sx: {
                             height: { xs: 30, sm: 42 },
                             fontSize: { xs: "15px", sm: "17px" },
@@ -1578,7 +1676,7 @@ const Register = () => {
                     required
                     onChange={handleChange}
                     InputProps={{
-                      readOnly: isUpgrade,
+                      readOnly: isUpgradeMode,
                       sx: {
                         height: { xs: 30, sm: 42 },
                         fontSize: { xs: "15px", sm: "17px" },
@@ -1951,7 +2049,7 @@ const Register = () => {
                       size="small"
                       name="mobile"
                       value={formData.mobile}
-                      disabled={isUpgrade}
+                      disabled={isUpgradeMode}
                       onChange={(e) => {
                         let v = e.target.value;
 
@@ -2088,7 +2186,7 @@ const Register = () => {
                         size="small"
                         name="parentName"
                         value={formData.parentName}
-                        disabled={isUpgrade}
+                        disabled={isUpgradeMode}
                         required
                         onChange={handleChange}
                         InputProps={{
@@ -2253,7 +2351,7 @@ const Register = () => {
                         size="small"
                         name="parentMobile"
                         value={formData.parentMobile}
-                        disabled={isUpgrade}
+                        disabled={isUpgradeMode}
                         required
                         onChange={(e) => {
                           let v = e.target.value;

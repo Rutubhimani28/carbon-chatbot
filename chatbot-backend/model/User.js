@@ -36,6 +36,11 @@ const userSchema = new mongoose.Schema(
     totalPriceINR: { type: Number, required: false },
     password: { type: String, required: false },
     remainingTokens: { type: Number },
+
+    // ✅ Plan Validity Tracking
+    planStartDate: { type: Date },
+    planExpiryDate: { type: Date },
+    planExpiryEmailSent: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
