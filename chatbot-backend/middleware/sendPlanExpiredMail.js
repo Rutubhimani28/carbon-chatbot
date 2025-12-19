@@ -28,16 +28,7 @@ const sendPlanExpiredMail = async (email, firstName, userData) => {
     console.log("dateOfBirth:::::", userData.dateOfBirth);
     console.log("ageGroup:::::", userData.ageGroup);
 
-    const upgradeUrl = `http://localhost:5173/register?isUpgrade=true
-      &firstName=${encodeURIComponent(userData.firstName)}
-      &lastName=${encodeURIComponent(userData.lastName)}
-      &email=${encodeURIComponent(userData.email)}
-      &mobile=${encodeURIComponent(userData.mobile || "")}
-      &dateOfBirth=${encodeURIComponent(userData.dateOfBirth || "")}
-      &ageGroup=${encodeURIComponent(userData.ageGroup)}
-      &parentName=${encodeURIComponent(userData.parentName || "")}
-      &parentEmail=${encodeURIComponent(userData.parentEmail || "")}
-      &parentMobile=${encodeURIComponent(userData.parentMobile || "")}`;
+    const upgradeUrl = `http://localhost:5173/register?isUpgrade=true&firstName=${encodeURIComponent(userData.firstName)}&lastName=${encodeURIComponent(userData.lastName)}&email=${encodeURIComponent(userData.email)}&mobile=${encodeURIComponent(userData.mobile || "")}&dateOfBirth=${encodeURIComponent(userData.dateOfBirth || "")}&ageGroup=${encodeURIComponent(userData.ageGroup)}&parentName=${encodeURIComponent(userData.parentName || "")}&parentEmail=${encodeURIComponent(userData.parentEmail || "")}&parentMobile=${encodeURIComponent(userData.parentMobile || "")}`;
 
     const htmlData = await ejs.renderFile(templatePath, {
       firstName,

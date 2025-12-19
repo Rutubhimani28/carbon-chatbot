@@ -4,12 +4,6 @@ import { checkPlanExpiry } from "./dateUtils.js";
 export const buildUserResponseByAgeGroup = (user) => {
   const isMinor = ["<13", "13-14", "15-17"].includes(user.ageGroup);
 
-  // ✅ Calculate remainingTokens based on selected plan
-  const remainingTokens = getTokenLimit({
-    subscriptionPlan: user.subscriptionPlan,
-    childPlan: user.childPlan,
-  });
-
   return {
     id: user._id,
 

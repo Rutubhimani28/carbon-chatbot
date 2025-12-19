@@ -178,6 +178,7 @@ import sendReceiptMail from "../middleware/mailWithAttachment.js";
 // import generateReceipt from "../utils/generateReceipt.js";
 import { generateReceipt } from "../middleware/generateReceipt.js";
 import { calculatePlanExpiry } from "../utils/dateUtils.js";
+import { getTokenLimit } from "../utils/planTokens.js";
 
 const router = express.Router();
 
@@ -681,7 +682,19 @@ router.post("/verify-payment", async (req, res) => {
       user.subscriptionPlan = subscriptionPlan;
       user.childPlan = childPlan;
       user.subscriptionType = subscriptionType;
-      
+
+      // ✅ Update Tokens using utility
+      const newTokenLimit = getTokenLimit({ subscriptionPlan, childPlan });
+      user.remainingTokens = newTokenLimit;
+      user.tokensConsumed = 0; // Reset consumed
+    } else {
+      // ✅ New User - Ensure tokens are set based on registration data
+      const tokenLimit = getTokenLimit({
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      });
+      user.remainingTokens = tokenLimit;
+      user.tokensConsumed = 0;
     }
 
     // 🔐 New user → generate password

@@ -14,21 +14,22 @@ export const calculatePlanExpiry = (subscriptionType) => {
   // expiryDate.setMinutes(expiryDate.getMinutes() + 5);
 
   //  Original Logic (Commented out for testing)
-  const year = startDate.getFullYear();
-  const month = startDate.getMonth() + 1; // 1-12
+    const year = startDate.getFullYear();
+    const month = startDate.getMonth() + 1; // 1-12
 
-  if (subscriptionType === "Monthly") {
-    // Get total days in current month
-    const daysInMonth = new Date(year, month, 0).getDate();
-    expiryDate.setDate(expiryDate.getDate() + daysInMonth);
-  } else if (subscriptionType === "Yearly") {
-    // Get total days in current year
-    const isLeap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    const daysInYear = isLeap ? 366 : 365;
-    expiryDate.setDate(expiryDate.getDate() + daysInYear);
-  } else if (subscriptionType === "One Time") {
-    return null;
-  }
+    if (subscriptionType === "Monthly") {
+        // Get total days in current month
+        const daysInMonth = new Date(year, month, 0).getDate();
+        expiryDate.setDate(expiryDate.getDate() + daysInMonth);
+    } else if (subscriptionType === "Yearly") {
+        // Get total days in current year
+        const isLeap = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+        const daysInYear = isLeap ? 366 : 365;
+        expiryDate.setDate(expiryDate.getDate() + daysInYear);
+    } else if (subscriptionType === "One Time") {
+        return null;
+    }
+    
 
   return expiryDate;
 };
