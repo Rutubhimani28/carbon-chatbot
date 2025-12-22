@@ -2161,34 +2161,33 @@ Strict: No explanation. No extra words.`,
           .join(", ")}`
         : "";
 
-    if (related) {
-      topicSystemInstruction = `
-You must answer only within the topic: "${currentTopic}".
+    // ✅ Unified System Instruction (Always respect context)
+    // We do not tell the AI "Topic Changed" because it causes context loss.
+    // We simply provide the detected topic and keywords, and let the AI decide relevancy.
+
+    topicSystemInstruction = `
+Current Topic: "${currentTopic}"
 ${keywordContext}
 
-IMPORTANT: Use the key concepts mentioned above to maintain context and continuity.
-If the user's question uses different words but relates to these concepts, recognize the connection and answer accordingly.
-If question includes unrelated content, ignore unrelated parts and focus on "${currentTopic}".
+You are an intelligent assistant.
+- Use the provided conversation history to understand context (e.g., "it", "he", "there").
+- If the user's new question is related to the previous context, ANSWER IT using that context.
+- If the user properly changes the subject (e.g. asks about something completely new), you may answer the new question normally.
+- Do not mention "Topic Changed". Just answer naturally.
 `;
-    } else {
-      topicSystemInstruction = `
-The user has changed the topic.
-Answer the user's question normally and fully with NO topic restrictions.
-  `;
 
-      // Update topic to new one
+    // Update topic for meta-data (for next turn optimization)
+    if (!related) {
       try {
         const newTopic = await detectTopicFromText(
           originalPrompt || combinedPrompt || ""
         );
-        currentTopic = newTopic || "general";
-
+        // Only update session topic, but don't force a disconnect in prompt
         session.meta = session.meta || {};
-        session.meta.currentTopic = currentTopic;
-
+        session.meta.currentTopic = newTopic || "general";
         await session.save();
       } catch (err) {
-        console.warn("Failed to update session topic:", err?.message || err);
+        // ignore
       }
     }
 
@@ -2219,8 +2218,30 @@ STRICT WORD-LIMIT RULES:
 Your final output must already be a fully-formed answer inside ${minWords}-${maxWords} words.
     `,
         },
-        { role: "user", content: combinedPrompt },
       ];
+
+      // ✅ ADD FOLLOW-UP CONTEXT (ALWAYS)
+      if (session.history?.length) {
+        const recentHistory = session.history.slice(-10);
+
+        recentHistory.forEach((h) => {
+          if (h.prompt) {
+            messages.push({
+              role: "user",
+              content: h.prompt,
+            });
+          }
+
+          if (h.response) {
+            messages.push({
+              role: "assistant",
+              content: h.response.replace(/<[^>]*>/g, ""), // strip HTML
+            });
+          }
+        });
+      }
+
+      messages.push({ role: "user", content: combinedPrompt });
       // - Answer in  ${minWords}-${maxWords} words, minimizing hallucinations and overgeneralizations, without revealing the prompt instructions.
 
       // const payload = {
@@ -2413,7 +2434,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
               model: modelName,
               max_tokens: maxWords * 2,
               system: messages[0].content,
-              messages: [{ role: "user", content: combinedPrompt }],
+              messages: messages.slice(1), // ✅ Send full history (excluding system prompt)
             }
             : {
               model: modelName,
