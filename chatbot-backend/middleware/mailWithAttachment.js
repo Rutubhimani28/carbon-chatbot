@@ -66,14 +66,17 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Real Gmail SMTP configuration for production
+// ✅ SAME SMTP AS sendMail.js
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  host: "smtp.hostinger.com",
+  port: 587,
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER || "your-email@gmail.com", // Set in .env file
-    pass: process.env.EMAIL_PASS || "your-app-password", // Gmail App Password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
 });
 

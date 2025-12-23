@@ -576,12 +576,23 @@ const Login = () => {
                   }}
                 />
 
+                <Box sx={{ textAlign: "right", mt: 1 }}>
+                  <Link
+                    component={RouterLink}
+                    to="/forgot-password"
+                    underline="hover"
+                    variant="body2"
+                  >
+                    Forgot Password?
+                  </Link>
+                </Box>
+
                 {/* Submit */}
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
-                  sx={{ mt: 3, mb: 2 }}
+                  sx={{ mt: 2, mb: 2 }}
                   disabled={loading}
                 >
                   {loading ? (
