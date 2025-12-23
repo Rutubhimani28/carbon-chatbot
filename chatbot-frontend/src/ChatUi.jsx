@@ -2773,7 +2773,18 @@ const ChatUI = () => {
         isSmartAIPro
       );
 
-      if (!result || isStoppedRef.current) return;
+      // ✅ Persist sessionId so subsequent prompts stay in the same session
+      if (result.sessionId && (!selectedChatId || selectedChatId !== result.sessionId)) {
+        console.log("Saving sessionId to state and localStorage:", result.sessionId);
+        setSelectedChatId(result.sessionId);
+        if (activeView === "smartAi" || isSmartAI) {
+          localStorage.setItem("lastSmartAISessionId", result.sessionId);
+        } else if (activeView === "wrds AiPro" || isSmartAIPro) {
+          localStorage.setItem("lastSmartAIProSessionId", result.sessionId);
+        } else {
+          localStorage.setItem("lastChatSessionId", result.sessionId);
+        }
+      }
 
       const responseText = result.response || "";
 
