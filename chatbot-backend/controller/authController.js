@@ -72,6 +72,7 @@
 // };
 
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import User from "../model/User.js";
 // import { sendPasswordMail } from "../services/mailService.js";
 import sendPasswordMail from "../middleware/sendPasswordMail.js";
@@ -79,6 +80,7 @@ import sendPlanExpiredMail from "../middleware/sendPlanExpiredMail.js";
 import { getTokenLimit } from "../utils/planTokens.js";
 import { buildUserResponseByAgeGroup } from "../utils/userResponse.js";
 import { checkPlanExpiry } from "../utils/dateUtils.js";
+import sendResetPasswordMail from "../middleware/sendResetPasswordMail.js";
 
 // ... (existing imports and constants) ...
 
@@ -179,14 +181,14 @@ const subscriptionTypes = ["Monthly", "Yearly"];
 
 const BASE_PRICES_INR = {
   Nova: {
-    "Glow Up": { Monthly: 99, Yearly: 1089 },
-    "Level Up": { Monthly: 199, Yearly: 1999 },
-    "Rise Up": { Monthly: 399, Yearly: 3999 },
+    "Glow Up": { Monthly: 83.90, Yearly: 922.86 },
+    "Level Up": { Monthly: 168.64, Yearly: 1694.09 },
+    "Rise Up": { Monthly: 338.14, Yearly: 3388.98 },
   },
   Supernova: {
-    "Step Up": { Monthly: 499, Yearly: 5489 },
-    "Speed Up": { Monthly: 899, Yearly: 8999 },
-    "Scale Up": { Monthly: 1599, Yearly: 15999 },
+    "Step Up": { Monthly: 422.88, Yearly: 4651.69 },
+    "Speed Up": { Monthly: 761.86, Yearly: 7626.44 },
+    "Scale Up": { Monthly: 1355.09, Yearly: 13558.50 },
   },
 };
 
@@ -725,3 +727,86 @@ export const registerUser = async (req, res) => {
 //     });
 //   }
 // };
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error("ERORR: JWT_SECRET is missing in .env");
+      return res.status(500).json({ error: "Server configuration error (JWT_SECRET missing)" });
+    }
+
+    if (!process.env.FRONTEND_URL) {
+      console.error("ERROR: FRONTEND_URL is missing in .env");
+      return res.status(500).json({
+        error: "Forgot password failed",
+        details: "FRONTEND_URL missing in backend .env file. Please add FRONTEND_URL=http://localhost:5173 (or your frontend port)"
+      });
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+    user.resetPasswordToken = token;
+    await user.save();
+
+    // Generate accurate reset link pointing to FRONTEND
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?id=${user._id}&token=${token}`;
+
+    await sendResetPasswordMail(
+      user.email,
+      user.firstName || "User",
+      resetLink
+    );
+
+    res.json({ message: "Reset password link sent to email" });
+  } catch (err) {
+    console.error("FORGOT PASSWORD ERROR 👉", err);
+    res.status(500).json({
+      error: "Forgot password failed",
+      details: err.message,
+    });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { id, token, password } = req.body;
+
+    if (!id || !token || !password) {
+      return res.status(400).json({ error: "Invalid reset data. All fields (id, token, password) are required." });
+    }
+
+    // Find user with valid token and expiration
+    const user = await User.findOne({
+      _id: id,
+      resetPasswordToken: token,
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Reset link is invalid or has expired." });
+    }
+
+    // Hash new password
+    user.password = await bcrypt.hash(password, 10);
+
+    // Clear reset tokens
+    user.resetPasswordToken = null;
+
+    await user.save();
+
+    res.json({ message: "Password reset successful! You can now login with your new password." });
+  } catch (err) {
+    console.error("RESET PASSWORD ERROR 👉", err);
+    res.status(500).json({ error: "Reset password failed", details: err.message });
+  }
+};

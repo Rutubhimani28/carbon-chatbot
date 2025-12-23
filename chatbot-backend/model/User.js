@@ -16,6 +16,9 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
     email: { type: String, required: false, unique: true },

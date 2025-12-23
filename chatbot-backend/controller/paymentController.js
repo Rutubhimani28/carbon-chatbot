@@ -337,14 +337,14 @@ router.post("/create-upi", async (req, res) => {
 // ✅ Price constants (same as authController.js)
 const BASE_PRICES_INR = {
   Nova: {
-    "Glow Up": { Monthly: 99, Yearly: 1089 },
-    "Level Up": { Monthly: 199, Yearly: 1999 },
-    "Rise Up": { Monthly: 399, Yearly: 3999 },
+    "Glow Up": { Monthly: 83.9, Yearly: 922.86 },
+    "Level Up": { Monthly: 168.64, Yearly: 1694.09 },
+    "Rise Up": { Monthly: 338.14, Yearly: 3388.98 },
   },
   Supernova: {
-    "Step Up": { Monthly: 499, Yearly: 5489 },
-    "Speed Up": { Monthly: 899, Yearly: 8999 },
-    "Scale Up": { Monthly: 1599, Yearly: 15999 },
+    "Step Up": { Monthly: 422.88, Yearly: 4651.69 },
+    "Speed Up": { Monthly: 761.86, Yearly: 7626.44 },
+    "Scale Up": { Monthly: 1355.09, Yearly: 13558.5 },
   },
 };
 
