@@ -88,17 +88,22 @@ export const handleTokens = async (sessions, session, payload) => {
   const totalWords = promptWords + responseWords + fileWordCount;
   const tokensUsed = promptTokens + responseTokens + fileTokenCount;
 
-  // ✅ Grand total tokens across all sessions (chat only for now here)
+  // ✅ Grand total tokens across all sessions (only since planStartDate)
+  const user = await User.findOne({ email: session.email });
+  const planStartDate = user?.planStartDate || new Date(0);
+
   const grandTotalTokensUsed = sessions.reduce((totalSum, chatSession) => {
-    const sessionTotal = chatSession.history.reduce(
-      (sessionSum, msg) => sessionSum + (msg.tokensUsed || 0),
-      0
-    );
+    const sessionTotal = chatSession.history.reduce((sessionSum, msg) => {
+      const msgDate = msg.create_time ? new Date(msg.create_time) : new Date(0);
+      if (msgDate >= planStartDate) {
+        return sessionSum + (msg.tokensUsed || 0);
+      }
+      return sessionSum;
+    }, 0);
     return totalSum + sessionTotal;
   }, 0);
 
   // ✅ Get user's plan-based token limit
-  const user = await User.findOne({ email: session.email });
   const userTokenLimit = user
     ? getTokenLimit({
       subscriptionPlan: user.subscriptionPlan,
