@@ -113,9 +113,7 @@ const sendReceiptMail = async (email, firstName, pdfPath) => {
             <p>If you have any questions, feel free to contact our support team.</p>
             <p>Best regards,<br><strong>WrdsAI Team</strong></p>
           </div>
-          <div class="footer">
-            <p>This is an automated email. Please do not reply to this message.</p>
-          </div>
+         
         </div>
       </body>
       </html>

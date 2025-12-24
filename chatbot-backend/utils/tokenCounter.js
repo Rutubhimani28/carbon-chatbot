@@ -20,6 +20,9 @@
 // tokenCounter.js
 import { encoding_for_model, get_encoding } from "tiktoken";
 import { AutoTokenizer } from "@xenova/transformers";
+// import { GoogleGenerativeAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 // import { MistralTokenizer } from "@mistralai/tokenizers";
 
 let grokTokenizer = null;
@@ -34,6 +37,18 @@ async function getGrokTokenizer() {
     );
   }
   return grokTokenizer;
+}
+
+// const geminiAI = new GoogleGenerativeAI({
+//   apiKey: process.env.GEMINI_API_KEY,
+// });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+async function countGeminiTokens(text, modelName = "gemini-3-flash-preview") {
+  const model = genAI.getGenerativeModel({ model: modelName });
+
+  const result = await model.countTokens(text);
+  return result.totalTokens;
 }
 
 // async function getMistralTokenizer() {
@@ -61,6 +76,41 @@ export async function countTokens(text, modelName = "gpt-4o-mini") {
     if (!text) return 0;
 
     let validModel = modelName.toLowerCase();
+
+    // ✅ 🔥 ADDITION: Gemini Models (SAFE ESTIMATE)
+    // if (validModel.includes("gemini")) {
+    //   const words = text.trim().split(/\s+/).length;
+    //   return Math.ceil(words * 1.3); // Google-safe estimate
+    // }
+    // 🔥 Gemini OFFICIAL
+    if (validModel.includes("gemini")) {
+      try {
+        return await countGeminiTokens(text, modelName);
+      } catch (err) {
+        console.warn("Gemini token count failed, fallback:", err);
+        return Math.ceil(text.trim().split(/\s+/).length * 1.3);
+      }
+    }
+
+    // if (validModel.includes("gemini")) {
+    //   try {
+    //     const result = await geminiAI.models.countTokens({
+    //       model: modelName, // e.g. "gemini-3-flash-preview"
+    //       contents: [
+    //         {
+    //           role: "user",
+    //           parts: [{ text }],
+    //         },
+    //       ],
+    //     });
+
+    //     return result?.totalTokens ?? 0;
+    //   } catch (err) {
+    //     console.warn("Gemini token API failed, fallback estimate:", err);
+    //     const words = text.trim().split(/\s+/).length;
+    //     return Math.ceil(words * 1.3);
+    //   }
+    // }
 
     // ✅ Case 1: Claude models → call Anthropic token-count API
     if (validModel.includes("claude")) {
