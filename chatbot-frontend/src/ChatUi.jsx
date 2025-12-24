@@ -5617,9 +5617,12 @@ const ChatUI = () => {
                         </IconButton>
                         <IconButton
                           onClick={isListening ? stopListening : startListening}
+                          disabled={true}
                           sx={{
                             color: isListening ? "red" : "#1268fb",
                             mr: 0.5,
+                            opacity: 0.5,
+                            cursor: "not-allowed",
                           }}
                           title={
                             isListening ? "Stop recording" : "Start voice input"
@@ -6513,9 +6516,12 @@ const ChatUI = () => {
                         </IconButton>
                         <IconButton
                           onClick={isListening ? stopListening : startListening}
+                          disabled={true}
                           sx={{
                             color: isListening ? "red" : "#1268fb",
                             mr: 0.5,
+                            opacity: 0.5,
+                            cursor: "not-allowed",
                           }}
                           title={
                             isListening ? "Stop recording" : "Start voice input"
@@ -7390,9 +7396,12 @@ const ChatUI = () => {
                         </IconButton>
                         <IconButton
                           onClick={isListening ? stopListening : startListening}
+                          disabled={true}
                           sx={{
                             color: isListening ? "red" : "#1268fb",
                             mr: 0.5,
+                            opacity: 0.5,
+                            cursor: "not-allowed",
                           }}
                           title={
                             isListening ? "Stop recording" : "Start voice input"
