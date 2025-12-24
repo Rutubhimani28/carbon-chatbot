@@ -3120,6 +3120,20 @@ const ChatUI = () => {
     );
   };
 
+  const bots = [
+    { label: "ChatGPT", value: "chatgpt-5-mini" },
+    { label: "Claude", value: "claude-3-haiku" },
+    { label: "Grok", value: "grok" },
+    { label: "Mistral", value: "mistral" },
+    // ❌ Gemini yaha direct add nahi
+  ];
+
+  const isSupernova = User?.subscription?.subscriptionPlan === "Supernova";
+
+  const finalBots = isSupernova
+    ? [...bots, { label: "Gemini", value: "gemini" }]
+    : bots;
+
   return (
     <Box
       sx={{
@@ -5209,6 +5223,8 @@ const ChatUI = () => {
                                   ? "Claude"
                                   : group.botName === "mistral"
                                   ? "Mistral"
+                                  : group.botName === "gemini"
+                                  ? "Gemini"
                                   : ""}
                               </Typography>
 
@@ -8957,12 +8973,14 @@ const ChatUI = () => {
                     gap: 1,
                   }}
                 >
-                  {[
+                  {/* [
                     { label: "ChatGPT", value: "chatgpt-5-mini" },
                     { label: "Claude", value: "claude-3-haiku" },
                     { label: "Grok", value: "grok" },
                     { label: "Mistral", value: "mistral" },
-                  ].map((bot) => (
+                    { label: "Gemini", value: "gemini" }, // ✅ ADD
+                  ] */}
+                  {finalBots.map((bot) => (
                     <Box
                       key={bot.value}
                       onClick={() => {
