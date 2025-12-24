@@ -80,6 +80,7 @@ import sendPlanExpiredMail from "../middleware/sendPlanExpiredMail.js";
 import { getTokenLimit } from "../utils/planTokens.js";
 import { buildUserResponseByAgeGroup } from "../utils/userResponse.js";
 import { checkPlanExpiry } from "../utils/dateUtils.js";
+import { getGlobalTokenStats } from "../utils/tokenLimit.js";
 import sendResetPasswordMail from "../middleware/sendResetPasswordMail.js";
 
 // ... (existing imports and constants) ...
@@ -150,6 +151,13 @@ export const loginUser = async (req, res) => {
       user.isActive = false;
       await user.save();
     }
+
+    // ✅ Sync remainingTokens from usage history (respecting planStartDate)
+    const stats = await getGlobalTokenStats(user.email);
+    user.remainingTokens = stats.remainingTokens;
+    // We don't necessarily need to save to DB here, as it's purely for the response, 
+    // but saving ensures consistency if other parts of the app read from DB.
+    await user.save();
 
     res.json({
       status: 200,
@@ -420,6 +428,7 @@ export const registerUser = async (req, res) => {
 
           password: hashedPassword,
           remainingTokens: tokenLimit,
+          planStartDate: new Date(),
         });
 
         await user.save();

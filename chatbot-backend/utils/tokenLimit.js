@@ -15,23 +15,26 @@ export const getGlobalTokenStats = async (email) => {
   });
 
 
-  // Chat tokens: sum of tokensUsed across all session messages
+  const planStartDate = user.planStartDate || new Date(0);
+
+  // Chat tokens: sum of tokensUsed across all session messages (only since planStartDate)
   const chatSessions = await ChatSession.find({ email });
   const chatTokensUsed = chatSessions.reduce((sum, session) => {
-    return (
-      sum + session.history.reduce((inner, msg) => inner + (msg.tokensUsed || 0), 0)
-    );
-    // return (
-    //   sum +
-    //   session.history.reduce(
-    //     (inner, msg) => inner + (msg.isPartial ? 0 : msg.tokensUsed || 0),
-    //     0
-    //   )
-    // );
+    const sessionTokens = session.history.reduce((inner, msg) => {
+      const msgDate = msg.create_time ? new Date(msg.create_time) : new Date(0);
+      if (msgDate >= planStartDate) {
+        return inner + (msg.tokensUsed || 0);
+      }
+      return inner;
+    }, 0);
+    return sum + sessionTokens;
   }, 0);
 
-  // Search tokens: sum of summaryTokenCount across user search history
-  const searches = await SearchHistory.find({ email });
+  // Search tokens: sum of summaryTokenCount across user search history (only since planStartDate)
+  const searches = await SearchHistory.find({
+    email,
+    createdAt: { $gte: planStartDate }
+  });
   const searchTokensUsed = searches.reduce(
     (sum, s) => sum + (s.summaryTokenCount || 0),
     0

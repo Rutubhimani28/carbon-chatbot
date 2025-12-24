@@ -56,62 +56,62 @@ export const grokSearchResults = async (req, res) => {
     const requestedLinks = [3, 5, 10].includes(linkCount) ? linkCount : 5;
 
     // 🧠 Step 1: Detect general (creative/social) prompts
-// const generalKeywords = [
-//   "quote",
-//   "quotes",
-//   "wish",
-//   "wishes",
-//   "greeting",
-//   "greetings",
-//   "caption",
-//   "message",
-//   "messages",
-//   "status",
-//   "shayari",
-//   "lines",
-//   "poem",
-//   "joke",
-//   "motivation",
-//   "motivational",
-//   "festival",
-//   "diwali",
-//   "holi",
-//   "new year",
-//   "birthday",
-//   "love",
-//   "funny",
-//   "good morning",
-// ];
-const generalKeywords = [
-  // Greetings & Wishes
-  "greeting", "greetings", "wish", "wishes", "hello", "hi", "hey","quote",
-  "good morning", "good afternoon", "good evening", "good night", "welcome", "congratulations", "congrats",
+    // const generalKeywords = [
+    //   "quote",
+    //   "quotes",
+    //   "wish",
+    //   "wishes",
+    //   "greeting",
+    //   "greetings",
+    //   "caption",
+    //   "message",
+    //   "messages",
+    //   "status",
+    //   "shayari",
+    //   "lines",
+    //   "poem",
+    //   "joke",
+    //   "motivation",
+    //   "motivational",
+    //   "festival",
+    //   "diwali",
+    //   "holi",
+    //   "new year",
+    //   "birthday",
+    //   "love",
+    //   "funny",
+    //   "good morning",
+    // ];
+    const generalKeywords = [
+      // Greetings & Wishes
+      "greeting", "greetings", "wish", "wishes", "hello", "hi", "hey", "quote",
+      "good morning", "good afternoon", "good evening", "good night", "welcome", "congratulations", "congrats",
 
-  // Festivals & Events
-  "festival", "diwali", "holi", "new year", "christmas", "eid", "ramadan", "pongal", "thanksgiving", "birthday", "anniversary", "halloween", "valentine", "raksha bandhan", "bhai dooj",
+      // Festivals & Events
+      "festival", "diwali", "holi", "new year", "christmas", "eid", "ramadan", "pongal", "thanksgiving", "birthday", "anniversary", "halloween", "valentine", "raksha bandhan", "bhai dooj",
 
-  // Quotes & Messages
-  "quote", "quotes", "shayari", "lines", "message", "messages", "status", "captions", "caption", "poem", "poetry", "joke", "funny", "motivation", "motivational", "inspiration", "inspirational", "life", "love", "friendship", "friend", "relationship",
+      // Quotes & Messages
+      "quote", "quotes", "shayari", "lines", "message", "messages", "status", "captions", "caption", "poem", "poetry", "joke", "funny", "motivation", "motivational", "inspiration", "inspirational", "life", "love", "friendship", "friend", "relationship",
 
-  // Emotions & Compliments
-  "smile", "happiness", "joy", "success", "achievement", "hard work", "positivity", "attitude", "mindset", "dream", "goals", "determination", "fun", "funny", "humor", "laugh", "romantic", "sweet",
+      // Emotions & Compliments
+      "smile", "happiness", "joy", "success", "achievement", "hard work", "positivity", "attitude", "mindset", "dream", "goals", "determination", "fun", "funny", "humor", "laugh", "romantic", "sweet",
 
-  // Misc Common Phrases
-  "good luck", "best wishes", "gud morning", "gud night", "happy birthday", "happy anniversary", "happy new year", "happy diwali", "happy holi", "fun facts", "tips", "trivia", "short story", "status update", "life lesson", "daily motivation"
-];
+      // Misc Common Phrases
+      "good luck", "best wishes", "gud morning", "gud night", "happy birthday", "happy anniversary", "happy new year", "happy diwali", "happy holi", "fun facts", "tips", "trivia", "short story", "status update", "life lesson", "daily motivation"
+    ];
 
 
-// normalize user input
-const normalizedQuery = query.toLowerCase().replace(/[^\w\s]/g, "");
+    // normalize user input
+    const normalizedQuery = query.toLowerCase().replace(/[^\w\s]/g, "");
 
-const isGeneralPrompt = generalKeywords.some((word) =>
-    normalizedQuery.includes(word)
-);
+    const isGeneralPrompt = generalKeywords.some((word) =>
+      normalizedQuery.includes(word)
+    );
 
-if (isGeneralPrompt) {
-  console.log("🟡 Generalized prompt detected — performing open search (non-trusted sources)");
+    if (isGeneralPrompt) {
+      console.log("🟡 Generalized prompt detected — performing open search (non-trusted sources)");
 
-  const generalPrompt = `
+      const generalPrompt = `
 You are a smart web discovery assistant.
 Your task: find the most popular, useful, or trending online pages directly related to "${query}".
 
@@ -136,80 +136,80 @@ Return ONLY valid JSON like this:
 }
 `;
 
-  // 🧮 Token count
-  const promptTokens = countTokens(query);
-  await checkGlobalTokenLimit(email, promptTokens);
+      // 🧮 Token count
+      const promptTokens = countTokens(query);
+      await checkGlobalTokenLimit(email, promptTokens);
 
-  // 🚀 Call Grok for general search (no domain restriction)
-  const generalRes = await axios.post(
-    GROK_API_URL,
-    {
-      model: GROK_MODEL,
-      messages: [{ role: "user", content: generalPrompt }],
-      temperature: 0.5,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${GROK_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      // 🚀 Call Grok for general search (no domain restriction)
+      const generalRes = await axios.post(
+        GROK_API_URL,
+        {
+          model: GROK_MODEL,
+          messages: [{ role: "user", content: generalPrompt }],
+          temperature: 0.5,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${GROK_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      // 🧩 Parse response
+      let verifiedLinks = [];
+      try {
+        const parsed = JSON.parse(
+          generalRes.data.choices[0].message.content
+        );
+        verifiedLinks = Array.isArray(parsed.verifiedLinks)
+          ? parsed.verifiedLinks.slice(0, requestedLinks)
+          : [];
+      } catch (err) {
+        console.warn("⚠️ Failed to parse generalized JSON:", err.message);
+      }
+
+      // 🧮 Token usage
+      const linkTokens = verifiedLinks.reduce((acc, link) => {
+        return (
+          acc +
+          countTokens(link.site) +
+          countTokens(link.title) +
+          countTokens(link.link) +
+          countTokens(link.snippet)
+        );
+      }, 0);
+
+      const totalTokens = promptTokens + linkTokens;
+      await checkGlobalTokenLimit(email, totalTokens);
+
+      // 💾 Save History
+      if (email) {
+        const record = new grokSearchHistory({
+          id,
+          email,
+          query,
+          summary: "",
+          resultsCount: verifiedLinks.length,
+          tokenUsage: { promptTokens, linkTokens, totalTokens },
+        });
+        await record.save();
+      }
+
+      // ✅ Send response immediately (skip trusted source flow)
+      return res.json({
+        id,
+        summary: "",
+        verifiedLinks,
+        email,
+        linkCount: verifiedLinks.length,
+        tokenUsage: { promptTokens, linkTokens, totalTokens },
+        remainingTokens: 10000 - totalTokens,
+      });
     }
-  );
-
-  // 🧩 Parse response
-  let verifiedLinks = [];
-  try {
-    const parsed = JSON.parse(
-      generalRes.data.choices[0].message.content
-    );
-    verifiedLinks = Array.isArray(parsed.verifiedLinks)
-      ? parsed.verifiedLinks.slice(0, requestedLinks)
-      : [];
-  } catch (err) {
-    console.warn("⚠️ Failed to parse generalized JSON:", err.message);
-  }
-
-  // 🧮 Token usage
-  const linkTokens = verifiedLinks.reduce((acc, link) => {
-    return (
-      acc +
-      countTokens(link.site) +
-      countTokens(link.title) +
-      countTokens(link.link) +
-      countTokens(link.snippet)
-    );
-  }, 0);
-
-  const totalTokens = promptTokens + linkTokens;
-  await checkGlobalTokenLimit(email, totalTokens);
-
-  // 💾 Save History
-  if (email) {
-    const record = new grokSearchHistory({
-      id,
-      email,
-      query,
-      summary: "",
-      resultsCount: verifiedLinks.length,
-      tokenUsage: { promptTokens, linkTokens, totalTokens },
-    });
-    await record.save();
-  }
-
-  // ✅ Send response immediately (skip trusted source flow)
-  return res.json({
-    id,
-    summary: "",
-    verifiedLinks,
-    email,
-    linkCount: verifiedLinks.length,
-    tokenUsage: { promptTokens, linkTokens, totalTokens },
-    remainingTokens: 10000 - totalTokens,
-  });
-}
 
 
-const combinedPrompt = `
+    const combinedPrompt = `
 You are a factual and time-aware research assistant.
 Your goal is to find the most recent and relevant information for the topic: "${query}".
 
@@ -261,7 +261,7 @@ Return output ONLY in this exact JSON structure:
     const promptTokens = countTokens(query);
     // handleTokenValidation(promptTokens, 3500);
 
- // ✅ 1️⃣ Global shared token check (AI + Grok combined)
+    // ✅ 1️⃣ Global shared token check (AI + Grok combined)
     try {
       await checkGlobalTokenLimit(email, 0);
     } catch (err) {
@@ -308,14 +308,14 @@ Return output ONLY in this exact JSON structure:
           ? parsed.verifiedLinks.slice(0, requestedLinks)
           : [];
 
-          
-    // ✅ Filter out old or irrelevant links (only 2022+)
-    verifiedLinks = verifiedLinks.filter((link) => {
-      const year = link.publishedDate
-        ? new Date(link.publishedDate).getFullYear()
-        : null;
-      return !year || year >= 2022; // keep recent or undated
-    });
+
+        // ✅ Filter out old or irrelevant links (only 2022+)
+        verifiedLinks = verifiedLinks.filter((link) => {
+          const year = link.publishedDate
+            ? new Date(link.publishedDate).getFullYear()
+            : null;
+          return !year || year >= 2022; // keep recent or undated
+        });
 
       } catch (err) {
         console.warn("⚠️ Failed to parse Grok JSON:", err.message);
@@ -339,7 +339,7 @@ Return output ONLY in this exact JSON structure:
     const totalTokens = promptTokens + summaryTokens + linkTokens;
     // handleTokenValidation(totalTokens, 6000); // enforce combined cap
 
-     // ✅ 2️⃣ Global token re-check after total usage known
+    // ✅ 2️⃣ Global token re-check after total usage known
     try {
       await checkGlobalTokenLimit(email, totalTokens);
     } catch (err) {
@@ -412,47 +412,56 @@ Return ONLY JSON array of ${requestedLinks} total unique valid links (no summary
       await record.save();
     }
 
-    
-        // === 🔗 Deduct tokens from global 10,000 pool ===
-        let remainingTokensAfter = 10000;
-        if (email) {
-          let session = await ChatSession.findOne({ email });
-          if (!session) {
-            session = new ChatSession({
-              email,
-              sessionId: `grok-${uuidv4()}`,
-              history: [],
-              create_time: new Date(),
-            });
-          }
-    
-          // Get all sessions for this email
-          const allSessions = await ChatSession.find({ email });
-          const grandTotalTokens = allSessions.reduce((sum, s) => {
-            return (
-              sum +
-              s.history.reduce((entrySum, e) => entrySum + (e.tokensUsed || 0), 0)
-            );
-          }, 0);
-    
-          const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokens);
-          remainingTokensAfter = Math.max(0, remainingTokensBefore - totalTokens);
-    
-          // Add Grok usage to ChatSession
-          session.history.push({
-            prompt: query,
-            response: summary,
-            botName: "grok",
-            tokensUsed: totalTokens,
-            promptTokens,
-            responseTokens: summaryTokens,
-            fileTokenCount: linkTokens,
-            totalTokensUsed: totalTokens,
-            create_time: new Date(),
-          });
-    
-          await session.save();
-        }
+
+    // === 🔗 Deduct tokens from global 10,000 pool ===
+    let remainingTokensAfter = 10000;
+    if (email) {
+      let session = await ChatSession.findOne({ email });
+      if (!session) {
+        session = new ChatSession({
+          email,
+          sessionId: `grok-${uuidv4()}`,
+          history: [],
+          create_time: new Date(),
+        });
+      }
+
+      // Get all sessions for this email (only since planStartDate)
+      const user = await User.findOne({ email });
+      const planStartDate = user?.planStartDate || new Date(0);
+      const allSessions = await ChatSession.find({ email });
+
+      const grandTotalTokens = allSessions.reduce((sum, s) => {
+        return (
+          sum +
+          s.history.reduce((entrySum, e) => {
+            const msgDate = e.create_time ? new Date(e.create_time) : new Date(0);
+            if (msgDate >= planStartDate) {
+              return entrySum + (e.tokensUsed || 0);
+            }
+            return entrySum;
+          }, 0)
+        );
+      }, 0);
+
+      const remainingTokensBefore = Math.max(0, 10000 - grandTotalTokens);
+      remainingTokensAfter = Math.max(0, remainingTokensBefore - totalTokens);
+
+      // Add Grok usage to ChatSession
+      session.history.push({
+        prompt: query,
+        response: summary,
+        botName: "grok",
+        tokensUsed: totalTokens,
+        promptTokens,
+        responseTokens: summaryTokens,
+        fileTokenCount: linkTokens,
+        totalTokensUsed: totalTokens,
+        create_time: new Date(),
+      });
+
+      await session.save();
+    }
 
     // === ✅ Send Final Response ===
     return res.json({
@@ -467,7 +476,7 @@ Return ONLY JSON array of ${requestedLinks} total unique valid links (no summary
         linkTokens,
         totalTokens,
       },
-      remainingTokens: remainingTokensAfter, 
+      remainingTokens: remainingTokensAfter,
     });
   } catch (err) {
     console.error("❌ grokSearchResults Error:", err);
@@ -494,9 +503,9 @@ export const grokUserSearchHistory = async (req, res) => {
       .sort({ createdAt: -1 });
 
     // ✅ Calculate total tokens across all records
-   const totalTokensUsed = history.reduce((acc, record) => {
-  return acc + (record.tokenUsage?.totalTokens || 0);
-}, 0);
+    const totalTokensUsed = history.reduce((acc, record) => {
+      return acc + (record.tokenUsage?.totalTokens || 0);
+    }, 0);
 
     return res.json({ email, history, totalTokensUsed });
   } catch (err) {
