@@ -791,8 +791,8 @@ const ChatUI = () => {
         activeView === "chat"
           ? `${apiBaseUrl}/api/ai/ask`
           : activeView === "wrds AiPro" || isSmartAIPro
-            ? `${apiBaseUrl}/api/ai/SmartAIProask`
-            : `${apiBaseUrl}/api/ai/SmartAIask`;
+          ? `${apiBaseUrl}/api/ai/SmartAIProask`
+          : `${apiBaseUrl}/api/ai/SmartAIask`;
 
       // : activeView === "wrds AiPro" || isSmartAIPro
       // ? `${apiBaseUrl}/api/ai/SmartAIProask`
@@ -866,8 +866,8 @@ const ChatUI = () => {
             isSmartAI || activeView === "smartAi"
               ? "Wrds AI"
               : isSmartAIPro || activeView === "wrds AiPro"
-                ? "Wrds AiPro"
-                : selectedBot,
+              ? "Wrds AiPro"
+              : selectedBot,
         };
       }
 
@@ -895,8 +895,8 @@ const ChatUI = () => {
             isSmartAI || activeView === "smartAi"
               ? "Wrds AI"
               : isSmartAIPro || activeView === "wrds AiPro"
-                ? "Wrds AiPro"
-                : selectedBot,
+              ? "Wrds AiPro"
+              : selectedBot,
           isError: true,
         };
       }
@@ -914,7 +914,10 @@ const ChatUI = () => {
         }).then((result) => {
           if (result.isConfirmed) {
             // just close
-          } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+          } else if (
+            result.isDismissed &&
+            result.dismiss === Swal.DismissReason.cancel
+          ) {
             handleUpgradePlan();
           }
         });
@@ -927,8 +930,8 @@ const ChatUI = () => {
             isSmartAI || activeView === "smartAi"
               ? "Wrds AI"
               : isSmartAIPro || activeView === "wrds AiPro"
-                ? "Wrds AiPro"
-                : selectedBot,
+              ? "Wrds AiPro"
+              : selectedBot,
 
           isError: true,
         };
@@ -951,8 +954,8 @@ const ChatUI = () => {
             isSmartAI || activeView === "smartAi"
               ? "Wrds AI"
               : isSmartAIPro || activeView === "wrds AiPro"
-                ? "Wrds AiPro"
-                : selectedBot,
+              ? "Wrds AiPro"
+              : selectedBot,
           isError: true,
         };
       }
@@ -1007,8 +1010,8 @@ const ChatUI = () => {
           isSmartAI || activeView === "smartAi"
             ? "Wrds AI"
             : isSmartAIPro || activeView === "wrds AiPro"
-              ? "Wrds AiPro"
-              : data.botName || selectedBot,
+            ? "Wrds AiPro"
+            : data.botName || selectedBot,
         files: data.files || [], // Include file info from backend
       };
     } catch (err) {
@@ -1041,7 +1044,10 @@ const ChatUI = () => {
         }).then((result) => {
           if (result.isConfirmed) {
             // Just close
-          } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+          } else if (
+            result.isDismissed &&
+            result.dismiss === Swal.DismissReason.cancel
+          ) {
             handleUpgradePlan();
           }
         });
@@ -1055,8 +1061,8 @@ const ChatUI = () => {
             isSmartAI || activeView === "smartAi"
               ? "Wrds AI"
               : isSmartAIPro || activeView === "wrds AiPro"
-                ? "Wrds AiPro"
-                : selectedBot,
+              ? "Wrds AiPro"
+              : selectedBot,
           isError: true,
         };
       }
@@ -1070,8 +1076,8 @@ const ChatUI = () => {
           isSmartAI || activeView === "smartAi"
             ? "Wrds AI"
             : isSmartAIPro || activeView === "wrds AiPro"
-              ? "Wrds AiPro"
-              : selectedBot,
+            ? "Wrds AiPro"
+            : selectedBot,
         isError: true,
       };
     }
@@ -1496,16 +1502,16 @@ const ChatUI = () => {
       activeView === "smartAi" || isSmartAI
         ? "smart Ai"
         : activeView === "wrds AiPro" || isSmartAIPro
-          ? "wrds AiPro"
-          : "chat";
+        ? "wrds AiPro"
+        : "chat";
 
     // 🧩 choose the correct message source
     const currentGroups =
       messageType === "smart Ai"
         ? smartAIMessageGroups
         : messageType === "wrds AiPro"
-          ? smartAIProMessageGroups
-          : messageGroups;
+        ? smartAIProMessageGroups
+        : messageGroups;
 
     const lastMsgGroup = currentGroups?.[0] || [];
     const lastMsg = lastMsgGroup[lastMsgGroup.length - 1];
@@ -1678,10 +1684,10 @@ const ChatUI = () => {
       return Array.isArray(data.response)
         ? data.response
         : Array.isArray(data.messages)
-          ? data.messages
-          : Array.isArray(data)
-            ? data
-            : [];
+        ? data.messages
+        : Array.isArray(data)
+        ? data
+        : [];
 
       // ✅ Add/force type:"chat" in each message
       // const filteredMessages = messagesArray
@@ -1901,8 +1907,8 @@ const ChatUI = () => {
       return Array.isArray(data.response)
         ? data.response
         : Array.isArray(data.messages)
-          ? data.messages
-          : [];
+        ? data.messages
+        : [];
 
       // ✅ Filter only type:"smart Ai"
       const messages = (data.response || data.messages || []).filter(
@@ -1940,8 +1946,8 @@ const ChatUI = () => {
       return Array.isArray(data.response)
         ? data.response
         : Array.isArray(data.messages)
-          ? data.messages
-          : [];
+        ? data.messages
+        : [];
 
       // ✅ Filter only type:"smart Ai"
       const messages = (data.response || data.messages || []).filter(
@@ -1963,8 +1969,8 @@ const ChatUI = () => {
       activeView === "smartAi" || isSmartAI
         ? smartAIMessageGroups
         : activeView === "wrds AiPro" || isSmartAIPro
-          ? smartAIProMessageGroups
-          : messageGroups;
+        ? smartAIProMessageGroups
+        : messageGroups;
 
     if (!historyLoading && currentGroups.length > 0) {
       scrollToBottom();
@@ -2579,7 +2585,10 @@ const ChatUI = () => {
           }).then((result) => {
             if (result.isConfirmed) {
               // just close
-            } else if (result.isDismissed && result.dismiss === Swal.DismissReason.cancel) {
+            } else if (
+              result.isDismissed &&
+              result.dismiss === Swal.DismissReason.cancel
+            ) {
               handleUpgradePlan();
             }
           });
@@ -2693,16 +2702,16 @@ const ChatUI = () => {
       activeView === "wrds AiPro" || isSmartAIPro
         ? "wrds AiPro"
         : activeView === "smartAi" || isSmartAI
-          ? "smart Ai"
-          : "chat";
+        ? "smart Ai"
+        : "chat";
 
     // 🧠 choose correct state setter
     const setMessagesFn =
       messageType === "wrds AiPro"
         ? setSmartAIProMessageGroups
         : messageType === "smart Ai"
-          ? setSmartAIMessageGroups
-          : setMessageGroups;
+        ? setSmartAIMessageGroups
+        : setMessageGroups;
 
     setMessagesFn((prev) => {
       const updated = [...prev];
@@ -2723,8 +2732,8 @@ const ChatUI = () => {
           messageType === "smart Ai"
             ? "Wrds AI"
             : messageType === "wrds AiPro"
-              ? "Wrds AiPro"
-              : selectedBot,
+            ? "Wrds AiPro"
+            : selectedBot,
         files: selectedFiles.map((f) => ({ name: f.name })),
       };
 
@@ -2768,14 +2777,20 @@ const ChatUI = () => {
         formData,
         currentSessionId,
         messageType === "smart Ai" ||
-        isSmartAI ||
-        messageType === "wrds AiPro" ||
-        isSmartAIPro
+          isSmartAI ||
+          messageType === "wrds AiPro" ||
+          isSmartAIPro
       );
 
       // ✅ Persist sessionId so subsequent prompts stay in the same session
-      if (result.sessionId && (!selectedChatId || selectedChatId !== result.sessionId)) {
-        console.log("Saving sessionId to state and localStorage:", result.sessionId);
+      if (
+        result.sessionId &&
+        (!selectedChatId || selectedChatId !== result.sessionId)
+      ) {
+        console.log(
+          "Saving sessionId to state and localStorage:",
+          result.sessionId
+        );
         setSelectedChatId(result.sessionId);
         if (activeView === "smartAi" || isSmartAI) {
           localStorage.setItem("lastSmartAISessionId", result.sessionId);
@@ -2824,8 +2839,8 @@ const ChatUI = () => {
                     messageType === "smart Ai"
                       ? "Wrds AI"
                       : messageType === "wrds AiPro"
-                        ? "Wrds AiPro"
-                        : selectedBot,
+                      ? "Wrds AiPro"
+                      : selectedBot,
                 }),
               });
             } catch (err) {
@@ -2860,8 +2875,8 @@ const ChatUI = () => {
                     messageType === "smart Ai"
                       ? "Wrds AI"
                       : messageType === "wrds AiPro"
-                        ? "Wrds AiPro"
-                        : result.botName || selectedBot,
+                      ? "Wrds AiPro"
+                      : result.botName || selectedBot,
                 };
                 updated[0] = messages;
               }
@@ -2896,8 +2911,8 @@ const ChatUI = () => {
                   messageType === "smart Ai"
                     ? "Wrds AI"
                     : messageType === "wrds AiPro"
-                      ? "Wrds AiPro"
-                      : result.botName || selectedBot,
+                    ? "Wrds AiPro"
+                    : result.botName || selectedBot,
               };
               updated[0] = messages;
             }
@@ -2993,8 +3008,8 @@ const ChatUI = () => {
         activeView === "smartAi" || isSmartAI
           ? `Smart AI ${smartAISessions?.length + 1 || 1}`
           : activeView === "wrds AiPro" || isSmartAIPro
-            ? `Wrds AI Pro ${smartAIProSessions?.length + 1 || 1}`
-            : `Chat ${chats.length + 1}`,
+          ? `Wrds AI Pro ${smartAIProSessions?.length + 1 || 1}`
+          : `Chat ${chats.length + 1}`,
       // sessionId: "", // blank session ID
       sessionId: newSessionId,
       createTime: new Date().toISOString(),
@@ -3071,8 +3086,8 @@ const ChatUI = () => {
     activeView === "smartAi" || isSmartAI
       ? smartAISessions
       : activeView === "wrds AiPro" || isSmartAIPro
-        ? smartAIProSessions
-        : chats
+      ? smartAIProSessions
+      : chats
   ).filter((chat) =>
     chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -4407,8 +4422,16 @@ const ChatUI = () => {
                     fontWeight: 500,
                   }}
                 >
-                  {User.firstName && User.lastName
+                  {/* {User.firstName && User.lastName
                     ? `${User.firstName} ${User.lastName}`
+                    : "User"} */}
+                  {User.firstName && User.lastName
+                    ? `${
+                        User.firstName[0].toUpperCase() +
+                        User.firstName.slice(1)
+                      } ${
+                        User.lastName[0].toUpperCase() + User.lastName.slice(1)
+                      }`
                     : "User"}
                 </Typography>
 
@@ -5133,7 +5156,7 @@ const ChatUI = () => {
                                 cursor: "pointer",
                                 // pl: "1px",
                               }}
-                            // onClick={() => setIsCollapsed(false)}
+                              // onClick={() => setIsCollapsed(false)}
                             />
                             {console.log(
                               group.botName,
@@ -5141,10 +5164,10 @@ const ChatUI = () => {
                                 "chatgpt-5-mini"
                                 ? "ChatGPT"
                                 : group.botName.charAt(0).toUpperCase() +
-                                  group.botName.slice(1) ===
+                                    group.botName.slice(1) ===
                                   "grok"
-                                  ? "Grok"
-                                  : "",
+                                ? "Grok"
+                                : "",
                               "group"
                             )}
                             {/* ✅ Bot name + AI Assistant */}
@@ -5169,14 +5192,14 @@ const ChatUI = () => {
                                 {isSmartAI
                                   ? "Wrds AI"
                                   : group.botName === "chatgpt-5-mini"
-                                    ? "ChatGPT"
-                                    : group.botName === "grok"
-                                      ? "Grok"
-                                      : group.botName === "claude-3-haiku"
-                                        ? "Claude"
-                                        : group.botName === "mistral"
-                                          ? "Mistral"
-                                          : ""}
+                                  ? "ChatGPT"
+                                  : group.botName === "grok"
+                                  ? "Grok"
+                                  : group.botName === "claude-3-haiku"
+                                  ? "Claude"
+                                  : group.botName === "mistral"
+                                  ? "Mistral"
+                                  : ""}
                               </Typography>
 
                               {/* <Typography
@@ -5201,13 +5224,13 @@ const ChatUI = () => {
                           >
                             <Box sx={{ mb: 2 }}>
                               {group.isTyping &&
-                                [
-                                  "Thinking...",
-                                  "Analyzing...",
-                                  "Generating...",
-                                ].includes(
-                                  group.responses[group.currentSlide]
-                                ) ? (
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -5328,7 +5351,7 @@ const ChatUI = () => {
                                     }}
                                   >
                                     {group.tokensUsed !== null &&
-                                      group.tokensUsed !== undefined
+                                    group.tokensUsed !== undefined
                                       ? group.tokensUsed
                                       : "N/A"}
                                   </Typography>
@@ -5527,7 +5550,7 @@ const ChatUI = () => {
                             // color: "#1268fb",
                             color:
                               User?.subscription?.subscriptionPlan ===
-                                "Free Trial"
+                              "Free Trial"
                                 ? "#9e9e9e"
                                 : "#1268fb",
                             // position: "absolute",
@@ -5543,13 +5566,13 @@ const ChatUI = () => {
                             // },
                             backgroundColor:
                               User?.subscription?.subscriptionPlan ===
-                                "Free Trial"
+                              "Free Trial"
                                 ? "rgba(0,0,0,0.05)"
                                 : "rgba(47, 103, 246, 0.1)",
                             "&:hover": {
                               backgroundColor:
                                 User?.subscription?.subscriptionPlan ===
-                                  "Free Trial"
+                                "Free Trial"
                                   ? "rgba(0,0,0,0.05)"
                                   : "rgba(47,103,246,0.2)",
                             },
@@ -6074,7 +6097,7 @@ const ChatUI = () => {
                                 cursor: "pointer",
                                 // pl: "1px",
                               }}
-                            // onClick={() => setIsCollapsed(false)}
+                              // onClick={() => setIsCollapsed(false)}
                             />
                             {console.log(
                               group.botName,
@@ -6082,10 +6105,10 @@ const ChatUI = () => {
                                 "chatgpt-5-mini"
                                 ? "ChatGPT"
                                 : group.botName.charAt(0).toUpperCase() +
-                                  group.botName.slice(1) ===
+                                    group.botName.slice(1) ===
                                   "grok"
-                                  ? "Grok"
-                                  : "",
+                                ? "Grok"
+                                : "",
                               "group"
                             )}
                             {/* ✅ Bot name + AI Assistant */}
@@ -6130,13 +6153,13 @@ const ChatUI = () => {
                           >
                             <Box sx={{ mb: 2 }}>
                               {group.isTyping &&
-                                [
-                                  "Thinking...",
-                                  "Analyzing...",
-                                  "Generating...",
-                                ].includes(
-                                  group.responses[group.currentSlide]
-                                ) ? (
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -6257,7 +6280,7 @@ const ChatUI = () => {
                                     }}
                                   >
                                     {group.tokensUsed !== null &&
-                                      group.tokensUsed !== undefined
+                                    group.tokensUsed !== undefined
                                       ? group.tokensUsed
                                       : "N/A"}
                                   </Typography>
@@ -6951,7 +6974,7 @@ const ChatUI = () => {
                                 cursor: "pointer",
                                 // pl: "1px",
                               }}
-                            // onClick={() => setIsCollapsed(false)}
+                              // onClick={() => setIsCollapsed(false)}
                             />
                             {console.log(
                               group.botName,
@@ -6959,10 +6982,10 @@ const ChatUI = () => {
                                 "chatgpt-5-mini"
                                 ? "ChatGPT"
                                 : group.botName.charAt(0).toUpperCase() +
-                                  group.botName.slice(1) ===
+                                    group.botName.slice(1) ===
                                   "grok"
-                                  ? "Grok"
-                                  : "",
+                                ? "Grok"
+                                : "",
                               "group"
                             )}
                             {/* ✅ Bot name + AI Assistant */}
@@ -7007,13 +7030,13 @@ const ChatUI = () => {
                           >
                             <Box sx={{ mb: 2 }}>
                               {group.isTyping &&
-                                [
-                                  "Thinking...",
-                                  "Analyzing...",
-                                  "Generating...",
-                                ].includes(
-                                  group.responses[group.currentSlide]
-                                ) ? (
+                              [
+                                "Thinking...",
+                                "Analyzing...",
+                                "Generating...",
+                              ].includes(
+                                group.responses[group.currentSlide]
+                              ) ? (
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -7134,7 +7157,7 @@ const ChatUI = () => {
                                     }}
                                   >
                                     {group.tokensUsed !== null &&
-                                      group.tokensUsed !== undefined
+                                    group.tokensUsed !== undefined
                                       ? group.tokensUsed
                                       : "N/A"}
                                   </Typography>
@@ -7651,10 +7674,10 @@ const ChatUI = () => {
                       activeView === "chat"
                         ? filteredChats
                         : activeView === "smartAi"
-                          ? filteredChats
-                          : activeView === "wrds AiPro"
-                            ? filteredChats
-                            : [];
+                        ? filteredChats
+                        : activeView === "wrds AiPro"
+                        ? filteredChats
+                        : [];
 
                     const filtered = list.filter((c) =>
                       c.name.toLowerCase().includes(term)
@@ -7740,58 +7763,58 @@ const ChatUI = () => {
               {/* WrdsAI */}
               {(User?.subscription?.subscriptionPlan === "Nova" ||
                 User?.subscription?.subscriptionPlan === "Free Trial") && (
-                  <Typography
-                    sx={{
-                      fontSize: 18,
-                      // cursor: "pointer",
-                      cursor: User?.subscription?.isPlanExpired
-                        ? "not-allowed"
-                        : "pointer",
-                      px: 1.5,
-                      py: 0.7,
-                      borderRadius: "6px",
-                      display: "inline-block",
-                      transition: "0.25s",
-                      // backgroundColor:
-                      //   activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
-                      backgroundColor:
-                        activeView === "smartAi" &&
-                          !User?.subscription?.isPlanExpired
-                          ? "#e3e3e3ff"
-                          : "transparent",
-                      // color: activeView === "smartAi" ? "#000" : "#000",
-                      color: User?.subscription?.isPlanExpired
-                        ? "#9e9e9e"
-                        : "#000",
-                      fontWeight: activeView === "smartAi" ? 600 : 400,
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    // cursor: "pointer",
+                    cursor: User?.subscription?.isPlanExpired
+                      ? "not-allowed"
+                      : "pointer",
+                    px: 1.5,
+                    py: 0.7,
+                    borderRadius: "6px",
+                    display: "inline-block",
+                    transition: "0.25s",
+                    // backgroundColor:
+                    //   activeView === "smartAi" ? "#e3e3e3ff" : "transparent",
+                    backgroundColor:
+                      activeView === "smartAi" &&
+                      !User?.subscription?.isPlanExpired
+                        ? "#e3e3e3ff"
+                        : "transparent",
+                    // color: activeView === "smartAi" ? "#000" : "#000",
+                    color: User?.subscription?.isPlanExpired
+                      ? "#9e9e9e"
+                      : "#000",
+                    fontWeight: activeView === "smartAi" ? 600 : 400,
 
-                      // "&:hover": {
-                      //   backgroundColor:
-                      //     activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
-                      // },
-                      "&:hover": {
-                        backgroundColor: User?.subscription?.isPlanExpired
-                          ? "transparent"
-                          : "#eaeaea",
-                      },
+                    // "&:hover": {
+                    //   backgroundColor:
+                    //     activeView === "smartAi" ? "#eaeaea" : "#eaeaea",
+                    // },
+                    "&:hover": {
+                      backgroundColor: User?.subscription?.isPlanExpired
+                        ? "transparent"
+                        : "#eaeaea",
+                    },
 
-                      opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
-                      pointerEvents: User?.subscription?.isPlanExpired
-                        ? "none"
-                        : "auto",
-                    }}
-                    onClick={() => {
-                      if (User?.subscription?.isPlanExpired) return;
+                    opacity: User?.subscription?.isPlanExpired ? 0.6 : 1,
+                    pointerEvents: User?.subscription?.isPlanExpired
+                      ? "none"
+                      : "auto",
+                  }}
+                  onClick={() => {
+                    if (User?.subscription?.isPlanExpired) return;
 
-                      setActiveView("smartAi");
-                      setIsSmartAI(false);
-                      setOpenSidebar(false);
-                      setSearchValue("");
-                      setSearchSessionResults([]);
-                    }}
-                  >
-                    WrdsAI
-                    {/* {activeView === "smartAi" && (
+                    setActiveView("smartAi");
+                    setIsSmartAI(false);
+                    setOpenSidebar(false);
+                    setSearchValue("");
+                    setSearchSessionResults([]);
+                  }}
+                >
+                  WrdsAI
+                  {/* {activeView === "smartAi" && (
                 <Box
                   sx={{
                     position: "absolute",
@@ -7804,8 +7827,8 @@ const ChatUI = () => {
                   }}
                 />
               )} */}
-                  </Typography>
-                )}
+                </Typography>
+              )}
 
               {/* WrdsAI Pro */}
               {User?.subscription?.subscriptionPlan === "Supernova" && (
@@ -7825,7 +7848,7 @@ const ChatUI = () => {
                     //   activeView === "wrds AiPro" ? "#e3e3e3ff" : "transparent",
                     backgroundColor:
                       activeView === "wrds AiPro" &&
-                        !User?.subscription?.isPlanExpired
+                      !User?.subscription?.isPlanExpired
                         ? "#e3e3e3ff"
                         : "transparent",
 
@@ -8042,7 +8065,7 @@ const ChatUI = () => {
                     //   activeView === "search2" ? "#e3e3e3ff" : "transparent",
                     backgroundColor:
                       activeView === "search2" &&
-                        !User?.subscription?.isPlanExpired
+                      !User?.subscription?.isPlanExpired
                         ? "#e3e3e3ff"
                         : "transparent",
 
