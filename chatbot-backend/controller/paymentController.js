@@ -336,12 +336,12 @@ router.post("/create-upi", async (req, res) => {
 
 // ✅ Price constants (same as authController.js)
 const BASE_PRICES_INR = {
-  Nova: {
+  WrdsAI: {
     "Glow Up": { Monthly: 83.9, Yearly: 922.86 },
     "Level Up": { Monthly: 168.64, Yearly: 1694.09 },
     "Rise Up": { Monthly: 338.14, Yearly: 3388.98 },
   },
-  Supernova: {
+  WrdsAIPro: {
     "Step Up": { Monthly: 422.88, Yearly: 4651.69 },
     "Speed Up": { Monthly: 761.86, Yearly: 7626.44 },
     "Scale Up": { Monthly: 1355.09, Yearly: 13558.5 },
@@ -700,7 +700,10 @@ router.post("/verify-payment", async (req, res) => {
     user.totalPriceINR = actualTotal;
 
     // Lookup base price from constant for the receipt breakdown
-    const basePriceLookup = BASE_PRICES_INR[user.subscriptionPlan]?.[user.childPlan]?.[user.subscriptionType];
+    const basePriceLookup =
+      BASE_PRICES_INR[user.subscriptionPlan]?.[user.childPlan]?.[
+        user.subscriptionType
+      ];
 
     if (basePriceLookup) {
       // If we found a matching price, use it for the breakdown
@@ -709,7 +712,8 @@ router.post("/verify-payment", async (req, res) => {
     } else {
       // Fallback calculation if lookup fails
       user.basePriceINR = Math.round((actualTotal / 1.18) * 100) / 100;
-      user.gstAmount = Math.round((actualTotal - user.basePriceINR) * 100) / 100;
+      user.gstAmount =
+        Math.round((actualTotal - user.basePriceINR) * 100) / 100;
     }
 
     if (!isUpgrade && !user.remainingTokens) {

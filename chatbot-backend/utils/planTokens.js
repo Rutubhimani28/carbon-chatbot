@@ -1,12 +1,12 @@
 // utils/planTokens.js
 
 export const PLAN_TOKENS = {
-  Nova: {
+  WrdsAI: {
     "Glow Up": 200_000,
     "Level Up": 500_000,
     "Rise Up": 1_000_000,
   },
-  Supernova: {
+  WrdsAIPro: {
     "Step Up": 500_000,
     "Speed Up": 1_000_000,
     "Scale Up": 2_000_000,
@@ -20,12 +20,12 @@ export const PLAN_TOKENS = {
  * ✅ Input token limits (prompt + files) per plan
  */
 export const INPUT_TOKEN_LIMITS = {
-  Nova: {
+  WrdsAI: {
     "Glow Up": 5000,
     "Level Up": 5000,
     "Rise Up": 10000,
   },
-  Supernova: {
+  WrdsAIPro: {
     "Step Up": 10000,
     "Speed Up": Infinity,  // No limit
     "Scale Up": Infinity,  // No limit

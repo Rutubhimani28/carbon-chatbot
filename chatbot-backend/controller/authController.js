@@ -169,18 +169,18 @@ export const loginUser = async (req, res) => {
   }
 };
 
-const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
-const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
+const wrdsAIOptions = ["Glow Up", "Level Up", "Rise Up"];
+const wrdsAIProOptions = ["Step Up", "Speed Up", "Scale Up"];
 const subscriptionTypes = ["Monthly", "Yearly"];
 
 // FIXED PRICES IN USD (કદી બદલવાના નહીં)
 // const BASE_PRICES_USD = {
-//   Nova: {
+//   WrdsAI: {
 //     "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
 //     "Level Up": { Monthly: 1.99, Yearly: 21.99 },
 //     "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
 //   },
-//   Supernova: {
+//   WrdsAIPro: {
 //     "Step Up": { Monthly: 2.99, Yearly: 32.99 },
 //     "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
 //     "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
@@ -188,12 +188,12 @@ const subscriptionTypes = ["Monthly", "Yearly"];
 // };
 
 const BASE_PRICES_INR = {
-  Nova: {
+  WrdsAI: {
     "Glow Up": { Monthly: 83.9, Yearly: 922.86 },
     "Level Up": { Monthly: 168.64, Yearly: 1694.09 },
     "Rise Up": { Monthly: 338.14, Yearly: 3388.98 },
   },
-  Supernova: {
+  WrdsAIPro: {
     "Step Up": { Monthly: 422.88, Yearly: 4651.69 },
     "Speed Up": { Monthly: 761.86, Yearly: 7626.44 },
     "Scale Up": { Monthly: 1355.09, Yearly: 13558.5 },
@@ -248,7 +248,7 @@ export const registerUser = async (req, res) => {
       parentName,
       parentEmail,
       parentMobile,
-      subscriptionPlan, // "Nova" or "Supernova"
+      subscriptionPlan, // "WrdsAI" or "WrdsAI Pro"
       childPlan, // "Glow Up", "Scale Up" etc.
       subscriptionType, // "Monthly" or "Yearly"
     } = req.body;
@@ -483,10 +483,10 @@ export const registerUser = async (req, res) => {
 
     // Get USD price
     // let priceUSD = 0;
-    // if (subscriptionPlan === "Nova") {
-    //   priceUSD = BASE_PRICES_USD.Nova[childPlan]?.[subscriptionType];
-    // } else if (subscriptionPlan === "Supernova") {
-    //   priceUSD = BASE_PRICES_USD.Supernova[childPlan]?.[subscriptionType];
+    // if (subscriptionPlan === "WrdsAI") {
+    //   priceUSD = BASE_PRICES_USD.WrdsAI[childPlan]?.[subscriptionType];
+    // } else if (subscriptionPlan === "WrdsAI Pro") {
+    //   priceUSD = BASE_PRICES_USD.WrdsAI Pro[childPlan]?.[subscriptionType];
     // }
 
     // if (!priceUSD) {
@@ -592,13 +592,13 @@ export const registerUser = async (req, res) => {
 };
 
 // Prices (USD)
-// const novaPrices = {
+// const wrdsAIPrices = {
 //   "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
 //   "Level Up": { Monthly: 1.99, Yearly: 21.99 },
 //   "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
 // };
 
-// const superNovaPrices = {
+// const wrdsAIProPrices = {
 //   "Step Up": { Monthly: 2.99, Yearly: 32.99 },
 //   "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
 //   "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
