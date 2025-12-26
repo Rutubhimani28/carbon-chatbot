@@ -155,7 +155,7 @@ export const loginUser = async (req, res) => {
     // ✅ Sync remainingTokens from usage history (respecting planStartDate)
     const stats = await getGlobalTokenStats(user.email);
     user.remainingTokens = stats.remainingTokens;
-    // We don't necessarily need to save to DB here, as it's purely for the response, 
+    // We don't necessarily need to save to DB here, as it's purely for the response,
     // but saving ensures consistency if other parts of the app read from DB.
     await user.save();
 
@@ -169,18 +169,18 @@ export const loginUser = async (req, res) => {
   }
 };
 
-const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
-const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
+const wrdsAIOptions = ["Glow Up", "Level Up", "Rise Up"];
+const wrdsAIProOptions = ["Step Up", "Speed Up", "Scale Up"];
 const subscriptionTypes = ["Monthly", "Yearly"];
 
 // FIXED PRICES IN USD (કદી બદલવાના નહીં)
 // const BASE_PRICES_USD = {
-//   Nova: {
+//   WrdsAI: {
 //     "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
 //     "Level Up": { Monthly: 1.99, Yearly: 21.99 },
 //     "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
 //   },
-//   Supernova: {
+//   WrdsAIPro: {
 //     "Step Up": { Monthly: 2.99, Yearly: 32.99 },
 //     "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
 //     "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
@@ -188,15 +188,15 @@ const subscriptionTypes = ["Monthly", "Yearly"];
 // };
 
 const BASE_PRICES_INR = {
-  Nova: {
-    "Glow Up": { Monthly: 83.90, Yearly: 922.86 },
+  WrdsAI: {
+    "Glow Up": { Monthly: 83.9, Yearly: 922.86 },
     "Level Up": { Monthly: 168.64, Yearly: 1694.09 },
     "Rise Up": { Monthly: 338.14, Yearly: 3388.98 },
   },
-  Supernova: {
+  WrdsAIPro: {
     "Step Up": { Monthly: 422.88, Yearly: 4651.69 },
     "Speed Up": { Monthly: 761.86, Yearly: 7626.44 },
-    "Scale Up": { Monthly: 1355.09, Yearly: 13558.50 },
+    "Scale Up": { Monthly: 1355.09, Yearly: 13558.5 },
   },
 };
 
@@ -248,7 +248,7 @@ export const registerUser = async (req, res) => {
       parentName,
       parentEmail,
       parentMobile,
-      subscriptionPlan, // "Nova" or "Supernova"
+      subscriptionPlan, // "WrdsAI" or "WrdsAI Pro"
       childPlan, // "Glow Up", "Scale Up" etc.
       subscriptionType, // "Monthly" or "Yearly"
     } = req.body;
@@ -282,6 +282,15 @@ export const registerUser = async (req, res) => {
     // Final login email (for <13, parent email is used)
     const finalEmail = isMinor ? parentEmail : email;
     const finalMobile = isMinor ? parentMobile : mobile;
+
+    const phoneRegex = /^\+\d{7,15}$/;
+
+    if (finalMobile && !phoneRegex.test(finalMobile)) {
+      return res.status(400).json({
+        error:
+          "Invalid mobile number format. Please use country code with number (e.g. +919876543210)",
+      });
+    }
 
     // Check duplicate email
     const existingUser = await User.findOne({ email: finalEmail });
@@ -474,10 +483,10 @@ export const registerUser = async (req, res) => {
 
     // Get USD price
     // let priceUSD = 0;
-    // if (subscriptionPlan === "Nova") {
-    //   priceUSD = BASE_PRICES_USD.Nova[childPlan]?.[subscriptionType];
-    // } else if (subscriptionPlan === "Supernova") {
-    //   priceUSD = BASE_PRICES_USD.Supernova[childPlan]?.[subscriptionType];
+    // if (subscriptionPlan === "WrdsAI") {
+    //   priceUSD = BASE_PRICES_USD.WrdsAI[childPlan]?.[subscriptionType];
+    // } else if (subscriptionPlan === "WrdsAI Pro") {
+    //   priceUSD = BASE_PRICES_USD.WrdsAI Pro[childPlan]?.[subscriptionType];
     // }
 
     // if (!priceUSD) {
@@ -583,13 +592,13 @@ export const registerUser = async (req, res) => {
 };
 
 // Prices (USD)
-// const novaPrices = {
+// const wrdsAIPrices = {
 //   "Glow Up": { Monthly: 0.99, Yearly: 10.99 },
 //   "Level Up": { Monthly: 1.99, Yearly: 21.99 },
 //   "Rise Up": { Monthly: 3.99, Yearly: 39.99 },
 // };
 
-// const superNovaPrices = {
+// const wrdsAIProPrices = {
 //   "Step Up": { Monthly: 2.99, Yearly: 32.99 },
 //   "Speed Up": { Monthly: 4.99, Yearly: 54.99 },
 //   "Scale Up": { Monthly: 9.99, Yearly: 99.99 },
@@ -752,14 +761,17 @@ export const forgotPassword = async (req, res) => {
 
     if (!process.env.JWT_SECRET) {
       console.error("ERORR: JWT_SECRET is missing in .env");
-      return res.status(500).json({ error: "Server configuration error (JWT_SECRET missing)" });
+      return res
+        .status(500)
+        .json({ error: "Server configuration error (JWT_SECRET missing)" });
     }
 
     if (!process.env.FRONTEND_URL) {
       console.error("ERROR: FRONTEND_URL is missing in .env");
       return res.status(500).json({
         error: "Forgot password failed",
-        details: "FRONTEND_URL missing in backend .env file. Please add FRONTEND_URL=http://localhost:5173 (or your frontend port)"
+        details:
+          "FRONTEND_URL missing in backend .env file. Please add FRONTEND_URL=http://localhost:5173 (or your frontend port)",
       });
     }
 
@@ -792,7 +804,10 @@ export const resetPassword = async (req, res) => {
     const { id, token, password } = req.body;
 
     if (!id || !token || !password) {
-      return res.status(400).json({ error: "Invalid reset data. All fields (id, token, password) are required." });
+      return res.status(400).json({
+        error:
+          "Invalid reset data. All fields (id, token, password) are required.",
+      });
     }
 
     // Find user with valid token and expiration
@@ -802,7 +817,9 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ error: "Reset link is invalid or has expired." });
+      return res
+        .status(400)
+        .json({ error: "Reset link is invalid or has expired." });
     }
 
     // Hash new password
@@ -813,9 +830,14 @@ export const resetPassword = async (req, res) => {
 
     await user.save();
 
-    res.json({ message: "Password reset successful! You can now login with your new password." });
+    res.json({
+      message:
+        "Password reset successful! You can now login with your new password.",
+    });
   } catch (err) {
     console.error("RESET PASSWORD ERROR 👉", err);
-    res.status(500).json({ error: "Reset password failed", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Reset password failed", details: err.message });
   }
 };

@@ -64,9 +64,9 @@
 //     "Other",
 //   ];
 //   const ageGroups = ["<13", "13-14", "15-17", "18+"];
-//   const subscriptionPlans = ["Nova", "Supernova"];
-//   const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
-//   const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
+//   const subscriptionPlans = ["WrdsAI", "WrdsAIPro"];
+//   const wrdsAIOptions = ["Glow Up", "Level Up", "Rise Up"];
+//   const wrdsAIProOptions = ["Step Up", "Speed Up", "Scale Up"];
 //   const subscriptionTypes = ["Monthly", "Yearly"];
 
 //   const theme = useTheme();
@@ -753,9 +753,9 @@
 //                       },
 //                     }}
 //                   >
-//                     {(formData.subscriptionPlan === "Nova"
-//                       ? novaOptions
-//                       : superNovaOptions
+//                     {(formData.subscriptionPlan === "WrdsAI"
+//                       ? wrdsAIOptions
+//                       : wrdsAIProOptions
 //                     ).map((item) => (
 //                       <MenuItem key={item} value={item}>
 //                         {item}
@@ -905,6 +905,7 @@ import { useTheme, useMediaQuery } from "@mui/material";
 import PaymentModal from "./PaymentModal";
 import Wrds from "././assets/Wrds White.webp";
 import { useLocation } from "react-router-dom";
+import { allCountries } from "country-telephone-data";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -912,13 +913,17 @@ const Register = () => {
     firstName: "",
     lastName: "",
     email: "",
-    mobile: "+91 ",
+    // mobile: "+91 ",
+    mobileCode: "+91",
+    mobileNumber: "",
     // country: "",
     dateOfBirth: null,
     ageGroup: "",
     parentName: "",
     parentEmail: "",
-    parentMobile: "+91 ",
+    // parentMobile: "+91 ",
+    parentMobileCode: "+91",
+    parentMobileNumber: "",
     subscriptionPlan: "",
     childPlan: "",
     subscriptionType: "",
@@ -956,9 +961,9 @@ const Register = () => {
     "Other",
   ];
   const ageGroups = ["<13", "13-14", "15-17", "18+"];
-  const subscriptionPlans = ["Nova", "Supernova", "Free Trial"];
-  const novaOptions = ["Glow Up", "Level Up", "Rise Up"];
-  const superNovaOptions = ["Step Up", "Speed Up", "Scale Up"];
+  const subscriptionPlans = ["WrdsAI", "WrdsAIPro", "Free Trial"];
+  const wrdsAIOptions = ["Glow Up", "Level Up", "Rise Up"];
+  const wrdsAIProOptions = ["Step Up", "Speed Up", "Scale Up"];
   const subscriptionTypes = ["Monthly", "Yearly", "One Time"];
 
   const theme = useTheme();
@@ -1028,24 +1033,42 @@ const Register = () => {
     // const params = new URLSearchParams(location.search); // Already defined above
     // const isUpgradeFromUrl = params.get("isUpgrade")?.trim() === "true"; // Already defined above
 
+    // 🔹 Improved helper: matches the longest dialCode from allCountries
+    const splitPhone = (phone) => {
+      if (!phone) return { code: "+91", number: "" };
+      const cleanPhone = phone.replace(/[^\d+]/g, "");
+      if (!cleanPhone.startsWith("+"))
+        return { code: "+91", number: cleanPhone };
+
+      const sortedCountries = [...allCountries].sort(
+        (a, b) => b.dialCode.length - a.dialCode.length
+      );
+      for (const country of sortedCountries) {
+        const dialCode = `+${country.dialCode}`;
+        if (cleanPhone.startsWith(dialCode)) {
+          return { code: dialCode, number: cleanPhone.slice(dialCode.length) };
+        }
+      }
+      return { code: "+91", number: cleanPhone.replace(/^\+/, "") };
+    };
+
     if (isUpgradeFromUrl) {
       const dobParam = params.get("dateOfBirth");
-      console.log("dobParam:::::::", dobParam);
-
-      // ✅ Convert string → Date object
       const dobDate = dobParam ? new Date(dobParam) : null;
-
-      // ✅ ALWAYS calculate age group from DOB (no fallback from param)
       const calculatedAgeGroup = dobDate ? calculateAgeGroup(dobDate) : "";
+
+      const m = splitPhone(params.get("mobile"));
+      const pm = splitPhone(params.get("parentMobile"));
 
       setFormData((prev) => ({
         ...prev,
         firstName: params.get("firstName") || "",
         lastName: params.get("lastName") || "",
         email: params.get("email") || "",
-        mobile: params.get("mobile") || "",
-        dateOfBirth: dobDate, // ✅ DatePicker auto filled
-        ageGroup: calculatedAgeGroup, // ✅ DOB based age group
+        mobileCode: m.code,
+        mobileNumber: m.number,
+        dateOfBirth: dobDate,
+        ageGroup: calculatedAgeGroup,
 
         parentName: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
           ? params.get("parentName") || ""
@@ -1053,26 +1076,28 @@ const Register = () => {
         parentEmail: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
           ? params.get("parentEmail") || ""
           : "",
-        parentMobile: ["<13", "13-14", "15-17"].includes(calculatedAgeGroup)
-          ? params.get("parentMobile") || ""
-          : "",
+        parentMobileCode: pm.code,
+        parentMobileNumber: pm.number,
       }));
 
-      console.log("ageGroup*********", calculatedAgeGroup);
-      return; // ✅ stop here, no need to check state
+      return;
     }
 
     // 🔹 2. Fallback: ChatUI → navigate(state)
     if (isUpgrade && userData) {
+      const m = splitPhone(userData.mobile);
+      const pm = splitPhone(userData.parentMobile);
+
       setFormData((prev) => ({
         ...prev,
         ...userData,
         dateOfBirth: userData.dateOfBirth
           ? new Date(userData.dateOfBirth)
           : null,
-        parentName: userData.parentName || "",
-        parentEmail: userData.parentEmail || "",
-        parentMobile: userData.parentMobile || "",
+        mobileCode: m.code,
+        mobileNumber: m.number,
+        parentMobileCode: pm.code,
+        parentMobileNumber: pm.number,
       }));
     }
   }, [isUpgrade, userData, location.search]);
@@ -1352,7 +1377,7 @@ const Register = () => {
       if (
         !formData.parentName ||
         !formData.parentEmail ||
-        !formData.parentMobile
+        !formData.parentMobileNumber
       ) {
         toast.error("Parent details are required for users under 18.");
         setLoading(false);
@@ -1397,6 +1422,13 @@ const Register = () => {
       ...formData,
       email:
         formData.ageGroup === "<13" ? formData.parentEmail : formData.email,
+      mobile: formData.mobileNumber
+        ? `${formData.mobileCode}${formData.mobileNumber}`
+        : null,
+
+      parentMobile: formData.parentMobileNumber
+        ? `${formData.parentMobileCode}${formData.parentMobileNumber}`
+        : null,
       dateOfBirth: formData.dateOfBirth
         ? formData.dateOfBirth.toISOString().split("T")[0]
         : null,
@@ -2053,7 +2085,7 @@ const Register = () => {
                   </Grid>
 
                   {/* TEXTFIELD */}
-                  <Grid item xs={12} sm={8} md={6}>
+                  {/* <Grid item xs={12} sm={8} md={6}>
                     <TextField
                       size="small"
                       name="mobile"
@@ -2079,6 +2111,77 @@ const Register = () => {
                       }}
                       fullWidth
                     />
+                  </Grid> */}
+                  <Grid item xs={12} sm={8} md={6}>
+                    <Grid container spacing={1}>
+                      {/* ISD CODE */}
+                      <Grid item xs={4}>
+                        <TextField
+                          select
+                          size="small"
+                          fullWidth
+                          value={formData.mobileCode}
+                          disabled={isUpgradeMode}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              mobileCode: e.target.value,
+                            })
+                          }
+                          InputProps={{
+                            sx: {
+                              height: { xs: 30, sm: 42 },
+                              fontSize: { xs: "15px", sm: "17px" },
+                            },
+                          }}
+                          SelectProps={{
+                            MenuProps: {
+                              PaperProps: {
+                                sx: {
+                                  maxHeight: 220, // 🔥 dropdown height control
+                                  width: 120,
+                                },
+                              },
+                            },
+                          }}
+                        >
+                          {allCountries.map((c) => (
+                            <MenuItem
+                              key={c.iso2}
+                              value={`+${c.dialCode}`}
+                              sx={{ fontSize: "14px", py: 0.5 }}
+                            >
+                              +{c.dialCode}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+
+                      {/* MOBILE NUMBER */}
+                      <Grid item xs={8}>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          required
+                          disabled={isUpgradeMode}
+                          value={formData.mobileNumber}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              mobileNumber: e.target.value.replace(/\D/g, ""),
+                            })
+                          }
+                          placeholder="Mobile number"
+                          inputProps={{ maxLength: 15 }}
+                          InputProps={{
+                            sx: {
+                              height: { xs: 30, sm: 42 },
+                              fontSize: { xs: "15px", sm: "17px" },
+                            },
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
                   </Grid>
                 </Grid>
               )}
@@ -2130,8 +2233,8 @@ const Register = () => {
               {(formData.ageGroup === "<13" ||
                 formData.ageGroup === "13-14" ||
                 formData.ageGroup === "15-17") && (
-                  <>
-                    {/* <Box
+                <>
+                  {/* <Box
                     sx={{
                       mb: 2,
                       display: "flex",
@@ -2171,45 +2274,45 @@ const Register = () => {
                     </Box>
                   </Box> */}
 
-                    <Grid
-                      container
-                      spacing={1}
-                      sx={{ mb: 2, display: "flex", flexDirection: "column" }}
-                    >
-                      {/* LABEL */}
-                      <Grid item xs={12}>
-                        <InputLabel
-                          sx={{
-                            fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                            fontFamily: "Calibri, sans-serif",
-                            width: "100%",
-                          }}
-                        >
-                          Parent/Guardian Name *
-                        </InputLabel>
-                      </Grid>
-
-                      {/* TEXTFIELD */}
-                      <Grid item xs={12} sm={8} md={6}>
-                        <TextField
-                          size="small"
-                          name="parentName"
-                          value={formData.parentName}
-                          disabled={isUpgradeMode}
-                          required
-                          onChange={handleChange}
-                          InputProps={{
-                            sx: {
-                              height: { xs: 30, sm: 42 },
-                              fontSize: { xs: "15px", sm: "17px" },
-                            },
-                          }}
-                          fullWidth
-                        />
-                      </Grid>
+                  <Grid
+                    container
+                    spacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent/Guardian Name *
+                      </InputLabel>
                     </Grid>
 
-                    {/* <Box
+                    {/* TEXTFIELD */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentName"
+                        value={formData.parentName}
+                        disabled={isUpgradeMode}
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* <Box
                     sx={{
                       mb: 2,
                       display: "flex",
@@ -2250,45 +2353,45 @@ const Register = () => {
                     </Box>
                   </Box> */}
 
-                    <Grid
-                      container
-                      spacing={1}
-                      sx={{ mb: 2, display: "flex", flexDirection: "column" }}
-                    >
-                      {/* LABEL */}
-                      <Grid item xs={12}>
-                        <InputLabel
-                          sx={{
-                            fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                            fontFamily: "Calibri, sans-serif",
-                            width: "100%",
-                          }}
-                        >
-                          Parent Email *
-                        </InputLabel>
-                      </Grid>
-
-                      {/* TEXTFIELD */}
-                      <Grid item xs={12} sm={8} md={6}>
-                        <TextField
-                          size="small"
-                          name="parentEmail"
-                          value={formData.parentEmail}
-                          // disabled={isUpgrade}
-                          required
-                          onChange={handleChange}
-                          InputProps={{
-                            sx: {
-                              height: { xs: 30, sm: 42 },
-                              fontSize: { xs: "15px", sm: "17px" },
-                            },
-                          }}
-                          fullWidth
-                        />
-                      </Grid>
+                  <Grid
+                    container
+                    spacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent Email *
+                      </InputLabel>
                     </Grid>
 
-                    {/* <Box
+                    {/* TEXTFIELD */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentEmail"
+                        value={formData.parentEmail}
+                        // disabled={isUpgrade}
+                        required
+                        onChange={handleChange}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* <Box
                     sx={{
                       mb: 2,
                       display: "flex",
@@ -2337,52 +2440,127 @@ const Register = () => {
                       />
                     </Box>
                   </Box> */}
-                    <Grid
-                      containerspacing={1}
-                      sx={{ mb: 2, display: "flex", flexDirection: "column" }}
-                    >
-                      {/* LABEL */}
-                      <Grid item xs={12}>
-                        <InputLabel
-                          sx={{
-                            fontSize: { xs: "17px", sm: "19px", md: "19px" },
-                            fontFamily: "Calibri, sans-serif",
-                            width: "100%",
-                          }}
-                        >
-                          Parent Mobile *
-                        </InputLabel>
-                      </Grid>
+                  <Grid
+                    containerspacing={1}
+                    sx={{ mb: 2, display: "flex", flexDirection: "column" }}
+                  >
+                    {/* LABEL */}
+                    <Grid item xs={12}>
+                      <InputLabel
+                        sx={{
+                          fontSize: { xs: "17px", sm: "19px", md: "19px" },
+                          fontFamily: "Calibri, sans-serif",
+                          width: "100%",
+                        }}
+                      >
+                        Parent Mobile *
+                      </InputLabel>
+                    </Grid>
 
-                      {/* TEXTFIELD */}
-                      <Grid item xs={12} sm={8} md={6}>
-                        <TextField
-                          size="small"
-                          name="parentMobile"
-                          value={formData.parentMobile}
-                          disabled={isUpgradeMode}
-                          required
-                          onChange={(e) => {
-                            let v = e.target.value;
+                    {/* TEXTFIELD */}
+                    {/* <Grid item xs={12} sm={8} md={6}>
+                      <TextField
+                        size="small"
+                        name="parentMobile"
+                        value={formData.parentMobile}
+                        disabled={isUpgradeMode}
+                        required
+                        onChange={(e) => {
+                          let v = e.target.value;
 
-                            if (!v.startsWith("+91 ")) {
-                              v = "+91 " + v.replace("+91", "").replace(" ", "");
+                          if (!v.startsWith("+91 ")) {
+                            v = "+91 " + v.replace("+91", "").replace(" ", "");
+                          }
+
+                          setFormData({ ...formData, parentMobile: v });
+                        }}
+                        InputProps={{
+                          sx: {
+                            height: { xs: 30, sm: 42 },
+                            fontSize: { xs: "15px", sm: "17px" },
+                          },
+                        }}
+                        fullWidth
+                      />
+                    </Grid> */}
+                    {/* ISD + PARENT MOBILE */}
+                    <Grid item xs={12} sm={8} md={6}>
+                      <Grid container spacing={1}>
+                        {/* ISD CODE */}
+                        <Grid item xs={4}>
+                          <TextField
+                            select
+                            size="small"
+                            fullWidth
+                            disabled={isUpgradeMode}
+                            value={formData.parentMobileCode}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                parentMobileCode: e.target.value,
+                              })
                             }
+                            InputProps={{
+                              sx: {
+                                height: { xs: 30, sm: 42 },
+                                fontSize: { xs: "15px", sm: "17px" },
+                              },
+                            }}
+                            SelectProps={{
+                              MenuProps: {
+                                PaperProps: {
+                                  sx: {
+                                    maxHeight: 220, // 🔥 dropdown height control
+                                    width: 120,
+                                  },
+                                },
+                              },
+                            }}
+                          >
+                            {allCountries.map((c) => (
+                              <MenuItem
+                                key={c.iso2}
+                                value={`+${c.dialCode}`}
+                                sx={{ fontSize: "14px", py: 0.5 }}
+                              >
+                                +{c.dialCode}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                        </Grid>
 
-                            setFormData({ ...formData, parentMobile: v });
-                          }}
-                          InputProps={{
-                            sx: {
-                              height: { xs: 30, sm: 42 },
-                              fontSize: { xs: "15px", sm: "17px" },
-                            },
-                          }}
-                          fullWidth
-                        />
+                        {/* PARENT MOBILE NUMBER */}
+                        <Grid item xs={8}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            required
+                            disabled={isUpgradeMode}
+                            value={formData.parentMobileNumber}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                parentMobileNumber: e.target.value.replace(
+                                  /\D/g,
+                                  ""
+                                ),
+                              })
+                            }
+                            placeholder="Parent mobile number"
+                            inputProps={{ maxLength: 15 }}
+                            InputProps={{
+                              sx: {
+                                height: { xs: 30, sm: 42 },
+                                fontSize: { xs: "15px", sm: "17px" },
+                              },
+                            }}
+                          />
+                        </Grid>
                       </Grid>
                     </Grid>
-                  </>
-                )}
+                  </Grid>
+                </>
+              )}
 
               {/* Subscription Plan */}
               {/* <Box
@@ -2508,9 +2686,9 @@ const Register = () => {
                       }}
                       fullWidth
                     >
-                      {(formData.subscriptionPlan === "Nova"
-                        ? novaOptions
-                        : superNovaOptions
+                      {(formData.subscriptionPlan === "WrdsAI"
+                        ? wrdsAIOptions
+                        : wrdsAIProOptions
                       ).map((item) => (
                         <MenuItem key={item} value={item}>
                           {item}
@@ -2563,13 +2741,13 @@ const Register = () => {
                         key={type}
                         value={type}
                         // disabled={
-                        //   ["Nova", "Supernova"].includes(
+                        //   ["WrdsAI", "WrdsAIPro"].includes(
                         //     formData.subscriptionPlan
                         //   ) && type === "One Time"
                         // }
                         disabled={
-                          // 🔴 Nova / Supernova → One Time disabled
-                          (["Nova", "Supernova"].includes(
+                          // 🔴 WrdsAI / WrdsAIPro → One Time disabled
+                          (["WrdsAI", "WrdsAIPro"].includes(
                             formData.subscriptionPlan
                           ) &&
                             type === "One Time") ||

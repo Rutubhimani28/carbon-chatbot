@@ -36,7 +36,7 @@ const openai = new OpenAI({
 });
 
 export const handleTokens = async (sessions, session, payload) => {
-  // ✅ Prompt & Response
+  // ✅ Prompt & Response0
   // const promptTokens = await countTokens(payload.prompt, payload.botName);
 
   let tokenizerModel = payload.botName;

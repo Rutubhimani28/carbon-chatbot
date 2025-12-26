@@ -3128,9 +3128,11 @@ const ChatUI = () => {
     // ❌ Gemini yaha direct add nahi
   ];
 
-  const isSupernova = User?.subscription?.subscriptionPlan === "Supernova";
+  const isWrdsAI = User?.subscription?.subscriptionPlan === "WrdsAI";
+  const isWrdsAIPro = User?.subscription?.subscriptionPlan === "WrdsAIPro";
+  const isFreeTrial = User?.subscription?.subscriptionPlan === "Free Trial";
 
-  const finalBots = isSupernova
+  const finalBots = isWrdsAIPro
     ? [...bots, { label: "Gemini", value: "gemini" }]
     : bots;
 
@@ -8729,8 +8731,7 @@ const ChatUI = () => {
               </Typography>
 
               {/* WrdsAI */}
-              {(User?.subscription?.subscriptionPlan === "Nova" ||
-                User?.subscription?.subscriptionPlan === "Free Trial") && (
+              {(isWrdsAI || isFreeTrial) && (
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -8799,7 +8800,7 @@ const ChatUI = () => {
               )}
 
               {/* WrdsAI Pro */}
-              {User?.subscription?.subscriptionPlan === "Supernova" && (
+              {isWrdsAIPro && (
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -9016,7 +9017,7 @@ const ChatUI = () => {
               )}
 
               {/* AI Browsing */}
-              {User?.subscription?.subscriptionPlan === "Supernova" && (
+              {isWrdsAIPro && (
                 <Typography
                   sx={{
                     fontSize: 18,
