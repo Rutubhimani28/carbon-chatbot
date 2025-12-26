@@ -194,38 +194,38 @@ router.use(bodyParser.json());
 function numberToWords(num) {
   const a = [
     "",
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-    "ten",
-    "eleven",
-    "twelve",
-    "thirteen",
-    "fourteen",
-    "fifteen",
-    "sixteen",
-    "seventeen",
-    "eighteen",
-    "nineteen",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
   ];
 
   const b = [
     "",
     "",
-    "twenty",
-    "thirty",
-    "forty",
-    "fifty",
-    "sixty",
-    "seventy",
-    "eighty",
-    "ninety",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
   ];
 
   function integerToWords(n) {
@@ -234,7 +234,7 @@ function numberToWords(num) {
     if (n < 1000)
       return (
         a[Math.floor(n / 100)] +
-        " hundred" +
+        " Hundred" +
         (n % 100 ? " " + integerToWords(n % 100) : "")
       );
     if (n < 1000000) {
@@ -242,15 +242,15 @@ function numberToWords(num) {
       const rem = n % 1000;
       return (
         integerToWords(thousands) +
-        " thousand" +
+        " Thousand" +
         (rem ? " " + integerToWords(rem) : "")
       );
     }
     return n.toString();
   }
 
-  if (typeof num !== "number" || Number.isNaN(num)) return "zero";
-  if (num === 0) return "zero";
+  if (typeof num !== "number" || Number.isNaN(num)) return "Zero";
+  if (num === 0) return "Zero";
 
   // split integer & decimal
   const parts = num.toString().split(".");
@@ -260,7 +260,7 @@ function numberToWords(num) {
   let words = integerToWords(integerPart);
 
   if (decimalPart && parseInt(decimalPart) > 0) {
-    words += " point";
+    words += " Point";
     for (const digit of decimalPart) {
       words += " " + a[parseInt(digit)];
     }
@@ -677,7 +677,7 @@ router.post("/verify-payment", async (req, res) => {
     user.subscriptionStatus = "active";
     user.isActive = true;
 
-    // 🔁 Upgrade case
+    // 🔁 Update plan details first (Upgrade case)
     if (isUpgrade) {
       user.subscriptionPlan = subscriptionPlan;
       user.childPlan = childPlan;
@@ -687,7 +687,32 @@ router.post("/verify-payment", async (req, res) => {
       const newTokenLimit = getTokenLimit({ subscriptionPlan, childPlan });
       user.remainingTokens = newTokenLimit;
       user.tokensConsumed = 0; // Reset consumed
+    } else if (!user.subscriptionPlan) {
+      // Fallback for new users if not already set
+      user.subscriptionPlan = subscriptionPlan;
+      user.childPlan = childPlan;
+      user.subscriptionType = subscriptionType;
+    }
+
+    // 💰 CALCULATE PRICING (Now uses updated user fields OR actual payment)
+    // We use the actual payment amount to ensure 100% accuracy on what was paid
+    const actualTotal = payment.amount / 100;
+    user.totalPriceINR = actualTotal;
+
+    // Lookup base price from constant for the receipt breakdown
+    const basePriceLookup = BASE_PRICES_INR[user.subscriptionPlan]?.[user.childPlan]?.[user.subscriptionType];
+
+    if (basePriceLookup) {
+      // If we found a matching price, use it for the breakdown
+      user.basePriceINR = basePriceLookup;
+      user.gstAmount = Math.round(basePriceLookup * 0.18 * 100) / 100;
     } else {
+      // Fallback calculation if lookup fails
+      user.basePriceINR = Math.round((actualTotal / 1.18) * 100) / 100;
+      user.gstAmount = Math.round((actualTotal - user.basePriceINR) * 100) / 100;
+    }
+
+    if (!isUpgrade && !user.remainingTokens) {
       // ✅ New User - Ensure tokens are set based on registration data
       const tokenLimit = getTokenLimit({
         subscriptionPlan: user.subscriptionPlan,
