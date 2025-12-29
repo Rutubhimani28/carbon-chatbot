@@ -1027,8 +1027,7 @@ const restrictions = {
     "blood",
     "rape",
     "abuse",
-    "attack",
-    "death",
+
     "weed",
     "marijuana",
     "cocaine",
@@ -1056,10 +1055,10 @@ const restrictions = {
     "dab",
     "dabbing",
     "cartel",
-    "trap",
+
     "OD",
     "overdose",
-    "inject",
+
     "snort",
     "sniff",
     "bong",
@@ -1091,8 +1090,7 @@ const restrictions = {
     "naked",
     "hooker",
     "prostitute",
-    "sugar daddy",
-    "onlyfans",
+
     "camgirl",
     "thot",
     "slut",
@@ -1116,7 +1114,7 @@ const restrictions = {
     "sub",
     "fetish",
     "anal",
-    "oral",
+
     "blowjob",
     "handjob",
     "rimming",
@@ -1128,7 +1126,7 @@ const restrictions = {
     "pedo",
     "lolita",
     "underage",
-    "teen",
+
     "jailbait",
 
     "boyfriend",
@@ -1138,7 +1136,7 @@ const restrictions = {
     "grindr",
     "bumble",
     "snapchat sext",
-    "DM slide",
+
     "thirst trap",
     "predator",
     "meetup",
@@ -1149,12 +1147,10 @@ const restrictions = {
 
     "killing",
     "killed",
-    "death",
-    "die",
+
     "dying",
     "stab",
-    "shoot",
-    "shooting",
+
     "shot",
     "gun",
     "knife",
@@ -1162,8 +1158,7 @@ const restrictions = {
     "explode",
     "explosion",
     "assault",
-    "fight",
-    "beat",
+
     "choke",
     "strangle",
     "hang",
@@ -1187,17 +1182,13 @@ const restrictions = {
     "slaughter",
     "carnage",
 
-    "robbery",
-    "theft",
     "shoplift",
     "burglar",
-    "hack",
-    "hacking",
+
     "DDoS",
     "phishing",
     "carding",
-    "fraud",
-    "scam",
+
     "blackmail",
     "extort",
     "kidnap",
@@ -1213,7 +1204,7 @@ const restrictions = {
     "jail",
     "prison",
     "felony",
-    "cop",
+
     "riot",
     "loot",
     "depression",
@@ -1221,8 +1212,7 @@ const restrictions = {
     "meds",
     "suicidal",
     "KMS",
-    "end it",
-    "rope",
+
     "noose",
     "gun to head",
     "swallow pills",
@@ -1243,11 +1233,9 @@ const restrictions = {
     "autistic",
     "incel",
 
-    "ugly",
-    "loser",
     "DAN",
     "jailbreak",
-    "bet",
+
     "betting",
     "gamble",
     "poker",
@@ -1257,12 +1245,12 @@ const restrictions = {
 
     "draftkings",
     "fanduel",
-    "wager",
+
     "parlay",
     "crypto gambling",
     "NFT flip",
     "loot box",
-    "skin betting",
+
     "beer",
     "liquor",
     "vodka",
@@ -1286,23 +1274,20 @@ const restrictions = {
     "explicit",
     "porn",
     "alcohol",
-    "kill",
 
-    "bet",
     "betting",
     "gamble",
     "poker",
     "casino",
-    "slot",
+
     "blackjack",
     "roulette",
 
     "draftkings",
     "fanduel",
-    "wager",
-    "odds",
+
     "parlay",
-    "crypto gambling",
+
     "NFT flip",
     "loot box",
     "skin betting",

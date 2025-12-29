@@ -22,6 +22,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogActions,
   Drawer,
 } from "@mui/material";
 import {
@@ -70,6 +71,12 @@ import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
 import { useNavigate } from "react-router-dom";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import InputAdornment from "@mui/material/InputAdornment";
+import { toast } from "react-toastify";
+import LockResetRoundedIcon from "@mui/icons-material/LockResetRounded";
+// import IconButton from "@mui/material/IconButton";
 
 const ChatUI = () => {
   const [input, setInput] = useState("");
@@ -129,6 +136,13 @@ const ChatUI = () => {
   // const [tokenCount, setTokenCount] = useState(0);
   const [linkCount, setLinkCount] = useState(3);
   const [isListening, setIsListening] = useState(false);
+  const [openChangePassword, setOpenChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const recognitionRef = useRef(null);
   const partialResponseRef = useRef("");
   const currentPromptRef = useRef("");
@@ -565,6 +579,59 @@ const ChatUI = () => {
   //     return text; // fallback: return original text if translation fails
   //   }
   // }
+
+  const resetChangePasswordForm = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+
+    setShowCurrent(false);
+    setShowNew(false);
+    setShowConfirm(false);
+  };
+
+  const handleChangePassword = async () => {
+    console.log("CHANGE PASSWORD CLICKED:::"); // 👈 add this
+
+    // e.preventDefault();
+    console.log(
+      ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;",
+      `${apiBaseUrl}/api/ai/change-password`
+    );
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/ai/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id, // logged-in user id
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Something went wrong");
+      }
+
+      toast.success(data?.message || "Password changed successfully");
+
+      // Swal.fire("Success", "Password changed successfully", "success");
+      resetChangePasswordForm();
+      setOpenChangePassword(false);
+    } catch (err) {
+      console.error("change-password API Error:", err);
+    }
+  };
 
   const handleUpgradePlan = () => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -4730,6 +4797,20 @@ const ChatUI = () => {
               sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
             >
               Contact Us
+            </Typography>
+          </MenuItem>
+
+          <MenuItem
+            onClick={() => {
+              setOpenChangePassword(true);
+              setMobileMenuAnchor(null);
+            }}
+          >
+            <LockResetRoundedIcon fontSize="small" sx={{ mr: 1 }} />
+            <Typography
+              sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
+            >
+              Change Password
             </Typography>
           </MenuItem>
 
@@ -9243,6 +9324,104 @@ const ChatUI = () => {
           </Box>
         </Box>
       </Drawer>
+
+      <Dialog
+        open={openChangePassword}
+        onClose={() => {
+          resetChangePasswordForm();
+          setOpenChangePassword(false);
+        }}
+          PaperProps={{
+    sx: {
+      maxWidth: "540px",
+      width: "100%",
+      borderRadius: "16px",
+      p: 1,
+    },
+  }}
+      >
+        <DialogTitle>Change Password</DialogTitle>
+
+        <DialogContent>
+          <TextField
+            fullWidth
+            margin="dense"
+            type={showCurrent ? "text" : "password"}
+            label="Current Password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    edge="end"
+                  >
+                    {showCurrent ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            fullWidth
+            margin="dense"
+            type={showNew ? "text" : "password"}
+            label="New Password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={() => setShowNew(!showNew)} edge="end">
+                    {showNew ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <TextField
+            fullWidth
+            margin="dense"
+            type={showConfirm ? "text" : "password"}
+            label="Confirm New Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    edge="end"
+                  >
+                    {showConfirm ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </DialogContent>
+
+        <DialogActions>
+          <Button
+            onClick={() => {
+              resetChangePasswordForm();
+              setOpenChangePassword(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleChangePassword}
+          >
+            Change Password
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openProfile}

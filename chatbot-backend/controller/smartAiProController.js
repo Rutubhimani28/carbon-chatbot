@@ -63,16 +63,17 @@ export const handleTokens = async (sessions, session, payload) => {
   const userForInputLimit = await User.findOne({ email: session.email });
   const MAX_INPUT_TOKENS = userForInputLimit
     ? getInputTokenLimit({
-      subscriptionPlan: userForInputLimit.subscriptionPlan,
-      childPlan: userForInputLimit.childPlan,
-    })
+        subscriptionPlan: userForInputLimit.subscriptionPlan,
+        childPlan: userForInputLimit.childPlan,
+      })
     : 5000; // fallback for users without plan
 
   const inputTokens = promptTokens + fileTokenCount;
 
   if (inputTokens > MAX_INPUT_TOKENS) {
     const err = new Error(
-      `Prompt + uploaded files exceed ${MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
+      `Prompt + uploaded files exceed ${
+        MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
       } token limit`
     );
     err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
@@ -106,9 +107,9 @@ export const handleTokens = async (sessions, session, payload) => {
   // ✅ Get user's plan-based token limit
   const userTokenLimit = user
     ? getTokenLimit({
-      subscriptionPlan: user.subscriptionPlan,
-      childPlan: user.childPlan,
-    })
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      })
     : 0;
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
@@ -469,8 +470,7 @@ const restrictions = {
     "blood",
     "rape",
     "abuse",
-    "attack",
-    "death",
+
     "weed",
     "marijuana",
     "cocaine",
@@ -498,10 +498,10 @@ const restrictions = {
     "dab",
     "dabbing",
     "cartel",
-    "trap",
+
     "OD",
     "overdose",
-    "inject",
+
     "snort",
     "sniff",
     "bong",
@@ -533,8 +533,7 @@ const restrictions = {
     "naked",
     "hooker",
     "prostitute",
-    "sugar daddy",
-    "onlyfans",
+
     "camgirl",
     "thot",
     "slut",
@@ -558,7 +557,7 @@ const restrictions = {
     "sub",
     "fetish",
     "anal",
-    "oral",
+
     "blowjob",
     "handjob",
     "rimming",
@@ -570,7 +569,7 @@ const restrictions = {
     "pedo",
     "lolita",
     "underage",
-    "teen",
+
     "jailbait",
 
     "boyfriend",
@@ -580,7 +579,7 @@ const restrictions = {
     "grindr",
     "bumble",
     "snapchat sext",
-    "DM slide",
+
     "thirst trap",
     "predator",
     "meetup",
@@ -591,12 +590,10 @@ const restrictions = {
 
     "killing",
     "killed",
-    "death",
-    "die",
+
     "dying",
     "stab",
-    "shoot",
-    "shooting",
+
     "shot",
     "gun",
     "knife",
@@ -604,8 +601,7 @@ const restrictions = {
     "explode",
     "explosion",
     "assault",
-    "fight",
-    "beat",
+
     "choke",
     "strangle",
     "hang",
@@ -629,17 +625,13 @@ const restrictions = {
     "slaughter",
     "carnage",
 
-    "robbery",
-    "theft",
     "shoplift",
     "burglar",
-    "hack",
-    "hacking",
+
     "DDoS",
     "phishing",
     "carding",
-    "fraud",
-    "scam",
+
     "blackmail",
     "extort",
     "kidnap",
@@ -655,7 +647,7 @@ const restrictions = {
     "jail",
     "prison",
     "felony",
-    "cop",
+
     "riot",
     "loot",
     "depression",
@@ -663,8 +655,7 @@ const restrictions = {
     "meds",
     "suicidal",
     "KMS",
-    "end it",
-    "rope",
+
     "noose",
     "gun to head",
     "swallow pills",
@@ -685,11 +676,9 @@ const restrictions = {
     "autistic",
     "incel",
 
-    "ugly",
-    "loser",
     "DAN",
     "jailbreak",
-    "bet",
+
     "betting",
     "gamble",
     "poker",
@@ -699,12 +688,12 @@ const restrictions = {
 
     "draftkings",
     "fanduel",
-    "wager",
+
     "parlay",
     "crypto gambling",
     "NFT flip",
     "loot box",
-    "skin betting",
+
     "beer",
     "liquor",
     "vodka",
@@ -721,7 +710,6 @@ const restrictions = {
     "DUI",
     "breathalyzer",
   ],
-
   under18: [
     "gambling",
     "adult",
@@ -729,23 +717,20 @@ const restrictions = {
     "explicit",
     "porn",
     "alcohol",
-    "kill",
 
-    "bet",
     "betting",
     "gamble",
     "poker",
     "casino",
-    "slot",
+
     "blackjack",
     "roulette",
 
     "draftkings",
     "fanduel",
-    "wager",
-    "odds",
+
     "parlay",
-    "crypto gambling",
+
     "NFT flip",
     "loot box",
     "skin betting",
@@ -1862,12 +1847,12 @@ export const getSmartAIProResponse = async (req, res) => {
         botName === "chatgpt-5-mini"
           ? "gpt-4o-mini"
           : botName === "grok"
-            ? "grok-4-1-fast-reasoning"
-            : botName === "claude-haiku-4.5"
-              ? "claude-haiku-4-5-20251001"
-              : botName === "mistral"
-                ? "mistral-medium-2508"
-                : undefined;
+          ? "grok-4-1-fast-reasoning"
+          : botName === "claude-haiku-4.5"
+          ? "claude-haiku-4-5-20251001"
+          : botName === "mistral"
+          ? "mistral-medium-2508"
+          : undefined;
 
       const fileData = await processFile(file, modelForTokenCount);
 
@@ -2165,8 +2150,8 @@ Strict: No explanation. No extra words.`,
     const keywordContext =
       conversationKeywords.length > 0
         ? `\nKey concepts from conversation: ${conversationKeywords
-          .slice(0, 10)
-          .join(", ")}`
+            .slice(0, 10)
+            .join(", ")}`
         : "";
 
     // ✅ Unified System Instruction (Always respect context)
@@ -2400,7 +2385,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch { }
+        } catch {}
 
         const apiError = errJson?.error || errJson;
 
@@ -2437,30 +2422,30 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         const fallbackPayload =
           fallback === "claude-haiku-4.5"
             ? {
-              model: modelName,
-              max_tokens: maxWords * 2,
-              system: messages[0].content,
-              messages: messages.slice(1), // ✅ Send full history (excluding system prompt)
-            }
+                model: modelName,
+                max_tokens: maxWords * 2,
+                system: messages[0].content,
+                messages: messages.slice(1), // ✅ Send full history (excluding system prompt)
+              }
             : {
-              model: modelName,
-              messages,
-              temperature: 0.7,
-              max_tokens: maxWords * 2,
-            };
+                model: modelName,
+                messages,
+                temperature: 0.7,
+                max_tokens: maxWords * 2,
+              };
 
         // Build fallback headers
         const fallbackHeaders =
           fallback === "claude-haiku-4.5"
             ? {
-              "Content-Type": "application/json",
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-            }
+                "Content-Type": "application/json",
+                "x-api-key": apiKey,
+                "anthropic-version": "2023-06-01",
+              }
             : {
-              Authorization: `Bearer ${apiKey}`,
-              "Content-Type": "application/json",
-            };
+                Authorization: `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+              };
 
         // Retry with fallback model
         const fbRes = await fetch(apiUrl, {
@@ -2538,8 +2523,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2547,8 +2532,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
