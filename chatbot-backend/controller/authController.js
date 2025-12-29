@@ -841,3 +841,98 @@ export const resetPassword = async (req, res) => {
       .json({ error: "Reset password failed", details: err.message });
   }
 };
+
+export const changePassword = async (req, res) => {
+  // try {
+  //   const { userId, currentPassword, newPassword } = req.body;
+
+  //   if (!userId || !currentPassword || !newPassword) {
+  //     return res.status(400).json({
+  //       error: "User ID, current password and new password are required",
+  //     });
+  //   }
+
+  //   const user = await User.findById(userId);
+  //   if (!user) {
+  //     return res.status(404).json({ error: "User not found" });
+  //   }
+
+  //   if (!user.password) {
+  //     return res.status(400).json({
+  //       error: "Password not set for this account",
+  //     });
+  //   }
+
+  //   // ✅ Verify current password
+  //   const isMatch = await bcrypt.compare(currentPassword, user.password);
+  //   if (!isMatch) {
+  //     return res.status(400).json({
+  //       error: "Current password is incorrect",
+  //     });
+  //   }
+
+  //   // ✅ Prevent same password reuse
+  //   const isSamePassword = await bcrypt.compare(newPassword, user.password);
+  //   if (isSamePassword) {
+  //     return res.status(400).json({
+  //       error: "New password must be different from old password",
+  //     });
+  //   }
+
+  //   // ✅ Hash & save new password
+  //   user.password = await bcrypt.hash(newPassword, 10);
+  //   await user.save();
+
+  //   res.json({
+  //     success: true,
+  //     message: "Password changed successfully",
+  //   });
+  // } catch (err) {
+  //   console.error("CHANGE PASSWORD ERROR 👉", err);
+  //   res.status(500).json({
+  //     error: "Change password failed",
+  //     details: err.message,
+  //   });
+  // }
+  try {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    if (!userId || !currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    // 1️⃣ user find karo
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // 2️⃣ current password check karo
+    const isMatch =  bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    // 3️⃣ new password hash karo
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // 4️⃣ password update karo
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Change Password Error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
