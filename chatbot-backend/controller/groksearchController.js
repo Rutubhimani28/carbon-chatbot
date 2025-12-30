@@ -4,7 +4,7 @@ import grokSearchHistory from "../model/grokSearchHistory.js";
 import trustedSources from "../trusted_sources.json" with { type: "json" };
 import { v4 as uuidv4 } from "uuid"; // npm install uuid
 import ChatSession from "../model/ChatSession.js";
-import { checkGlobalTokenLimit } from "../utils/tokenLimit.js";
+import { checkGlobalTokenLimit, getGlobalTokenStats } from "../utils/tokenLimit.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -195,6 +195,15 @@ Return ONLY valid JSON like this:
         });
         await record.save();
       }
+
+      // ✅ Get remaining tokens from global stats (single source of truth)
+      const globalStats = await getGlobalTokenStats(email);
+
+      // 💾 Persist remaining tokens to User model
+      await User.updateOne(
+        { email },
+        { $set: { remainingTokens: globalStats.remainingTokens } }
+      );
 
       // ✅ Send response immediately (skip trusted source flow)
       return res.json({
@@ -462,6 +471,15 @@ Return ONLY JSON array of ${requestedLinks} total unique valid links (no summary
 
       await session.save();
     }
+
+    // ✅ Get remaining tokens from global stats (single source of truth)
+    const globalStats = await getGlobalTokenStats(email);
+
+    // 💾 Persist remaining tokens to User model
+    await User.updateOne(
+      { email },
+      { $set: { remainingTokens: globalStats.remainingTokens } }
+    );
 
     // === ✅ Send Final Response ===
     return res.json({

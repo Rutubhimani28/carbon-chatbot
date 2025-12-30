@@ -910,7 +910,7 @@ export const changePassword = async (req, res) => {
     }
 
     // 2️⃣ current password check karo
-    const isMatch =  bcrypt.compare(currentPassword, user.password);
+    const isMatch = bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -934,5 +934,50 @@ export const changePassword = async (req, res) => {
     res.status(500).json({
       message: "Internal server error",
     });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 });
+
+    const formattedUsers = users.map((user) => {
+      // Calculate total tokens for the plan
+      const totalTokens = getTokenLimit({
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      });
+
+      console.log("Total Tokens::::::::", totalTokens);
+      console.log("Total Tokens::::::::", user);
+      console.log("Remaining Tokens::::::::::::::", user.remainingTokens);
+
+      // Calculate consumed tokens (Simple logic: Total - Remaining)
+      // Note: If remainingTokens is undefined, default to 0 for safety
+      const remaining =
+        user.remainingTokens !== undefined ? user.remainingTokens : 0;
+      console.log("Remaining :********************", remaining);
+      const consumed = Math.max(0, totalTokens - remaining);
+
+      return {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        mobile: user.mobile,
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+        planStartDate: user.planStartDate,
+        subscriptionType: user.subscriptionType,
+        remainingTokens: remaining,
+        tokensConsumed: consumed,
+        totalTokens: totalTokens, // Optional: send total capacity too if needed
+      };
+    });
+
+    res.status(200).json(formattedUsers);
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 };

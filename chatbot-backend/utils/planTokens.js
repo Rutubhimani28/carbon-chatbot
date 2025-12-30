@@ -42,7 +42,7 @@ export function getTokenLimit({
   subscriptionPlan,
   childPlan,
 }) {
-  if (subscriptionPlan === "Free Trial") {
+  if (!subscriptionPlan || subscriptionPlan === "Free Trial") {
     return PLAN_TOKENS["Free Trial"].DEFAULT;
   }
 

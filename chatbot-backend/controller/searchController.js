@@ -18,7 +18,7 @@ const SERPER_API_KEY = "030caba1631ac33e868536cda190dd632ea99d82";
 
 // meeral last uses key
 // const SERPER_API_KEY = "4065c8aa208d00278c9dfedbc5bbeaae7aaed872";
- 
+
 /**
  * Call Serper API
  * @param {string} query
@@ -75,7 +75,7 @@ async function searchTrusted(query, category) {
  * @param {string} category
  */
 async function smartSearch(query, category) {
-  
+
   let results = await searchTrusted(query, category);
 
   if (
@@ -149,7 +149,7 @@ async function summarizeAsk(query, results) {
       );
 
       combinedText += " " + relevantParagraphs.join(" ");
-      
+
       // Limit content to avoid too much text
       if (combinedText.split(/\s+/).length > 800) {
         break;
@@ -169,18 +169,18 @@ async function summarizeAsk(query, results) {
 function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
   // Split into sentences (basic sentence boundary detection)
   const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  
+
   const keywords = query.toLowerCase().split(/\s+/);
-  
+
   // Rank sentences by relevance to query
   const rankedSentences = sentences.map(sentence => {
     const lowerSentence = sentence.toLowerCase();
     const relevanceScore = keywords.filter(kw => lowerSentence.includes(kw)).length;
     const wordCount = sentence.split(/\s+/).length;
-    return { 
-      sentence: sentence.trim() + ".", 
-      score: relevanceScore, 
-      wordCount 
+    return {
+      sentence: sentence.trim() + ".",
+      score: relevanceScore,
+      wordCount
     };
   }).filter(item => item.wordCount > 5); // Filter out very short sentences
 
@@ -197,7 +197,7 @@ function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
       summary += (summary ? " " : "") + item.sentence;
       wordCount += item.wordCount;
       usedSentences++;
-      
+
       // Stop if we have enough content and reached a good breaking point
       if (wordCount >= minWords && usedSentences >= 2) {
         break;
@@ -218,7 +218,7 @@ function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
 
     summary = "";
     wordCount = 0;
-    
+
     for (const sentence of allSentences) {
       const sentenceWordCount = sentence.split(/\s+/).length;
       if (wordCount + sentenceWordCount <= maxWords) {
@@ -231,7 +231,7 @@ function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
 
   // Final cleanup and word count adjustment
   const words = summary.split(/\s+/);
-  
+
   // If over max words, trim gracefully
   if (words.length > maxWords) {
     // Find the last sentence boundary before maxWords
@@ -244,7 +244,7 @@ function createFlexibleSummary(text, query, minWords = 50, maxWords = 100) {
     }
     summary = words.slice(0, lastGoodIndex).join(" ");
   }
-  
+
   // If still under min words, add contextual padding
   const finalWords = summary.split(/\s+/);
   if (finalWords.length < minWords) {
@@ -263,10 +263,10 @@ function createCoherentSummary(content, query, targetWordCount) {
     .replace(/\[\d+\]/g, '') // Remove citation numbers
     .replace(/\s+/g, ' ')
     .trim();
-  
+
   // Split into meaningful chunks (sentences or phrases)
   const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 10);
-  
+
   // Prioritize sentences that contain query keywords
   const keywords = query.toLowerCase().split(/\s+/);
   const rankedSentences = sentences.map(sentence => {
@@ -274,13 +274,13 @@ function createCoherentSummary(content, query, targetWordCount) {
     const relevanceScore = keywords.filter(kw => lowerSentence.includes(kw)).length;
     return { sentence, score: relevanceScore, wordCount: sentence.split(/\s+/).length };
   }).filter(item => item.score > 0 || item.wordCount > 5);
-  
+
   // Sort by relevance
   rankedSentences.sort((a, b) => b.score - a.score);
-  
+
   let summary = "";
   let wordCount = 0;
-  
+
   // Build summary with most relevant sentences
   for (const item of rankedSentences) {
     if (wordCount + item.wordCount <= targetWordCount) {
@@ -296,27 +296,27 @@ function createCoherentSummary(content, query, targetWordCount) {
       }
       break;
     }
-    
+
     if (wordCount >= targetWordCount) break;
   }
-  
+
   // Fallback if no relevant sentences found
   if (!summary) {
     const allWords = cleanContent.split(/\s+/).slice(0, targetWordCount);
     summary = allWords.join(" ");
-    
+
     // Ensure it ends properly
     if (!summary.endsWith('.') && summary.length > 20) {
       summary += ".";
     }
   }
-  
+
   // Final word count check
   const finalWords = summary.split(/\s+/);
   if (finalWords.length !== targetWordCount) {
     console.log(`🔹 Summary adjusted from ${finalWords.length} to ${targetWordCount} words`);
   }
-  
+
   return finalWords.slice(0, targetWordCount).join(" ").trim();
 }
 function calculateAge(dob) {
@@ -334,31 +334,31 @@ const restrictions = {
   under13: ["violence", "drugs", "sex", "dating", "murder", "weapon", "kill", "adult",
     "nsfw", "explicit", "porn", "alcohol", "gambling", "suicide", "crime",
     "terrorism", "blood", "rape", "abuse", "attack", "death",
-  "weed", "marijuana", "pot", "coke", "cocaine", "meth", "heroin", "fentanyl", "opioid", "pill", "xanax", "oxy", "perc", "lean", "codeine", "molly", "ecstasy", "MDMA", "LSD", "acid", "shrooms", "mushroom", "ketamine", "ket", "special-k", "vape", "juul", "nicotine", "dab", "dabbing", "cartel", "dealer", "trap", "high", "stoned", "tripped", "OD", "overdose", "inject", "needle", "snort", "sniff", "smoke", "blunt", "joint", "bong", "rig", "paraphernalia",
-    
+    "weed", "marijuana", "pot", "coke", "cocaine", "meth", "heroin", "fentanyl", "opioid", "pill", "xanax", "oxy", "perc", "lean", "codeine", "molly", "ecstasy", "MDMA", "LSD", "acid", "shrooms", "mushroom", "ketamine", "ket", "special-k", "vape", "juul", "nicotine", "dab", "dabbing", "cartel", "dealer", "trap", "high", "stoned", "tripped", "OD", "overdose", "inject", "needle", "snort", "sniff", "smoke", "blunt", "joint", "bong", "rig", "paraphernalia",
+
     "sexual", "intercourse", "fuck", "fucking", "fucked", "pussy", "dick", "cock", "tits", "boobs", "ass", "hole", "cum", "jizz", "orgasm", "climax", "masturbate", "jerk", "wank", "porno", "xxx", "hentai", "nude", "naked", "strip", "hooker", "prostitute", "escort", "sugar daddy", "onlyfans", "camgirl", "thot", "slut", "whore", "raping", "raped", "molest", "grope", "touch", "fondle", "sext", "sexting", "nudes", "dickpic", "titpic", "erotic", "kink", "BDSM", "bondage", "dom", "sub", "fetish", "anal", "oral", "blowjob", "handjob", "rimming", "creampie", "gangbang", "threesome", "orgy", "incest", "pedo", "lolita", "underage", "teen", "jailbait",
-    
+
     "date", "boyfriend", "girlfriend", "hookup", "hook-up", "tinder", "grindr", "bumble", "snapchat sext", "DM slide", "thirst trap", "catfish", "groom", "grooming", "predator", "meetup", "stranger", "older", "sugar", "daddy", "mommy", "trade", "nudes for", "trade pics", "body count", "virgin", "lose virginity", "sleep with", "smash", "Netflix and chill",
-    
+
     "killing", "killed", "death", "die", "dying", "stab", "shoot", "shooting", "shot", "gun", "knife", "bomb", "explode", "explosion", "assault", "fight", "beat", "choke", "strangle", "hang", "self-harm", "cut", "wrist", "razor", "poison", "drown", "burn", "torture", "massacre", "genocide", "terror", "terrorist", "ISIS", "Al-Qaeda", "hitman", "assassin", "sniper", "decapitate", "behead", "mutilate", "disembowel", "slaughter", "carnage", "execution", "execute",
-    
+
     "steal", "rob", "robbery", "theft", "shoplift", "burglar", "hack", "hacking", "DDoS", "phishing", "carding", "fraud", "scam", "blackmail", "extort", "kidnap", "ransom", "trafficking", "gang", "mafia", "hit", "contract kill", "arson", "vandalism", "graffiti", "trespass", "fugitive", "warrant", "jail", "prison", "felony", "cop", "police brutality", "riot", "loot",
-    
+
     "depression", "depressed", "anxiety", "anxious", "panic attack", "therapy", "meds", "suicidal", "KMS", "end it", "rope", "noose", "bridge", "gun to head", "swallow pills", "worthless", "hate myself", "kill myself",
-    
+
     "fag", "dyke", "tranny", "retard", "nigger", "chink", "spic", "kike", "raghead", "towelhead", "beaner", "cripple", "autistic", "incel", "fat", "ugly", "loser",
-    
+
     "DAN", "jailbreak", "ignore rules", "pretend", "roleplay as", "unfiltered", "no limits", "bypass", "override", "system prompt", "hypothetical", "story", "fiction", "creative writing", "simulate", "generate", "uncensored", "raw", "dark mode"
-  , "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
-    
+    , "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
+
     "beer", "liquor", "vodka", "whiskey", "drunk", "wasted", "blackout", "binge", "shot", "chug", "keg", "party", "alc", "booze", "underage drinking", "fake ID", "bar", "club", "DUI", "breathalyzer"
-  
+
   ],
   under18: [
-    "gambling", "adult", "nsfw", "explicit", "porn", "alcohol" ,"kill",
+    "gambling", "adult", "nsfw", "explicit", "porn", "alcohol", "kill",
 
     "bet", "betting", "gamble", "poker", "casino", "slot", "blackjack", "roulette", "sportsbook", "draftkings", "fanduel", "stake", "wager", "odds", "parlay", "crypto gambling", "NFT flip", "loot box", "skin betting",
-    
+
     "beer", "liquor", "vodka", "whiskey", "drunk", "wasted", "blackout", "binge", "shot", "chug", "keg", "party", "alc", "booze", "underage drinking", "fake ID", "bar", "club", "DUI", "breathalyzer"
   ],
 };
@@ -371,7 +371,7 @@ export const getAISearchResults = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-  // ✅ Limit check — max 50 searches per user
+    // ✅ Limit check — max 50 searches per user
     const searchCount = await SearchHistory.countDocuments({ email });
     if (searchCount >= 50) {
       return res.status(403).json({
@@ -465,6 +465,12 @@ export const getAISearchResults = async (req, res) => {
     const globalStats = await getGlobalTokenStats(email);
     const remainingTokens = globalStats.remainingTokens;
 
+    // 💾 Persist remaining tokens to User model
+    await User.updateOne(
+      { email },
+      { $set: { remainingTokens: remainingTokens } }
+    );
+
     return res.json({
       allowed: true,
       summary,
@@ -494,7 +500,7 @@ export const getAISearchResults = async (req, res) => {
 
 //     // ✅ 1. Use direct search API
 //     const searchResults = await searchAPI(query);
-    
+
 //     console.log("Search Results ::::::::::", searchResults);
 
 //     // ✅ 2. Take only the requested number of organic results
@@ -518,13 +524,13 @@ export const getAISearchResults = async (req, res) => {
 
 //     // ✅ 4. Create summary using Grok
 //     const summary = await summarizeAsk(query, formattedResults.organic);
-    
+
 //     // ✅ 5. COUNT TOKENS AND WORDS FOR THE SUMMARY
 //     const tokenCount = await countTokens(summary, "grok-1"); // Use "gpt-4o-mini" if using OpenAI
 //     const wordCount = countWords(summary);
-    
+
 //     console.log(`🔹 Summary Stats - Words: ${wordCount}, Tokens: ${tokenCount}`);
-    
+
 //     // ✅ 6. Verify summary length (optional - for quality control)
 //     if (wordCount < 40) {
 //       console.warn(`⚠️ Summary might be too short: ${wordCount} words`);
@@ -592,7 +598,7 @@ export const getAISearchResults = async (req, res) => {
 
 //     // ✅ 1. Use direct search API
 //     const searchResults = await searchAPI(query);
-    
+
 //     console.log("Search Results ::::::::::", searchResults);
 
 //     // ✅ 2. Take only the requested number of organic results
@@ -616,7 +622,7 @@ export const getAISearchResults = async (req, res) => {
 
 //     // ✅ 4. Create 50-word summary using Grok
 //     const summary = await summarizeAsk(query, formattedResults.organic);
-    
+
 //     // ✅ 5. Verify word count
 //     const wordCount = summary.split(/\s+/).length;
 //     console.log(`🔹 Summary word count: ${wordCount} words`);
@@ -671,7 +677,7 @@ export const getAISearchResults = async (req, res) => {
 
 //     // ✅ 1. Use direct search API
 //     const searchResults = await searchAPI(query);
-    
+
 //     console.log("Search Results ::::::::::", searchResults);
 
 //     // ✅ 2. Take only the requested number of organic results
@@ -758,8 +764,8 @@ export const getUserSearchHistory = async (req, res) => {
 
     const history = await SearchHistory.find({ email }).sort({ createdAt: -1 });
 
-    return res.json({ 
-      email, 
+    return res.json({
+      email,
       history,
       // Optional: Include total stats
       totalStats: {
