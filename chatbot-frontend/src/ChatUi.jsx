@@ -5638,7 +5638,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap:1.5}}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           disabled={
@@ -6563,7 +6565,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center" , gap:1.5}}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           sx={{
@@ -7444,7 +7448,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center" , gap:1.5}}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           sx={{
