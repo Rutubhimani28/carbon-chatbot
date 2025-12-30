@@ -30,6 +30,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -237,6 +238,19 @@ const ChatUI = () => {
 
   const handleCloseMenu = () => {
     setAnchorsEl(null);
+  };
+
+  // Pagination state for "All User Data"
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   // Add this function to generate a unique session ID
@@ -4963,7 +4977,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: isXS ? "60vh" : "64vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -5918,7 +5932,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -6818,7 +6832,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -7701,7 +7715,7 @@ const ChatUI = () => {
                 width: "100%",
                 overflow: "hidden",
                 borderRadius: 3,
-                boxShadow: "0px 4px 20px rgba(0,0,0,0.05)",
+                boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
               }}
             >
               {allUsersLoading ? (
@@ -7728,8 +7742,8 @@ const ChatUI = () => {
                             key={head}
                             sx={{
                               fontWeight: "bold",
-                              backgroundColor: "#f9fafb",
-                              color: "#637381",
+                              backgroundColor: "#b7b8b9",
+                              color: "#373232",
                             }}
                           >
                             {head}
@@ -7738,39 +7752,56 @@ const ChatUI = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {allUsers.map((row, index) => (
-                        <TableRow
-                          key={row._id}
-                          hover
-                          sx={{
-                            "&:last-child td, &:last-child th": { border: 0 },
-                          }}
-                        >
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{row.firstName}</TableCell>
-                          <TableCell>{row.lastName}</TableCell>
-                          <TableCell>{row.email}</TableCell>
-                          <TableCell>{row.mobile || "N/A"}</TableCell>
-                          <TableCell>{row.subscriptionPlan}</TableCell>
-                          <TableCell>
-                            {row.planStartDate
-                              ? new Date(row.planStartDate).toLocaleDateString(
-                                  "en-GB"
-                                )
-                              : "N/A"}
-                          </TableCell>
-                          <TableCell>
-                            {row.tokensConsumed?.toLocaleString() || 0}
-                          </TableCell>
-                          <TableCell>
-                            {row.remainingTokens?.toLocaleString() || 0}
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {allUsers
+                        .slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage
+                        )
+                        .map((row, index) => (
+                          <TableRow
+                            key={row._id}
+                            hover
+                            sx={{
+                              "&:last-child td, &:last-child th": { border: 0 },
+                            }}
+                          >
+                            <TableCell>
+                              {page * rowsPerPage + index + 1}
+                            </TableCell>
+                            <TableCell>{row.firstName}</TableCell>
+                            <TableCell>{row.lastName}</TableCell>
+                            <TableCell>{row.email}</TableCell>
+                            <TableCell>{row.mobile || "N/A"}</TableCell>
+                            <TableCell>{row.subscriptionPlan}</TableCell>
+                            <TableCell>
+                              {row.planStartDate
+                                ? new Date(
+                                    row.planStartDate
+                                  ).toLocaleDateString("en-GB")
+                                : "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              {row.tokensConsumed?.toLocaleString() || 0}
+                            </TableCell>
+                            <TableCell>
+                              {row.remainingTokens?.toLocaleString() || 0}
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
               )}
+              {/* Pagination Component */}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={allUsers.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </Paper>
           </Box>
         ) : null}
