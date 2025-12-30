@@ -179,6 +179,7 @@ import sendReceiptMail from "../middleware/mailWithAttachment.js";
 import { generateReceipt } from "../middleware/generateReceipt.js";
 import { calculatePlanExpiry } from "../utils/dateUtils.js";
 import { getTokenLimit } from "../utils/planTokens.js";
+import { generateReceiptNo } from "../utils/generateReceiptNo.js";
 
 const router = express.Router();
 
@@ -293,11 +294,14 @@ router.post("/create-upi", async (req, res) => {
       });
     }
 
+    const receiptNo = await generateReceiptNo();
+
     // const amountInWords = numberToWords(Number(total));
 
     // --------- 1️⃣ Generate PDF Receipt ---------
     const receiptData = {
-      receiptNo: `RCP-${Date.now()}`,
+      // receiptNo: `RCP-${Date.now()}`,
+      receiptNo: receiptNo,
       date: date || new Date().toISOString().split("T")[0],
       fullName,
       planName,
@@ -741,15 +745,30 @@ router.post("/verify-payment", async (req, res) => {
         ? user.parentName
         : user.firstName;
 
-      await sendPasswordMail(sendTo, sendName, password);
+      // await sendPasswordMail(sendTo, sendName, password);
+
+      // ⏳ DELAY EMAIL BY 4 MINUTES
+      setTimeout(async () => {
+        try {
+          // SEND PASSWORD MAIL
+          await sendPasswordMail(sendTo, sendName, password);
+          console.log(`📩 Password email sent after 4 min → ${sendTo}`);
+        } catch (err) {
+          console.error("12 hour delayed email error:", err);
+        }
+        // }, 120000); // 4 minutes = 240000ms
+      }, 43200000); // 12 hours
     }
 
     await user.save();
     const amountInWords = numberToWords(Number(user.totalPriceINR || 0));
 
+    const receiptNo = await generateReceiptNo();
+
     // 📄 Generate receipt
     const receiptData = {
-      receiptNo: `RCP-${Date.now()}`,
+      // receiptNo: `RCP-${Date.now()}`,
+      receiptNo: receiptNo,
       date: new Date().toISOString().split("T")[0],
       fullName: `${user.firstName} ${user.lastName}`,
       planName: `${user.subscriptionPlan} - ${user.childPlan}`,

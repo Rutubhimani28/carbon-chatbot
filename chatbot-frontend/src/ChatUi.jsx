@@ -5648,7 +5648,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           disabled={
@@ -5708,7 +5710,8 @@ const ChatUI = () => {
                           />
                           <AttachFileIcon fontSize="small" />
                         </IconButton>
-                        <IconButton
+
+                        {/* <IconButton
                           onClick={isListening ? stopListening : startListening}
                           disabled={true}
                           sx={{
@@ -5731,7 +5734,7 @@ const ChatUI = () => {
                               }}
                             />
                           )}
-                        </IconButton>
+                        </IconButton> */}
 
                         {(isTypingResponse || isSending) && (
                           <Tooltip title="Stop generating">
@@ -6572,7 +6575,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           sx={{
@@ -6607,7 +6612,8 @@ const ChatUI = () => {
                           />
                           <AttachFileIcon fontSize="small" />
                         </IconButton>
-                        <IconButton
+
+                        {/* <IconButton
                           onClick={isListening ? stopListening : startListening}
                           disabled={true}
                           sx={{
@@ -6630,7 +6636,7 @@ const ChatUI = () => {
                               }}
                             />
                           )}
-                        </IconButton>
+                        </IconButton> */}
 
                         {(isTypingResponse || isSending) && (
                           <Tooltip title="Stop generating">
@@ -7452,7 +7458,9 @@ const ChatUI = () => {
                     }}
                   >
                     <Box sx={{ ml: 1 }}>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <IconButton
                           component="label"
                           sx={{
@@ -7487,7 +7495,8 @@ const ChatUI = () => {
                           />
                           <AttachFileIcon fontSize="small" />
                         </IconButton>
-                        <IconButton
+
+                        {/* <IconButton
                           onClick={isListening ? stopListening : startListening}
                           disabled={true}
                           sx={{
@@ -7510,7 +7519,7 @@ const ChatUI = () => {
                               }}
                             />
                           )}
-                        </IconButton>
+                        </IconButton> */}
 
                         {(isTypingResponse || isSending) && (
                           <Tooltip title="Stop generating">
@@ -9331,14 +9340,14 @@ const ChatUI = () => {
           resetChangePasswordForm();
           setOpenChangePassword(false);
         }}
-          PaperProps={{
-    sx: {
-      maxWidth: "540px",
-      width: "100%",
-      borderRadius: "16px",
-      p: 1,
-    },
-  }}
+        PaperProps={{
+          sx: {
+            maxWidth: "540px",
+            width: "100%",
+            borderRadius: "16px",
+            p: 1,
+          },
+        }}
       >
         <DialogTitle>Change Password</DialogTitle>
 

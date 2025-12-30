@@ -146,19 +146,21 @@ export const handleTokens = async (sessions, session, payload) => {
   // }
 
   // ✅ Save in session history
-  session.history.push({
-    ...payload,
-    promptTokens,
-    responseTokens,
-    fileTokenCount,
-    promptWords,
-    responseWords,
-    fileWordCount,
-    totalWords,
-    tokensUsed,
-    totalTokensUsed,
-    create_time: new Date(),
-  });
+  if (!payload.skipSave) {
+    session.history.push({
+      ...payload,
+      promptTokens,
+      responseTokens,
+      fileTokenCount,
+      promptWords,
+      responseWords,
+      fileWordCount,
+      totalWords,
+      tokensUsed,
+      totalTokensUsed,
+      create_time: new Date(),
+    });
+  }
 
   return {
     promptTokens,
@@ -2755,6 +2757,7 @@ export const saveSmartAIProPartialResponse = async (req, res) => {
       response: partialResponse,
       botName,
       files: [],
+      skipSave: true,
     });
 
     // ✅ Global shared token check (chat + search combined)
