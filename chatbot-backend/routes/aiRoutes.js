@@ -14,7 +14,7 @@ import { getSmartAIProAllSessions } from "../controller/smartAiProController.js"
 import { saveSmartAIPartialResponse } from "../controller/smartAiController.js";
 import { saveSmartAIProPartialResponse } from "../controller/smartAiProController.js";
 import { forgotPassword, resetPassword } from "../controller/authController.js";
-import { changePassword } from "../controller/authController.js";
+import { changePassword, getAllUsers } from "../controller/authController.js";
 
 const router = express.Router();
 
@@ -37,6 +37,8 @@ router.post("/SmartAIProask", getSmartAIProResponse);
 router.post("/save_smartAi_Pro_partial", saveSmartAIProPartialResponse);
 router.post("/SmartAIProhistory", getSmartAiProHistory);
 router.post("/get_smartAi_Pro_sessions", getSmartAIProAllSessions);
+
+router.get("/get_all_users", getAllUsers);
 
 // router.post("/translate", translatetolanguage);
 

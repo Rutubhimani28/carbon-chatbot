@@ -910,7 +910,7 @@ export const changePassword = async (req, res) => {
     }
 
     // 2️⃣ current password check karo
-    const isMatch =  bcrypt.compare(currentPassword, user.password);
+    const isMatch = bcrypt.compare(currentPassword, user.password);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -934,5 +934,63 @@ export const changePassword = async (req, res) => {
     res.status(500).json({
       message: "Internal server error",
     });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().sort({ createdAt: -1 });
+
+    // Use Promise.all to fetch up-to-date stats for every user
+    const formattedUsers = await Promise.all(
+      users.map(async (user) => {
+        try {
+          // ✅ Get dynamic, real-time stats (single source of truth)
+          const stats = await getGlobalTokenStats(user.email);
+
+          return {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            mobile: user.mobile,
+            subscriptionPlan: user.subscriptionPlan,
+            childPlan: user.childPlan,
+            planStartDate: user.planStartDate,
+            subscriptionType: user.subscriptionType,
+            // Use calculated values from stats
+            remainingTokens: stats.remainingTokens,
+            tokensConsumed: stats.totalTokensUsed,
+            totalTokens: stats.limit,
+          };
+        } catch (err) {
+          console.error(`Error fetching stats for ${user.email}:`, err.message);
+          // Fallback if something fails (e.g. user not found logic, though redundant here)
+          const fallbackLimit = getTokenLimitFromTokenLimit({
+            subscriptionPlan: user.subscriptionPlan,
+            childPlan: user.childPlan,
+          });
+          return {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            mobile: user.mobile,
+            subscriptionPlan: user.subscriptionPlan,
+            childPlan: user.childPlan,
+            planStartDate: user.planStartDate,
+            subscriptionType: user.subscriptionType,
+            remainingTokens: user.remainingTokens ?? fallbackLimit,
+            tokensConsumed: 0,
+            totalTokens: fallbackLimit,
+          };
+        }
+      })
+    );
+
+    res.status(200).json(formattedUsers);
+  } catch (error) {
+    console.error("Get All Users Error:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 };

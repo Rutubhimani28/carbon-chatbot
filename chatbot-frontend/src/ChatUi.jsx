@@ -24,6 +24,13 @@ import {
   DialogContent,
   DialogActions,
   Drawer,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -41,6 +48,7 @@ import FeaturedPlayListOutlinedIcon from "@mui/icons-material/FeaturedPlayListOu
 import KeyboardArrowDownTwoToneIcon from "@mui/icons-material/KeyboardArrowDownTwoTone";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import LogoutTwoToneIcon from "@mui/icons-material/LogoutTwoTone";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import leaf from "././assets/leaf.png"; // path adjust karo according to folder
 import Mainlogo from "././assets/Mainlogo.png"; // path adjust karo
 import Msg_logo from "././assets/Msg_logo.png"; // path adjust karo
@@ -142,7 +150,10 @@ const ChatUI = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  // const [showConfirm, setShowConfirm] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [allUsers, setAllUsers] = useState([]);
+  const [allUsersLoading, setAllUsersLoading] = useState(false);
   const recognitionRef = useRef(null);
   const partialResponseRef = useRef("");
   const currentPromptRef = useRef("");
@@ -227,6 +238,19 @@ const ChatUI = () => {
 
   const handleCloseMenu = () => {
     setAnchorsEl(null);
+  };
+
+  // Pagination state for "All User Data"
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   // Add this function to generate a unique session ID
@@ -367,6 +391,27 @@ const ChatUI = () => {
   // useEffect(() => {
   //   fetchSearchHistory();
   // }, [apiBaseUrl, historyLoading]);
+
+  const fetchAllUsers = async () => {
+    try {
+      setAllUsersLoading(true);
+      const response = await fetch(`${apiBaseUrl}/api/ai/get_all_users`);
+      if (!response.ok) throw new Error("Failed to fetch users");
+      const data = await response.json();
+      setAllUsers(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load user data");
+    } finally {
+      setAllUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeView === "allUserData") {
+      fetchAllUsers();
+    }
+  }, [activeView]);
 
   console.log("historyList::::::::::", historyList);
 
@@ -4770,6 +4815,20 @@ const ChatUI = () => {
             )} */}
 
           {/* User Actions */}
+          {/* <MenuItem
+            onClick={() => {
+              setActiveView("allUserData");
+              setMobileMenuAnchor(null);
+              setSearchSessionResults([]);
+              setShowSessionPanel(false);
+            }}
+          >
+            <ManageAccountsIcon fontSize="small" sx={{ mr: 1 }} />
+            <Typography sx={{ fontSize: "16px", fontWeight: 600 }}>
+              All User Data
+            </Typography>
+          </MenuItem> */}
+
           <MenuItem
             onClick={() => {
               setMobileMenuAnchor(null);
@@ -4785,6 +4844,24 @@ const ChatUI = () => {
               Profile
             </Typography>
           </MenuItem>
+
+          {User?.email === "m.shafeeq@wrdsai.com" && (
+            <MenuItem
+              onClick={() => {
+                setActiveView("allUserData");
+                setMobileMenuAnchor(null);
+                setSearchSessionResults([]);
+                setShowSessionPanel(false);
+              }}
+            >
+              <ManageAccountsIcon fontSize="small" sx={{ mr: 1 }} />
+              <Typography
+                sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
+              >
+                All User Data
+              </Typography>
+            </MenuItem>
+          )}
 
           <MenuItem
             onClick={() => {
@@ -4910,7 +4987,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: isXS ? "60vh" : "64vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -5865,7 +5942,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -6765,7 +6842,7 @@ const ChatUI = () => {
               <Box
                 sx={{
                   // height: "70vh",
-                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "66vh" },
+                  height: { xs: "62vh", sm: "62vh", md: "62vh", lg: "63vh" },
                   // p: 2,
                   display: "flex",
                   flexDirection: "column",
@@ -8566,6 +8643,110 @@ const ChatUI = () => {
             selectedGrokQuery={selectedGrokQuery}
             setSessionRemainingTokens={setSessionRemainingTokens}
           />
+        ) : activeView === "allUserData" ? (
+          <Box
+            sx={{
+              flexGrow: 1,
+              overflow: "auto",
+              p: { xs: 1, md: 3 },
+              height: "100%",
+              //  bgcolor: "#f4f6f8",
+            }}
+          >
+            <Paper
+              sx={{
+                width: "100%",
+                overflow: "hidden",
+                borderRadius: 3,
+                boxShadow: "0px 4px 20px rgba(0,0,0,0.08)",
+              }}
+            >
+              {allUsersLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+                  <CircularProgress />
+                </Box>
+              ) : (
+                <TableContainer sx={{ maxHeight: "75vh" }}>
+                  <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                      <TableRow>
+                        {[
+                          "S.No",
+                          "First Name",
+                          "Last Name",
+                          "Email",
+                          "Mobile",
+                          "Plan Name",
+                          "Subscription Date",
+                          "Tokens Consumed",
+                          "Tokens Remaining",
+                        ].map((head) => (
+                          <TableCell
+                            key={head}
+                            sx={{
+                              fontWeight: "bold",
+                              backgroundColor: "#b7b8b9",
+                              color: "#373232",
+                            }}
+                          >
+                            {head}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {allUsers
+                        .slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage
+                        )
+                        .map((row, index) => (
+                          <TableRow
+                            key={row._id}
+                            hover
+                            sx={{
+                              "&:last-child td, &:last-child th": { border: 0 },
+                            }}
+                          >
+                            <TableCell>
+                              {page * rowsPerPage + index + 1}
+                            </TableCell>
+                            <TableCell>{row.firstName}</TableCell>
+                            <TableCell>{row.lastName}</TableCell>
+                            <TableCell>{row.email}</TableCell>
+                            <TableCell>{row.mobile || "N/A"}</TableCell>
+                            <TableCell>{row.subscriptionPlan}</TableCell>
+                            <TableCell>
+                              {row.planStartDate
+                                ? new Date(
+                                    row.planStartDate
+                                  ).toLocaleDateString("en-GB")
+                                : "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              {row.tokensConsumed?.toLocaleString() || 0}
+                            </TableCell>
+                            <TableCell>
+                              {row.remainingTokens?.toLocaleString() || 0}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+              {/* Pagination Component */}
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                component="div"
+                count={allUsers.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Paper>
+          </Box>
         ) : null}
       </Box>
 

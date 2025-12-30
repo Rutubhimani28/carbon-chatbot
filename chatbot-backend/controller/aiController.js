@@ -2390,6 +2390,12 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
     // ✅ Get remaining tokens from global stats (single source of truth)
     const globalStats = await getGlobalTokenStats(email);
 
+    // 💾 Persist remaining tokens to User model
+    await User.updateOne(
+      { email },
+      { $set: { remainingTokens: globalStats.remainingTokens } }
+    );
+
     res.json({
       type: "chat",
       sessionId: currentSessionId,
