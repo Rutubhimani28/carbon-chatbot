@@ -326,7 +326,7 @@ const Login = () => {
       localStorage.setItem("globalRemainingTokens", remainingTokens);
 
       //  navigate to home after success
-      navigate("/");
+      navigate("/home");
     } catch (err) {
       setMessage(err.response?.data?.error || "Login failed");
     } finally {

@@ -77,6 +77,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 // import searchIcon from "@mui/icons-material/Language";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import ContactSupportRoundedIcon from "@mui/icons-material/ContactSupportRounded";
+import MailOutlineIcon from "@mui/icons-material/MailOutline";
 import { useNavigate } from "react-router-dom";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import Visibility from "@mui/icons-material/Visibility";
@@ -4859,7 +4860,7 @@ const ChatUI = () => {
               setMobileMenuAnchor(null);
             }}
           >
-            <ContactSupportRoundedIcon fontSize="small" sx={{ mr: 1 }} />
+            <MailOutlineIcon fontSize="small" sx={{ mr: 1 }} />
             <Typography
               sx={{ fontSize: "17px", fontFamily: "Calibri, sans-serif" }}
             >
