@@ -3222,9 +3222,21 @@ const ChatUI = () => {
   //     // "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
   //   );
   // };
+  // const handleRedirect = () => {
+  //   window.location.href =
+  //     "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com";
+  // };
   const handleRedirect = () => {
-    window.location.href =
-      "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com";
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // ✅ Mobile → Mail app / Gmail app
+      window.location.href = "mailto:support@wrdsai.com";
+    } else {
+      // ✅ Desktop → Gmail web compose
+      window.location.href =
+        "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com";
+    }
   };
 
   const bots = [
