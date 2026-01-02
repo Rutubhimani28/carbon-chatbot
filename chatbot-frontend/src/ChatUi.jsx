@@ -3226,11 +3226,15 @@ const ChatUI = () => {
   //   chat?.name?.toLowerCase().includes(searchQuery.toLowerCase())
   // );
 
+  // const handleRedirect = () => {
+  //   window.open(
+  //     "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
+  //     // "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
+  //   );
+  // };
   const handleRedirect = () => {
-    window.open(
-      "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com"
-      // "https://mail.google.com/mail/?view=cm&fs=1&to=krushil.prolink@gmail.com"
-    );
+    window.location.href =
+      "https://mail.google.com/mail/?view=cm&fs=1&to=support@wrdsai.com";
   };
 
   const bots = [
