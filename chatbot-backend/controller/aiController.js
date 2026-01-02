@@ -73,16 +73,17 @@ export const handleTokens = async (sessions, session, payload) => {
   const userForInputLimit = await User.findOne({ email: session.email });
   const MAX_INPUT_TOKENS = userForInputLimit
     ? getInputTokenLimit({
-      subscriptionPlan: userForInputLimit.subscriptionPlan,
-      childPlan: userForInputLimit.childPlan,
-    })
+        subscriptionPlan: userForInputLimit.subscriptionPlan,
+        childPlan: userForInputLimit.childPlan,
+      })
     : 5000; // fallback for users without plan
 
   const inputTokens = promptTokens + fileTokenCount;
 
   if (inputTokens > MAX_INPUT_TOKENS) {
     const err = new Error(
-      `Prompt + uploaded files exceed ${MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
+      `Prompt + uploaded files exceed ${
+        MAX_INPUT_TOKENS === Infinity ? "no" : MAX_INPUT_TOKENS
       } token limit`
     );
     err.code = "INPUT_TOKEN_LIMIT_EXCEEDED";
@@ -116,9 +117,9 @@ export const handleTokens = async (sessions, session, payload) => {
   // ✅ Get user's plan-based token limit
   const userTokenLimit = user
     ? getTokenLimit({
-      subscriptionPlan: user.subscriptionPlan,
-      childPlan: user.childPlan,
-    })
+        subscriptionPlan: user.subscriptionPlan,
+        childPlan: user.childPlan,
+      })
     : 0;
 
   // Note: remainingTokens will be validated via checkGlobalTokenLimit (which now includes search tokens)
@@ -1063,7 +1064,7 @@ const restrictions = {
     "snort",
     "sniff",
     "bong",
-    "rig",
+
     "paraphernalia",
 
     "sexual",
@@ -1540,14 +1541,14 @@ export const getAIResponse = async (req, res) => {
           botName === "chatgpt-5-mini"
             ? "gpt-4o-mini"
             : botName === "grok"
-              ? "grok-3-mini"
-              : botName === "claude-3-haiku"
-                ? "claude-3-haiku-20240307"
-                : botName === "mistral"
-                  ? "mistral-small-2506"
-                  : botName === "gemini"
-                    ? "gemini-3-flash-preview"
-                    : undefined;
+            ? "grok-3-mini"
+            : botName === "claude-3-haiku"
+            ? "claude-3-haiku-20240307"
+            : botName === "mistral"
+            ? "mistral-small-2506"
+            : botName === "gemini"
+            ? "gemini-3-flash-preview"
+            : undefined;
 
         const fileData = await processFile(file, modelForTokenCount);
 
@@ -1862,8 +1863,8 @@ Strict: No explanation. No extra words.`,
     const keywordContext =
       conversationKeywords.length > 0
         ? `\nKey concepts from conversation: ${conversationKeywords
-          .slice(0, 10)
-          .join(", ")}`
+            .slice(0, 10)
+            .join(", ")}`
         : "";
 
     if (related) {
@@ -2133,7 +2134,7 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
         let errJson = {};
         try {
           errJson = JSON.parse(errorText);
-        } catch { }
+        } catch {}
 
         const apiError = errJson?.error || errJson;
 
@@ -2257,8 +2258,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```html([\s\S]*?)```/g, (match, code) => {
         return `
       <pre class="language-html"><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 
@@ -2266,8 +2267,8 @@ Your final output must already be a fully-formed answer inside ${minWords}-${max
       html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
         return `
       <pre><code>${code
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")}</code></pre>
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</code></pre>
     `;
       });
 

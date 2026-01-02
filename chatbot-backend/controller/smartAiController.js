@@ -505,7 +505,7 @@ const restrictions = {
     "snort",
     "sniff",
     "bong",
-    "rig",
+    
     "paraphernalia",
 
     "sexual",

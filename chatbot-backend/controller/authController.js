@@ -771,7 +771,7 @@ export const forgotPassword = async (req, res) => {
       return res.status(500).json({
         error: "Forgot password failed",
         details:
-          "FRONTEND_URL missing in backend .env file. Please add FRONTEND_URL=http://localhost:5173 (or your frontend port)",
+          "FRONTEND_URL missing in backend .env file. ",
       });
     }
 
